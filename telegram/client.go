@@ -1,14 +1,14 @@
 package telegram
 
 import (
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
 	"path/filepath"
 )
 
 type Config struct {
-	Logger  logrus.FieldLogger `json:"-" yaml:"-"`
-	Version string             `json:"-" yaml:"-"`
+	Logger  log.FieldLogger `json:"-" yaml:"-"`
+	Version string          `json:"-" yaml:"-"`
 
 	DataFolder string `json:"data_folder" yaml:"data_folder"`
 	ApiId      int32  `json:"api_id" yaml:"api_id"`
@@ -19,7 +19,6 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 	authorizer := client.ClientAuthorizer(&client.SetTdlibParametersRequest{
 		DatabaseDirectory:   filepath.Join(c.DataFolder, "database"),
 		FilesDirectory:      filepath.Join(c.DataFolder, "files"),
-		UseFileDatabase:     true,
 		UseChatInfoDatabase: true,
 		UseMessageDatabase:  true,
 		ApiId:               c.ApiId,
@@ -35,8 +34,15 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 	}
 
 	if c.Logger == nil {
-		c.Logger = logrus.StandardLogger()
+		c.Logger = log.StandardLogger()
 	}
+
+	user, err := _client.GetMe()
+	if err != nil {
+		return nil, err
+	}
+	c.Logger.Debugf("user GetMe: %+v", user)
+
 	return &Telegram{
 		logger: c.Logger,
 		client: _client,
@@ -44,6 +50,6 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 }
 
 type Telegram struct {
-	logger logrus.FieldLogger
+	logger log.FieldLogger
 	client *client.Client
 }
