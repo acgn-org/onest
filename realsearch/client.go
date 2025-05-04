@@ -40,8 +40,15 @@ type Client struct {
 
 func (c Client) NewProxy() *Proxy {
 	u, _ := url.Parse(c.baseUrl)
+	proxy := httputil.NewSingleHostReverseProxy(u)
+	proxy.Transport = c.httpClient.Transport
+	rawDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		rawDirector(req)
+		req.Host = req.URL.Host
+	}
 	return &Proxy{
-		httputil.NewSingleHostReverseProxy(u),
+		proxy,
 	}
 }
 
