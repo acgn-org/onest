@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
+	"path"
 )
 
 func NewClient(c *Config) (*Client, error) {
@@ -18,8 +18,7 @@ func NewClient(c *Config) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	u.Path = "/api/public/"
-	u.RawQuery = ""
+	u.Path = path.Join(u.Path, "/api/public")
 	u.Fragment = ""
 
 	return &Client{
@@ -36,20 +35,6 @@ type Config struct {
 type Client struct {
 	baseUrl    string
 	httpClient *http.Client
-}
-
-func (c Client) NewProxy() *Proxy {
-	u, _ := url.Parse(c.baseUrl)
-	proxy := httputil.NewSingleHostReverseProxy(u)
-	proxy.Transport = c.httpClient.Transport
-	rawDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		rawDirector(req)
-		req.Host = req.URL.Host
-	}
-	return &Proxy{
-		proxy,
-	}
 }
 
 type ResponseSuccess struct {
