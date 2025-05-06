@@ -1,8 +1,9 @@
 package repository
 
 type Item struct {
-	ID       uint `gorm:"primarykey"`
-	RemoteID uint `gorm:"not null"`
+	ID        uint  `gorm:"primarykey"`
+	RemoteID  uint  `gorm:"not null"`
+	ChannelID int64 `gorm:"not null"`
 
 	Name   string `gorm:"not null"`
 	Regexp string `gorm:"not null"`
@@ -12,3 +13,5 @@ type Item struct {
 
 	Process int64 `gorm:"not null"`
 }
+
+type ItemRepository Repository

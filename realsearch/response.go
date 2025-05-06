@@ -24,7 +24,6 @@ type RawInfo struct {
 	ChannelName       string `json:"channel_name"`
 	Size              int32  `json:"size"`
 	Text              string `json:"text"`
-	TextParsed        string `json:"-"`
 	FileSuffix        string `json:"file_suffix"`
 	MsgID             int64  `json:"msg_id"`
 	SupportsStreaming bool   `json:"supports_streaming"`
