@@ -9,6 +9,6 @@ func AutoMigrate(db *gorm.DB) error {
 	)
 }
 
-type Repository interface {
-	DB() *gorm.DB
+type Repository struct {
+	DB *gorm.DB
 }
