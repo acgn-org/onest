@@ -7,8 +7,10 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
+	"sync"
 )
 
 const EnvPrefix = "ONEST"
@@ -25,8 +27,14 @@ func LoadConfigFile() error {
 	return kFile.Load(file.Provider(pathname), yaml.Parser())
 }
 
-// Load should to be called after kFile is loaded
-// scope is used in both loading from kFile and env
+var loadConfigFileOnce = sync.OnceFunc(func() {
+	err := LoadConfigFile()
+	if err != nil {
+		log.Fatalln("load config file failed:", err)
+	}
+})
+
+// Load scope is used in both loading from kFile and env
 func Load[T any](scope string, defaults *T) (*T, error) {
 	var conf T
 
@@ -39,6 +47,7 @@ func Load[T any](scope string, defaults *T) (*T, error) {
 	}
 
 	// from file
+	loadConfigFileOnce()
 	if err := k.Merge(kFile.Cut(scope)); err != nil {
 		return nil, err
 	}
