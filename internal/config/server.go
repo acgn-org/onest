@@ -1,7 +1,6 @@
 package config
 
 import (
-	nested "github.com/antonfisher/nested-logrus-formatter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,7 +22,4 @@ func init() {
 		log.Fatalln("failed to parse log level:", err)
 	}
 	log.SetLevel(lv)
-	log.SetFormatter(&nested.Formatter{
-		TimestampFormat: "01/02 15:04:05",
-	})
 }

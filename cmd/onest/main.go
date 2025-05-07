@@ -8,7 +8,6 @@ import (
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/server"
 	"github.com/acgn-org/onest/realsearch"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 	"os"
@@ -57,6 +56,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	if err := httpSrv.Shutdown(ctx); err != nil {
-		log.Errorln("shutdown http server failed:", err)
+		logger.Errorln("shutdown http server failed:", err)
 	}
 }

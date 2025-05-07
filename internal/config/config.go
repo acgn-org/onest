@@ -2,12 +2,12 @@ package config
 
 import (
 	"fmt"
+	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"sync"
@@ -16,31 +16,46 @@ import (
 const EnvPrefix = "ONEST"
 const EnvConfig = EnvPrefix + "_CONFIG"
 
+func _logger() logfield.LoggerWithFields {
+	return logfield.New("config")
+}
+
 var kFile = koanf.New(".")
 
-func LoadConfigFile() error {
+func LoadConfigFile(logger logfield.LoggerWithFields) error {
 	pathname := os.Getenv(EnvConfig)
 	if pathname == "" {
 		pathname = "config.yaml"
 	}
-	return kFile.Load(file.Provider(pathname), yaml.Parser())
+	err := kFile.Load(file.Provider(pathname), yaml.Parser())
+	if err != nil {
+		if os.IsNotExist(err) {
+			logger.Warnln("config file not found, skipping...")
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 var loadConfigFileOnce = sync.OnceFunc(func() {
-	err := LoadConfigFile()
+	logger := _logger().WithAction("load:file")
+	err := LoadConfigFile(logger)
 	if err != nil {
-		log.Fatalln("load config file failed:", err)
+		logger.Fatalln("load config file failed:", err)
 	}
 })
 
 // Load scope is used in both loading from kFile and env
 func Load[T any](scope string, defaults *T) *T {
+	logger := _logger().WithAction("load:" + scope)
+
 	var conf T
 	var k = koanf.New(".")
 
 	// defaults
 	if defaults != nil {
-		err := k.Load(structs.Provider(&conf, "yaml"), nil)
+		err := k.Load(structs.Provider(defaults, "yaml"), nil)
 		if err != nil {
 			panic(err)
 		}
@@ -62,11 +77,13 @@ func Load[T any](scope string, defaults *T) *T {
 		return strings.Replace(strings.ToLower(
 			strings.TrimPrefix(s, prefix)), "_", ".", -1)
 	}), nil); err != nil {
-		log.Fatalln("load config from env failed:", err)
+		logger.Fatalln("load from env failed:", err)
 	}
 
-	if err := k.Unmarshal("", &conf); err != nil {
-		log.Fatalln("unmarshal config failed:", err)
+	if err := k.UnmarshalWithConf("", &conf, koanf.UnmarshalConf{
+		Tag: "yaml",
+	}); err != nil {
+		logger.Fatalln("unmarshal failed:", err)
 	}
 	return &conf
 }
