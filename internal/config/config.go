@@ -16,7 +16,6 @@ import (
 const EnvPrefix = "ONEST"
 const EnvConfig = EnvPrefix + "_CONFIG"
 
-var k = koanf.New(".")
 var kFile = koanf.New(".")
 
 func LoadConfigFile() error {
@@ -35,21 +34,22 @@ var loadConfigFileOnce = sync.OnceFunc(func() {
 })
 
 // Load scope is used in both loading from kFile and env
-func Load[T any](scope string, defaults *T) (*T, error) {
+func Load[T any](scope string, defaults *T) *T {
 	var conf T
+	var k = koanf.New(".")
 
 	// defaults
 	if defaults != nil {
 		err := k.Load(structs.Provider(&conf, "yaml"), nil)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 	}
 
 	// from file
 	loadConfigFileOnce()
 	if err := k.Merge(kFile.Cut(scope)); err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	// from env
@@ -62,8 +62,11 @@ func Load[T any](scope string, defaults *T) (*T, error) {
 		return strings.Replace(strings.ToLower(
 			strings.TrimPrefix(s, prefix)), "_", ".", -1)
 	}), nil); err != nil {
-		return nil, err
+		log.Fatalln("load config from env failed:", err)
 	}
 
-	return &conf, k.Unmarshal("", &conf)
+	if err := k.Unmarshal("", &conf); err != nil {
+		log.Fatalln("unmarshal config failed:", err)
+	}
+	return &conf
 }

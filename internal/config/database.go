@@ -1,6 +1,6 @@
 package config
 
-type Database struct {
+type _Database struct {
 	Type     string `yaml:"type"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
@@ -9,3 +9,8 @@ type Database struct {
 	SSLMode  string `yaml:"ssl_mode"`
 	DBFile   string `yaml:"db_file"`
 }
+
+var Database = Load("database", &_Database{
+	Type:   "sqlite",
+	DBFile: "server.db",
+})
