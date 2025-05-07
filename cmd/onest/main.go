@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/server"
 	"github.com/acgn-org/onest/realsearch"
 	log "github.com/sirupsen/logrus"
@@ -8,8 +9,8 @@ import (
 
 func main() {
 	_realSearch, err := realsearch.NewClient(&realsearch.Config{
-		HttpClient: nil, // todo
-		BaseUrl:    "",  // todo
+		HttpClient: config.RealSearchHttpClient,
+		BaseUrl:    config.RealSearch.BaseUrl,
 	})
 	if err != nil {
 		log.Fatalln("create real search client failed:", err)

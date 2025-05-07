@@ -17,6 +17,8 @@ func NewClient(c *Config) (*Client, error) {
 	u, err := url.Parse(c.BaseUrl)
 	if err != nil {
 		return nil, err
+	} else if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("invalid url: %s", c.BaseUrl)
 	}
 	u.Path = path.Join(u.Path, "/api/public")
 	u.Fragment = ""
