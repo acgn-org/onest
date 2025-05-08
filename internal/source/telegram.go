@@ -16,7 +16,13 @@ func init() {
 
 	// options
 	var opts = make([]client.Option, 0, 2)
-	if log.StandardLogger().Level == log.TraceLevel {
+	if log.StandardLogger().Level != log.TraceLevel {
+		_, err := client.SetLogStream(&client.SetLogStreamRequest{
+			LogStream: &client.LogStreamEmpty{},
+		})
+		if err != nil {
+			logger.Warnln("set log stream failed:", err)
+		}
 		opts = append(opts, client.WithLogVerbosity(&client.SetLogVerbosityLevelRequest{
 			NewVerbosityLevel: 0,
 		}))
