@@ -12,6 +12,8 @@ type Item struct {
 	DateEnd   int32 `gorm:"not null"`
 
 	Process int64 `gorm:"not null"`
+
+	TargetPath string `gorm:"not null"`
 }
 
 type ItemRepository Repository
