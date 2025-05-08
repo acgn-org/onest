@@ -13,7 +13,7 @@ import (
 var DB *gorm.DB
 
 func init() {
-	logger := logfield.New("database")
+	logger := logfield.New(logfield.ComDatabase)
 
 	conf := &gorm.Config{
 		SkipDefaultTransaction: true,

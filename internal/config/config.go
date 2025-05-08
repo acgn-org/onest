@@ -16,10 +16,6 @@ import (
 const EnvPrefix = "ONEST"
 const EnvConfig = EnvPrefix + "_CONFIG"
 
-func _logger() logfield.LoggerWithFields {
-	return logfield.New("config")
-}
-
 var kFile = koanf.New(".")
 
 func LoadConfigFile(logger logfield.LoggerWithFields) error {
@@ -39,7 +35,7 @@ func LoadConfigFile(logger logfield.LoggerWithFields) error {
 }
 
 var loadConfigFileOnce = sync.OnceFunc(func() {
-	logger := _logger().WithAction("load:file")
+	logger := logfield.New(logfield.ComConfig).WithAction("load:file")
 	err := LoadConfigFile(logger)
 	if err != nil {
 		logger.Fatalln("load config file failed:", err)
@@ -48,7 +44,7 @@ var loadConfigFileOnce = sync.OnceFunc(func() {
 
 // Load scope is used in both loading from kFile and env
 func Load[T any](scope string, defaults *T) *T {
-	logger := _logger().WithAction("load:" + scope)
+	logger := logfield.New(logfield.ComConfig).WithAction("load:" + scope)
 
 	var conf T
 	var k = koanf.New(".")

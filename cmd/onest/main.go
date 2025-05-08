@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	logger := logfield.New("server")
+	logger := logfield.New(logfield.ComServer)
 
 	_realSearch, err := realsearch.NewClient(&realsearch.Config{
 		HttpClient: config.RealSearchHttpClient,
