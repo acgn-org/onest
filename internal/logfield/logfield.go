@@ -18,18 +18,18 @@ func New(com string) LoggerWithFields {
 	logWithFields := LoggerWithFields{
 		components: com,
 	}
-	logWithFields.FieldLogger = logWithFields.NewLogger()
+	logWithFields.Entry = logWithFields.NewLogger()
 	return logWithFields
 }
 
 type LoggerWithFields struct {
-	log.FieldLogger
+	*log.Entry
 
 	components string
 	action     string
 }
 
-func (l LoggerWithFields) NewLogger() log.FieldLogger {
+func (l LoggerWithFields) NewLogger() *log.Entry {
 	logger := log.WithField(Component, l.components)
 	if l.action != "" {
 		logger = logger.WithField(Action, l.action)
@@ -37,14 +37,14 @@ func (l LoggerWithFields) NewLogger() log.FieldLogger {
 	return logger
 }
 
-func (l LoggerWithFields) WithComponent(component string) LoggerWithFields {
+func (l LoggerWithFields) WithSubComponent(component string) LoggerWithFields {
 	l.components += ":" + component
-	l.FieldLogger = l.NewLogger()
+	l.Entry = l.NewLogger()
 	return l
 }
 
 func (l LoggerWithFields) WithAction(action string) LoggerWithFields {
 	l.action = action
-	l.FieldLogger = l.NewLogger()
+	l.Entry = l.NewLogger()
 	return l
 }

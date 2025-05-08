@@ -6,6 +6,7 @@ type _Database struct {
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
+	Database string `yaml:"database"`
 	SSLMode  string `yaml:"ssl_mode"`
 	DBFile   string `yaml:"db_file"`
 }
