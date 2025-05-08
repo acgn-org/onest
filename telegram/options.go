@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func ProxyFromEnvironment(logger log.FieldLogger) *client.AddProxyRequest {
+func ProxyFromEnvironment(logger log.FieldLogger) (*client.AddProxyRequest, bool) {
 	var option client.AddProxyRequest
 
 	env := httpproxy.FromEnvironment()
@@ -19,16 +19,16 @@ func ProxyFromEnvironment(logger log.FieldLogger) *client.AddProxyRequest {
 		proxyUrlStr = env.HTTPProxy
 	}
 	if proxyUrlStr == "" {
-		return &option
+		return nil, false
 	}
 
 	proxyUrl, err := url.Parse(proxyUrlStr)
 	if err != nil {
 		logger.WithError(err).WithField("url", proxyUrlStr).Errorln("invalid proxy url")
-		return &option
+		return nil, false
 	} else if proxyUrl.Scheme != "http" {
 		logger.Warnf("unsupported scheme '%s'", proxyUrl.Scheme)
-		return &option
+		return nil, false
 	}
 
 	var portStr = proxyUrl.Port()
@@ -39,7 +39,7 @@ func ProxyFromEnvironment(logger log.FieldLogger) *client.AddProxyRequest {
 		port64, err := strconv.ParseInt(portStr, 10, 32)
 		if err != nil {
 			logger.WithError(err).WithField("port", portStr).Errorln("invalid proxy port")
-			return &option
+			return nil, false
 		}
 		port = int32(port64)
 	}
@@ -55,5 +55,5 @@ func ProxyFromEnvironment(logger log.FieldLogger) *client.AddProxyRequest {
 		HttpOnly: false,
 	}
 
-	return &option
+	return &option, true
 }

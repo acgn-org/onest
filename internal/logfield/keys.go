@@ -10,4 +10,5 @@ const (
 	ComConfig   = "config"
 	ComDatabase = "database"
 	ComSource   = "source"
+	ComTelegram = "telegram"
 )

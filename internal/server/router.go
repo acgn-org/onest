@@ -5,6 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Api(c *Config, group *gin.RouterGroup) {
-	group.Any("realsearch/*path", api.RealSearchProxy(c.RealSearch))
+func Api(group *gin.RouterGroup) {
+	group.Any("realsearch/*path", api.RealSearchProxy())
 }

@@ -1,12 +1,12 @@
 package api
 
 import (
-	"github.com/acgn-org/onest/realsearch"
+	"github.com/acgn-org/onest/internal/source"
 	"github.com/gin-gonic/gin"
 )
 
-func RealSearchProxy(client *realsearch.Client) gin.HandlerFunc {
-	proxy := client.NewProxy()
+func RealSearchProxy() gin.HandlerFunc {
+	proxy := source.RealSearch.NewProxy()
 	return func(ctx *gin.Context) {
 		ctx.Request.URL.Path = ctx.Param("path")
 		proxy.ServeHTTP(ctx.Writer, ctx.Request)

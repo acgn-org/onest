@@ -7,7 +7,6 @@ import (
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/server"
-	"github.com/acgn-org/onest/realsearch"
 	"net"
 	"net/http"
 	"os"
@@ -19,13 +18,7 @@ import (
 func main() {
 	logger := logfield.New(logfield.ComServer)
 
-	_realSearch, err := realsearch.NewClient(&realsearch.Config{
-		HttpClient: config.RealSearchHttpClient,
-		BaseUrl:    config.RealSearch.BaseUrl,
-	})
-	if err != nil {
-		logger.Fatalln("create real search client failed:", err)
-	}
+	// create http server
 
 	addr := fmt.Sprintf("%s:%d", config.Server.Host, config.Server.Port)
 	listen, err := net.Listen("tcp", addr)
@@ -35,9 +28,7 @@ func main() {
 	logger.Infof("listening on %s", listen.Addr())
 
 	httpSrv := http.Server{
-		Handler: server.New(&server.Config{
-			RealSearch: _realSearch,
-		}),
+		Handler: server.New(),
 	}
 	go func(listen net.Listener) {
 		if err := httpSrv.Serve(listen); err != nil {
@@ -47,6 +38,8 @@ func main() {
 			logger.Fatalln("start server failed:", err)
 		}
 	}(listen)
+
+	// shutdown
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt, os.Kill, syscall.SIGTERM)

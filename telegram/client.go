@@ -7,12 +7,12 @@ import (
 )
 
 type Config struct {
-	Logger  log.FieldLogger `json:"-" yaml:"-"`
-	Version string          `json:"-" yaml:"-"`
+	Logger  log.FieldLogger
+	Version string
 
-	DataFolder string `json:"data_folder" yaml:"data_folder"`
-	ApiId      int32  `json:"api_id" yaml:"api_id"`
-	ApiHash    string `json:"api_hash" yaml:"api_hash"`
+	DataFolder string
+	ApiId      int32
+	ApiHash    string
 }
 
 func New(c *Config, opts ...client.Option) (*Telegram, error) {
@@ -27,6 +27,7 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 		DeviceModel:         "onest",
 		ApplicationVersion:  c.Version,
 	})
+	c.Logger.Infoln("authorizing...")
 	go client.CliInteractor(authorizer)
 	_client, err := client.NewClient(authorizer, opts...)
 	if err != nil {
