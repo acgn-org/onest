@@ -13,5 +13,5 @@ type _Database struct {
 
 var Database = Load("database", &_Database{
 	Type:   "sqlite",
-	DBFile: "server.db",
+	DBFile: "server.sqlite",
 })
