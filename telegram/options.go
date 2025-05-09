@@ -9,14 +9,12 @@ import (
 )
 
 func ProxyFromEnvironment(logger log.FieldLogger) (*client.AddProxyRequest, bool) {
-	var option client.AddProxyRequest
-
 	env := httpproxy.FromEnvironment()
 	var proxyUrlStr string
-	if env.HTTPSProxy != "" {
-		proxyUrlStr = env.HTTPSProxy
-	} else {
+	if env.HTTPProxy != "" {
 		proxyUrlStr = env.HTTPProxy
+	} else {
+		proxyUrlStr = env.HTTPSProxy
 	}
 	if proxyUrlStr == "" {
 		return nil, false
@@ -34,7 +32,7 @@ func ProxyFromEnvironment(logger log.FieldLogger) (*client.AddProxyRequest, bool
 	var portStr = proxyUrl.Port()
 	var port int32
 	if portStr == "" {
-		option.Port = 80
+		port = 80
 	} else {
 		port64, err := strconv.ParseInt(portStr, 10, 32)
 		if err != nil {
@@ -44,16 +42,16 @@ func ProxyFromEnvironment(logger log.FieldLogger) (*client.AddProxyRequest, bool
 		port = int32(port64)
 	}
 
-	option.Enable = true
-	option.Server = proxyUrl.Hostname()
-	option.Port = port
-
 	passwd, _ := proxyUrl.User.Password()
-	option.Type = &client.ProxyTypeHttp{
-		Username: proxyUrl.User.Username(),
-		Password: passwd,
-		HttpOnly: false,
-	}
 
-	return &option, true
+	return &client.AddProxyRequest{
+		Enable: true,
+		Server: proxyUrl.Hostname(),
+		Port:   port,
+		Type: &client.ProxyTypeHttp{
+			Username: proxyUrl.User.Username(),
+			Password: passwd,
+			HttpOnly: false,
+		},
+	}, true
 }
