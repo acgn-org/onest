@@ -4,7 +4,6 @@ import (
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
-	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
 	"sync"
 )
@@ -21,9 +20,7 @@ var (
 func init() {
 	logger := logfield.New(logfield.ComQueue).WithAction("init")
 
-	downloadRepo := repository.DownloadRepository{
-		DB: database.DB,
-	}
+	downloadRepo := database.NewRepository[repository.DownloadRepository]()
 
 	// load queue number
 

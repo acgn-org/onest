@@ -55,3 +55,15 @@ func init() {
 func Begin() *gorm.DB {
 	return DB.Begin()
 }
+
+func NewRepository[T any]() T {
+	var repo T
+	any(&repo).(repository.TypeRepository).SetDB(DB)
+	return repo
+}
+
+func BeginRepository[T any]() T {
+	var repo T
+	any(&repo).(repository.TypeRepository).SetDB(Begin())
+	return repo
+}

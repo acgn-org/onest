@@ -20,7 +20,9 @@ type Download struct {
 	ErrorAt    int64
 }
 
-type DownloadRepository Repository
+type DownloadRepository struct {
+	Repository
+}
 
 func (repo DownloadRepository) CountQueued() (int64, error) {
 	var count int64

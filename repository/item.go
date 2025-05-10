@@ -17,4 +17,6 @@ type Item struct {
 	TargetPath string `gorm:"not null"`
 }
 
-type ItemRepository Repository
+type ItemRepository struct {
+	Repository
+}
