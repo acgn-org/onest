@@ -15,3 +15,8 @@ type Download struct {
 }
 
 type DownloadRepository Repository
+
+func (repo DownloadRepository) CountNotDownloaded() (int64, error) {
+	var count int64
+	return count, repo.DB.Model(&Download{}).Where("downloaded=?", false).Count(&count).Error
+}

@@ -7,7 +7,7 @@ import (
 type _Server struct {
 	Host     string `yaml:"host"`
 	Port     uint16 `yaml:"port"`
-	LogLevel string `yaml:"logLevel"`
+	LogLevel string `yaml:"log_level"`
 }
 
 var Server = Load("server", &_Server{

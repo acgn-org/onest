@@ -69,7 +69,7 @@ func (c Client) Do(req *http.Request, data interface{}) error {
 		if err == nil {
 			return &errResp
 		}
-		return fmt.Errorf("real search api internal error with httpstatus %d", httpRes.StatusCode)
+		return fmt.Errorf("real search api internal error with http status %d", httpRes.StatusCode)
 	}
 
 	var res = ResponseSuccess{
