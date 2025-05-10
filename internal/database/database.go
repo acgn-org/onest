@@ -24,22 +24,24 @@ func init() {
 
 	logger = logger.WithAction("connect")
 
+	databaseConfig := config.Database.Get()
+
 	var err error
-	switch config.Database.Type {
+	switch databaseConfig.Type {
 	case "sqlite":
-		DB, err = gorm.Open(sqlite.Open(config.Database.DBFile), conf)
+		DB, err = gorm.Open(sqlite.Open(databaseConfig.DBFile), conf)
 	case "mysql":
 		DB, err = gorm.Open(mysql.Open(fmt.Sprintf(
 			"%s:%s@tcp(%s:%d)/%s?parseTime=True&loc=Local&tls=%s",
-			config.Database.User,
-			config.Database.Password,
-			config.Database.Host,
-			config.Database.Port,
-			config.Database.Database,
-			config.Database.SSLMode,
+			databaseConfig.User,
+			databaseConfig.Password,
+			databaseConfig.Host,
+			databaseConfig.Port,
+			databaseConfig.Database,
+			databaseConfig.SSLMode,
 		)), conf)
 	default:
-		logger.Fatalf("unsupported database type: %s", config.Database.Type)
+		logger.Fatalf("unsupported database type: %s", databaseConfig.Type)
 	}
 	if err != nil {
 		logger.Fatalln("failed:", err)

@@ -32,13 +32,14 @@ func init() {
 	}
 
 	// connect client
+	var telegramConfig = config.Telegram.Get()
 	var err error
 	Telegram, err = telegram.New(&telegram.Config{
 		Logger:     logfield.New(logfield.ComTelegram),
 		Version:    config.VERSION,
-		DataFolder: config.Telegram.DataFolder,
-		ApiId:      config.Telegram.ApiId,
-		ApiHash:    config.Telegram.ApiHash,
+		DataFolder: telegramConfig.DataFolder,
+		ApiId:      telegramConfig.ApiId,
+		ApiHash:    telegramConfig.ApiHash,
 	}, opts...)
 	if err != nil {
 		logger.Fatalln("failed to create Telegram client:", err)

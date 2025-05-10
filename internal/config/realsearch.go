@@ -19,7 +19,7 @@ var RealSearch = Load("realsearch", &_RealSearch{
 var RealSearchHttpClient *http.Client
 
 func init() {
-	timeout := time.Duration(RealSearch.Timeout) * time.Second
+	timeout := time.Duration(RealSearch.Get().Timeout) * time.Second
 
 	RealSearchHttpClient = &http.Client{
 		Transport: &http.Transport{

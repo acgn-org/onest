@@ -17,7 +17,7 @@ var Server = Load("server", &_Server{
 })
 
 func init() {
-	lv, err := log.ParseLevel(Server.LogLevel)
+	lv, err := log.ParseLevel(Server.Get().LogLevel)
 	if err != nil {
 		log.Fatalln("failed to parse log level:", err)
 	}

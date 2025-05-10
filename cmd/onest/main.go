@@ -17,10 +17,11 @@ import (
 
 func main() {
 	logger := logfield.New(logfield.ComServer)
+	serverConfig := config.Server.Get()
 
 	// create http server
 
-	addr := fmt.Sprintf("%s:%d", config.Server.Host, config.Server.Port)
+	addr := fmt.Sprintf("%s:%d", serverConfig.Host, serverConfig.Port)
 	listen, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Fatalf("listen on %s failed: %v", addr, err)

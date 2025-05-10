@@ -17,13 +17,21 @@ const EnvPrefix = "ONEST"
 const EnvConfig = EnvPrefix + "_CONFIG"
 
 var kFile = koanf.New(".")
+var kFileLock sync.RWMutex
 
-func LoadConfigFile(logger logfield.LoggerWithFields) error {
+func Pathname() string {
 	pathname := os.Getenv(EnvConfig)
 	if pathname == "" {
 		pathname = "config.yaml"
 	}
-	err := kFile.Load(file.Provider(pathname), yaml.Parser())
+	return pathname
+}
+
+func LoadConfigFile(logger logfield.LoggerWithFields) error {
+	kFileLock.Lock()
+	defer kFileLock.Unlock()
+
+	err := kFile.Load(file.Provider(Pathname()), yaml.Parser())
 	if err != nil {
 		if os.IsNotExist(err) {
 			logger.Warnln("config file not found, skipping...")
@@ -42,8 +50,32 @@ var loadConfigFileOnce = sync.OnceFunc(func() {
 	}
 })
 
+type ScopedConfig[T any] struct {
+	lock  sync.RWMutex
+	scope string
+	value T
+}
+
+func (c *ScopedConfig[T]) Get() T {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	return c.value
+}
+
+func (c *ScopedConfig[T]) Save(value T) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	err := Save(c.scope, value)
+	if err != nil {
+		return err
+	}
+	c.value = value
+	return nil
+}
+
 // Load scope is used in both loading from kFile and env
-func Load[T any](scope string, defaults *T) *T {
+func Load[T any](scope string, defaults *T) *ScopedConfig[T] {
 	logger := logfield.New(logfield.ComConfig).WithAction("load:" + scope)
 
 	var conf T
@@ -59,6 +91,8 @@ func Load[T any](scope string, defaults *T) *T {
 
 	// from file
 	loadConfigFileOnce()
+	kFileLock.RLock()
+	defer kFileLock.RUnlock()
 	if err := k.Merge(kFile.Cut(scope)); err != nil {
 		panic(err)
 	}
@@ -81,5 +115,29 @@ func Load[T any](scope string, defaults *T) *T {
 	}); err != nil {
 		logger.Fatalln("unmarshal failed:", err)
 	}
-	return &conf
+	return &ScopedConfig[T]{
+		scope: scope,
+		value: conf,
+	}
+}
+
+func Save(scope string, value any) error {
+	var k = koanf.New(".")
+	if err := k.Load(structs.Provider(value, "yaml"), nil); err != nil {
+		return err
+	}
+
+	kFileLock.Lock()
+	defer kFileLock.Unlock()
+
+	if err := kFile.MergeAt(k, scope); err != nil {
+		return err
+	}
+
+	data, err := kFile.Marshal(yaml.Parser())
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(Pathname(), data, 0600)
 }

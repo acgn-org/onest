@@ -12,7 +12,7 @@ func init() {
 	var err error
 	RealSearch, err = realsearch.NewClient(&realsearch.Config{
 		HttpClient: config.RealSearchHttpClient,
-		BaseUrl:    config.RealSearch.BaseUrl,
+		BaseUrl:    config.RealSearch.Get().BaseUrl,
 	})
 	if err != nil {
 		logfield.New(logfield.ComSource).WithAction("init:realsearch").

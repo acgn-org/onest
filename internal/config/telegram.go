@@ -1,5 +1,7 @@
 package config
 
+import "github.com/acgn-org/onest/internal/logfield"
+
 type _Telegram struct {
 	ApiId               int32  `yaml:"api_id"`
 	ApiHash             string `yaml:"api_hash"`
@@ -13,7 +15,13 @@ var Telegram = Load("telegram", &_Telegram{
 })
 
 func init() {
-	if Telegram.MaxParallelDownload == 0 {
-		Telegram.MaxParallelDownload = 1
+	telegramConfig := Telegram.Get()
+
+	if telegramConfig.MaxParallelDownload == 0 {
+		telegramConfig.MaxParallelDownload = 1
+		err := Telegram.Save(telegramConfig)
+		if err != nil {
+			logfield.New(logfield.ComConfig).Fatalln("save telegram config failed:", err)
+		}
 	}
 }

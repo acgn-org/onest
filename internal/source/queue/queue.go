@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	parallel = config.Telegram.MaxParallelDownload
+	parallel = config.Telegram.Get().MaxParallelDownload
 	lock     sync.RWMutex
 
 	// active or pending is determined by tdlib
