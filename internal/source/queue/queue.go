@@ -34,6 +34,9 @@ func init() {
 }
 
 func Clean() error {
+	lock.Lock()
+	defer lock.Unlock()
+
 	if err := source.Telegram.RemoveDownloads(); err != nil {
 		return err
 	}
