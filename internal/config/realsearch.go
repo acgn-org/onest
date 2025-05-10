@@ -11,7 +11,7 @@ type _RealSearch struct {
 	BaseUrl string `yaml:"base_url"`
 }
 
-var RealSearch = Load("realsearch", &_RealSearch{
+var RealSearch = LoadScoped("realsearch", &_RealSearch{
 	Timeout: 30,
 	BaseUrl: "https://search.acgn.es/",
 })

@@ -10,7 +10,7 @@ type _Server struct {
 	LogLevel string `yaml:"log_level"`
 }
 
-var Server = Load("server", &_Server{
+var Server = LoadScoped("server", &_Server{
 	Host:     "0.0.0.0",
 	Port:     80,
 	LogLevel: "info",

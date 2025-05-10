@@ -11,7 +11,7 @@ type _Database struct {
 	DBFile   string `yaml:"db_file"`
 }
 
-var Database = Load("database", &_Database{
+var Database = LoadScoped("database", &_Database{
 	Type:   "sqlite",
 	DBFile: "server.sqlite",
 })

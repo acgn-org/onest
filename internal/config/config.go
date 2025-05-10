@@ -8,6 +8,7 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"strings"
 	"sync"
@@ -51,8 +52,11 @@ var loadConfigFileOnce = sync.OnceFunc(func() {
 })
 
 type ScopedConfig[T any] struct {
+	logger log.FieldLogger
+	scope  string
+	kEnv   *koanf.Koanf
+
 	lock  sync.RWMutex
-	scope string
 	value T
 }
 
@@ -66,16 +70,58 @@ func (c *ScopedConfig[T]) Save(value T) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	err := Save(c.scope, value)
+	kRaw := koanf.New(".")
+	err := kRaw.Load(structs.Provider(c.value, "yaml"), nil)
 	if err != nil {
 		return err
 	}
+
+	kNew := koanf.New(".")
+	err = kNew.Load(structs.Provider(value, "yaml"), nil)
+	if err != nil {
+		return err
+	}
+
+	kFileLock.Lock()
+	defer kFileLock.Unlock()
+
+	var kFileChanged bool
+	for _, key := range kNew.Keys() {
+		val := kNew.Get(key)
+		if val != kRaw.Get(key) {
+			globalKey := c.scope + "." + key
+
+			if c.kEnv.Get(key) != nil {
+				c.logger.Warnf("key '%s' is set by environment, change will not take effect on next startup", globalKey)
+			}
+
+			if kFile.Get(globalKey) != val {
+				kFileChanged = true
+				err := kFile.Set(c.scope+"."+key, val)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	if kFileChanged {
+		data, err := kFile.Marshal(yaml.Parser())
+		if err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(Pathname(), data, 0600); err != nil {
+			return err
+		}
+	}
+
 	c.value = value
 	return nil
 }
 
-// Load scope is used in both loading from kFile and env
-func Load[T any](scope string, defaults *T) *ScopedConfig[T] {
+// LoadScoped scope is used in both loading from kFile and env
+func LoadScoped[T any](scope string, defaults *T) *ScopedConfig[T] {
 	logger := logfield.New(logfield.ComConfig).WithAction("load:" + scope)
 
 	var conf T
@@ -85,7 +131,7 @@ func Load[T any](scope string, defaults *T) *ScopedConfig[T] {
 	if defaults != nil {
 		err := k.Load(structs.Provider(defaults, "yaml"), nil)
 		if err != nil {
-			panic(err)
+			logger.Fatalln("load defaults failed:", err)
 		}
 	}
 
@@ -94,20 +140,24 @@ func Load[T any](scope string, defaults *T) *ScopedConfig[T] {
 	kFileLock.RLock()
 	defer kFileLock.RUnlock()
 	if err := k.Merge(kFile.Cut(scope)); err != nil {
-		panic(err)
+		logger.Fatalln("merge from file failed:", err)
 	}
 
 	// from env
+	var kEnv = koanf.New(".")
 	var prefix = fmt.Sprintf(
 		"%s_%s_",
 		EnvPrefix,
 		strings.Join(strings.Split(strings.ToUpper(scope), "."), "_"),
 	)
-	if err := k.Load(env.Provider(prefix, ".", func(s string) string {
+	if err := kEnv.Load(env.Provider(prefix, ".", func(s string) string {
 		return strings.Replace(strings.ToLower(
 			strings.TrimPrefix(s, prefix)), "_", ".", -1)
 	}), nil); err != nil {
 		logger.Fatalln("load from env failed:", err)
+	}
+	if err := k.Merge(kEnv); err != nil {
+		logger.Fatalln("merge from env failed:", err)
 	}
 
 	if err := k.UnmarshalWithConf("", &conf, koanf.UnmarshalConf{
@@ -116,28 +166,9 @@ func Load[T any](scope string, defaults *T) *ScopedConfig[T] {
 		logger.Fatalln("unmarshal failed:", err)
 	}
 	return &ScopedConfig[T]{
-		scope: scope,
-		value: conf,
+		logger: logger,
+		scope:  scope,
+		kEnv:   kEnv,
+		value:  conf,
 	}
-}
-
-func Save(scope string, value any) error {
-	var k = koanf.New(".")
-	if err := k.Load(structs.Provider(value, "yaml"), nil); err != nil {
-		return err
-	}
-
-	kFileLock.Lock()
-	defer kFileLock.Unlock()
-
-	if err := kFile.MergeAt(k, scope); err != nil {
-		return err
-	}
-
-	data, err := kFile.Marshal(yaml.Parser())
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(Pathname(), data, 0600)
 }

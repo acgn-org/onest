@@ -9,7 +9,7 @@ type _Telegram struct {
 	MaxParallelDownload uint8  `yaml:"max_parallel_download"`
 }
 
-var Telegram = Load("telegram", &_Telegram{
+var Telegram = LoadScoped("telegram", &_Telegram{
 	DataFolder:          "tdlib",
 	MaxParallelDownload: 3,
 })
