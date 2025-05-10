@@ -49,18 +49,3 @@ func init() {
 
 	go supervisor()
 }
-
-func Clean() error {
-	lock.Lock()
-	defer lock.Unlock()
-
-	downloading = make(map[int64]*DownloadTask)
-
-	if err := source.Telegram.RemoveDownloads(); err != nil {
-		return err
-	}
-	if err := source.Telegram.CleanDownloadDirectory(); err != nil {
-		return err
-	}
-	return nil
-}

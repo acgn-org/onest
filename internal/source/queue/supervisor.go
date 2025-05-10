@@ -7,5 +7,6 @@ func supervisor() {
 		time.Sleep(time.Second * 10)
 
 		// todo proactively update stats
+		// todo clean downloads
 	}
 }

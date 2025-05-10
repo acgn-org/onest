@@ -2,16 +2,43 @@ package queue
 
 import (
 	"errors"
+	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
 	"time"
 )
 
-func StartDownload(repo repository.Download) error {
+func CleanDownload() error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	task, ok := downloading[repo.MsgID]
+	downloading = make(map[int64]*DownloadTask)
+
+	if err := source.Telegram.RemoveDownloads(); err != nil {
+		return err
+	}
+	if err := source.Telegram.CleanDownloadDirectory(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func setDownloadError(id uint, isFatal bool, msg string, date int64) error {
+	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	defer downloadRepo.Rollback()
+
+	err := downloadRepo.UpdateDownloadError(id, isFatal, msg, date)
+	if err != nil {
+		return err
+	}
+	return downloadRepo.Commit().Error
+}
+
+func StartDownload(model repository.Download) error {
+	lock.Lock()
+	defer lock.Unlock()
+
+	task, ok := downloading[model.MsgID]
 	if ok { // resume download within queue
 		task.lock.Lock()
 		defer task.lock.Unlock()
@@ -27,14 +54,23 @@ func StartDownload(repo repository.Download) error {
 		return err
 	}
 
-	task, err := retrieveDownloadInfo(repo)
+	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	defer downloadRepo.Rollback()
+
+	if !model.Downloading {
+		if err := downloadRepo.SetDownloading(model.ID); err != nil {
+			return err
+		}
+	}
+
+	task, err := retrieveAndStartDownload(model)
 	if err != nil {
-		_ = setDownloadError(repo.ID, true, err.Error(), time.Now().Unix())
+		_ = setDownloadError(model.ID, true, err.Error(), time.Now().Unix())
 		return err
 	}
-	downloading[repo.MsgID] = task
+	downloading[model.MsgID] = task
 
-	return nil
+	return downloadRepo.Commit().Error
 }
 
 func AddDownloadQueue(repo repository.Download) error {

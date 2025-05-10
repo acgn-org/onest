@@ -54,3 +54,7 @@ func (repo DownloadRepository) UpdateDownloadError(id uint, isFatal bool, err st
 	}
 	return tx.Updates(&model).Error
 }
+
+func (repo DownloadRepository) SetDownloading(id uint) error {
+	return repo.DB.Model(&Download{}).Where("id=?", id).Update("downloading", true).Error
+}

@@ -21,24 +21,24 @@ type DownloadTask struct {
 	errorAt        time.Time
 }
 
-func retrieveDownloadInfo(repo repository.Download) (*DownloadTask, error) {
-	msg, err := source.Telegram.GetMessage(repo.Item.ChannelID, repo.MsgID)
+func retrieveAndStartDownload(model repository.Download) (*DownloadTask, error) {
+	msg, err := source.Telegram.GetMessage(model.Item.ChannelID, model.MsgID)
 	if err != nil {
 		return nil, err
 	}
 	video, ok := source.Telegram.GetMessageVideo(msg)
 	if !ok {
-		return nil, fmt.Errorf("download %d is not a video message", repo.ID)
+		return nil, fmt.Errorf("download %d is not a video message", model.ID)
 	}
-	file, err := source.Telegram.DownloadFile(video.Video.Id, repo.Priority)
+	file, err := source.Telegram.DownloadFile(video.Video.Id, model.Priority)
 	if err != nil {
 		return nil, err
 	}
 	return &DownloadTask{
-		RepoID:         repo.ID,
-		MsgID:          repo.MsgID,
+		RepoID:         model.ID,
+		MsgID:          model.MsgID,
 		VideoFile:      video,
-		priority:       repo.Priority,
+		priority:       model.Priority,
 		state:          file,
 		stateUpdatedAt: time.Now(),
 	}, nil
