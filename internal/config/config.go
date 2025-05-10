@@ -92,7 +92,8 @@ func (c *ScopedConfig[T]) Save(value T) error {
 			globalKey := c.scope + "." + key
 
 			if c.kEnv.Get(key) != nil {
-				c.logger.Warnf("key '%s' is set by environment, change will not take effect on next startup", globalKey)
+				c.logger.Warnf("%s was set by environment, change is not saved to file and will not take effect on next startup", globalKey)
+				continue
 			}
 
 			if kFile.Get(globalKey) != val {
@@ -151,8 +152,7 @@ func LoadScoped[T any](scope string, defaults *T) *ScopedConfig[T] {
 		strings.Join(strings.Split(strings.ToUpper(scope), "."), "_"),
 	)
 	if err := kEnv.Load(env.Provider(prefix, ".", func(s string) string {
-		return strings.Replace(strings.ToLower(
-			strings.TrimPrefix(s, prefix)), "_", ".", -1)
+		return strings.ToLower(strings.TrimPrefix(s, prefix))
 	}), nil); err != nil {
 		logger.Fatalln("load from env failed:", err)
 	}
