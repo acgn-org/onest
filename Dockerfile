@@ -1,4 +1,5 @@
 FROM acgn0rg/tdlib:golang AS builder
+ARG OnestVersion="unknown"
 
 WORKDIR /build
 
@@ -8,7 +9,13 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -trimpath -ldflags "-s -w -extldflags '-static -fpic'" ./cmd/onest
+RUN go build -trimpath \
+      -ldflags "\
+        -s -w \
+        -extldflags '-static -fpic' \
+        -X 'github.com/acgn-org/onest/internal/config.VERSION=${OnestVersion}' \
+      " \
+      ./cmd/onest
 
 FROM alpine:latest
 
