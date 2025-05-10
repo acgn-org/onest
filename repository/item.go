@@ -13,6 +13,7 @@ type Item struct {
 
 	Process int64 `gorm:"not null"`
 
+	Priority   int32  `gorm:"not null"`
 	TargetPath string `gorm:"not null"`
 }
 

@@ -9,14 +9,46 @@ type Download struct {
 	MsgID int64 `gorm:"not null"`
 	Text  string
 	Size  int32 `gorm:"not null"`
-	Date  int32 `gorm:"index:idx_global_queue;not null;priority:2"`
+	Date  int32 `gorm:"index:idx_global_queue;not null;priority:3"`
 
-	Downloaded bool `gorm:"index:idx_global_queue;default:false;priority:1"`
+	Priority    int32 `gorm:"not null"`
+	Downloading bool  `gorm:"index:idx_global_queue;default:false;priority:2"`
+	Downloaded  bool  `gorm:"index:idx_global_queue;default:false;priority:1"`
+
+	FatalError bool
+	Error      string
+	ErrorAt    int64
 }
 
 type DownloadRepository Repository
 
-func (repo DownloadRepository) CountNotDownloaded() (int64, error) {
+func (repo DownloadRepository) CountQueued() (int64, error) {
 	var count int64
-	return count, repo.DB.Model(&Download{}).Where("downloaded=?", false).Count(&count).Error
+	return count, repo.DB.Model(&Download{}).Where("downloaded=? AND downloading=?", false, false).Count(&count).Error
+}
+
+func (repo DownloadRepository) GetDownloading() ([]Download, error) {
+	var downloads []Download
+	return downloads, repo.DB.Model(&Download{}).Preload("Item").Where("downloaded=? AND downloading=?", false, true).Find(&downloads).Error
+}
+
+func (repo DownloadRepository) UpdateDownloadError(id uint, isFatal bool, err string, date int64) error {
+	model := Download{
+		ID:          id,
+		Downloading: false,
+		Downloaded:  true,
+		FatalError:  true,
+		Error:       err,
+		ErrorAt:     date,
+	}
+	tx := repo.DB.Model(&model)
+	if isFatal {
+		tx = tx.Select(
+			"downloading", "downloaded",
+			"fatal_error", "error", "error_at",
+		)
+	} else {
+		tx = tx.Select("error", "error_at")
+	}
+	return tx.Updates(&model).Error
 }

@@ -51,3 +51,7 @@ func init() {
 		logger.WithAction("migrate").Fatalln("failed:", err)
 	}
 }
+
+func Begin() *gorm.DB {
+	return DB.Begin()
+}

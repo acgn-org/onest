@@ -11,12 +11,11 @@ import (
 
 var (
 	parallel = config.Telegram.Get().MaxParallelDownload
-	lock     sync.RWMutex
 
-	// active or pending is determined by tdlib
-	queued  int64
-	active  int64
-	pending int64
+	lock   sync.RWMutex
+	queued int64
+	// Telegram.MessageID => DownloadTask
+	downloading map[int64]*DownloadTask
 )
 
 func init() {
@@ -27,15 +26,32 @@ func init() {
 	}
 
 	var err error
-	queued, err = downloadRepo.CountNotDownloaded()
+	queued, err = downloadRepo.CountQueued()
 	if err != nil {
 		logger.Fatalln("count download failed:", err)
+	}
+
+	// resume downloads
+
+	downloadingSlice, err := downloadRepo.GetDownloading()
+	if err != nil {
+		logger.Fatalln("load downloading failed:", err)
+	}
+	downloading = make(map[int64]*DownloadTask, len(downloadingSlice))
+
+	for _, repo := range downloadingSlice {
+		err := StartDownload(repo)
+		if err != nil {
+			logger.Errorln("resume download failed:", err)
+		}
 	}
 }
 
 func Clean() error {
 	lock.Lock()
 	defer lock.Unlock()
+
+	downloading = make(map[int64]*DownloadTask)
 
 	if err := source.Telegram.RemoveDownloads(); err != nil {
 		return err

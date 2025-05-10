@@ -65,6 +65,32 @@ type Telegram struct {
 	filesDirectory    string
 }
 
+func (t Telegram) GetMessage(chatId, messageId int64) (*client.Message, error) {
+	return t.client.GetMessage(&client.GetMessageRequest{
+		ChatId:    chatId,
+		MessageId: messageId,
+	})
+}
+
+func (t Telegram) GetMessageVideo(msg *client.Message) (*client.Video, bool) {
+	msgVideo, ok := msg.Content.(*client.MessageVideo)
+	if !ok {
+		return nil, false
+	}
+	return msgVideo.Video, true
+}
+
+func (t Telegram) DownloadFile(fileID, priority int32) (*client.File, error) {
+	t.logger.Debugf("download file %d with priotiry %d", fileID, priority)
+	return t.client.DownloadFile(&client.DownloadFileRequest{
+		FileId:      fileID,
+		Priority:    priority,
+		Offset:      0,
+		Limit:       0,
+		Synchronous: false,
+	})
+}
+
 func (t Telegram) RemoveDownloads() error {
 	_, err := t.client.RemoveAllFilesFromDownloads(&client.RemoveAllFilesFromDownloadsRequest{
 		OnlyActive:      false,

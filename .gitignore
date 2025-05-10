@@ -27,3 +27,4 @@ go.work.sum
 /.idea
 /config.yaml
 /data
+/main*
