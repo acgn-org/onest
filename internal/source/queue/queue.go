@@ -20,7 +20,7 @@ var (
 )
 
 func init() {
-	logger := logfield.New("queue").WithAction("init")
+	logger := logfield.New(logfield.ComQueue).WithAction("init")
 
 	downloadRepo := repository.DownloadRepository{
 		DB: database.DB,

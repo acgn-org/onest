@@ -11,8 +11,7 @@ import (
 var Telegram *telegram.Telegram
 
 func init() {
-	loggerCom := logfield.New(logfield.ComSource)
-	logger := loggerCom.WithAction("init:telegram")
+	logger := logfield.New(logfield.ComSource).WithAction("init:telegram")
 
 	// options
 	var opts = make([]client.Option, 0, 2)
@@ -35,7 +34,7 @@ func init() {
 	// connect client
 	var err error
 	Telegram, err = telegram.New(&telegram.Config{
-		Logger:     loggerCom.WithSubComponent(logfield.ComTelegram),
+		Logger:     logfield.New(logfield.ComTelegram),
 		Version:    config.VERSION,
 		DataFolder: config.Telegram.DataFolder,
 		ApiId:      config.Telegram.ApiId,
