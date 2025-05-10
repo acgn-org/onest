@@ -14,10 +14,11 @@ type DownloadTask struct {
 	MsgID     int64
 	VideoFile *client.Video
 
-	lock     sync.RWMutex
-	priority int32
-	state    *client.File
-	errorAt  time.Time
+	lock           sync.RWMutex
+	priority       int32
+	state          *client.File
+	stateUpdatedAt time.Time
+	errorAt        time.Time
 }
 
 func retrieveDownloadInfo(repo repository.Download) (*DownloadTask, error) {
@@ -34,10 +35,11 @@ func retrieveDownloadInfo(repo repository.Download) (*DownloadTask, error) {
 		return nil, err
 	}
 	return &DownloadTask{
-		RepoID:    repo.ID,
-		MsgID:     repo.MsgID,
-		VideoFile: video,
-		priority:  repo.Priority,
-		state:     file,
+		RepoID:         repo.ID,
+		MsgID:          repo.MsgID,
+		VideoFile:      video,
+		priority:       repo.Priority,
+		state:          file,
+		stateUpdatedAt: time.Now(),
 	}, nil
 }

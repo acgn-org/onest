@@ -25,6 +25,8 @@ func init() {
 		DB: database.DB,
 	}
 
+	// load queue number
+
 	var err error
 	queued, err = downloadRepo.CountQueued()
 	if err != nil {
@@ -45,6 +47,10 @@ func init() {
 			logger.Errorln("resume download failed:", err)
 		}
 	}
+
+	// run supervisor
+
+	go supervisor()
 }
 
 func Clean() error {
