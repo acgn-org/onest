@@ -4,8 +4,10 @@ import (
 	"errors"
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
+	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
+	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
 	"sync"
 	"sync/atomic"
@@ -17,7 +19,9 @@ func NewTask(model repository.Download) (*DownloadTask, error) {
 		RepoID:    model.ID,
 		ChannelID: model.Item.ChannelID,
 		MsgID:     model.MsgID,
-		priority:  model.Priority,
+		logger: logfield.New(logfield.ComTask).
+			WithField("id", model.ID),
+		priority: model.Priority,
 	}
 	return task, task.UpdateOrDownload()
 }
@@ -27,6 +31,9 @@ type DownloadTask struct {
 	ChannelID int64
 	MsgID     int64
 
+	logger  log.FieldLogger
+	isFatal atomic.Bool
+
 	lock     sync.RWMutex
 	priority int32
 	// maybe nil
@@ -34,17 +41,17 @@ type DownloadTask struct {
 	stateUpdatedAt time.Time
 	errorAt        time.Time
 	errorCount     uint8
-	isFatal        atomic.Bool
 }
 
 func (task *DownloadTask) fatal() {
+	task.logger.Errorln("task failed with too many or fatal errors")
 	task.isFatal.Store(true)
 }
 
 func (task *DownloadTask) getVideoFile() (bool, error) {
 	msg, err := source.Telegram.GetMessage(task.ChannelID, task.MsgID)
 	if err != nil {
-		_ = task.setError(err.Error())
+		_ = task.setError(err.Error(), false)
 		return false, err
 	}
 	video, ok := source.Telegram.GetMessageVideo(msg)
@@ -55,7 +62,10 @@ func (task *DownloadTask) getVideoFile() (bool, error) {
 	return true, nil
 }
 
-func (task *DownloadTask) setError(msg string) error {
+func (task *DownloadTask) setError(msg string, fatalNow bool) error {
+	logger := task.logger.WithField("msg", msg)
+	logger.Warnln("error updating")
+
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
@@ -63,14 +73,14 @@ func (task *DownloadTask) setError(msg string) error {
 	task.errorCount++
 
 	if err := downloadRepo.UpdateDownloadError(task.RepoID, msg, task.errorAt.Unix()); err != nil {
-		// todo warn with log
+		logger.Errorln("save error message to database failed:", err)
 		return err
 	}
 	if err := downloadRepo.Commit().Error; err != nil {
 		return err
 	}
 
-	if config.Telegram.Get().MaxDownloadError <= task.errorCount {
+	if fatalNow || config.Telegram.Get().MaxDownloadError <= task.errorCount {
 		task.fatal()
 	}
 	return nil
@@ -89,14 +99,15 @@ func (task *DownloadTask) UpdateOrDownload() error {
 		if err != nil {
 			return err
 		} else if !ok {
-			task.fatal()
-			return errors.New("no video file found")
+			msg := "no video file found"
+			_ = task.setError(msg, true)
+			return errors.New(msg)
 		}
 	}
 
 	newState, err := source.Telegram.DownloadFile(task.state.Id, task.priority)
 	if err != nil {
-		_ = task.setError(err.Error())
+		_ = task.setError(err.Error(), false)
 	} else {
 		task.state = newState
 		task.stateUpdatedAt = time.Now()
