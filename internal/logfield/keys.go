@@ -10,7 +10,7 @@ const (
 	ComConfig   = "config"
 	ComDatabase = "database"
 	ComSource   = "source"
-	ComQueue    = "source:queue"
-	ComTask     = "source:queue:task"
 	ComTelegram = "source:telegram"
+	ComQueue    = "queue"
+	ComTask     = "queue:task"
 )
