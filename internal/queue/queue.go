@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/repository"
@@ -9,8 +8,6 @@ import (
 )
 
 var (
-	parallel = config.Telegram.Get().MaxParallelDownload
-
 	lock   sync.RWMutex
 	queued int64
 	// Telegram.MessageID => DownloadTask

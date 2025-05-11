@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"errors"
+	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
@@ -22,12 +22,8 @@ func CleanDownload() error {
 	return nil
 }
 
+// create task and start
 func startDownload(model repository.Download) error {
-	task, ok := downloading[model.MsgID]
-	if ok {
-		return task.UpdateOrDownload()
-	}
-
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
@@ -50,5 +46,15 @@ func AddDownloadQueue(model repository.Download) error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	return errors.New("not implemented")
+	task, ok := downloading[model.MsgID]
+	if ok {
+		return task.UpdateOrDownload()
+	}
+
+	if int(config.Telegram.Get().MaxParallelDownload) <= len(downloading) {
+		// skip and wait for trigger from supervisor
+		return nil
+	}
+
+	return startDownload(model)
 }

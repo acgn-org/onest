@@ -8,6 +8,7 @@ func supervisor() {
 
 		// todo proactively update stats
 		// todo restart downloads with error
+		// todo remove downloads with fatal error
 		// todo clean downloads
 	}
 }
