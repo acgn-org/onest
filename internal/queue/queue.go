@@ -39,7 +39,7 @@ func init() {
 	downloading = make(map[int64]*DownloadTask, len(downloadingSlice))
 
 	for _, repo := range downloadingSlice {
-		err := StartDownload(repo)
+		err := startDownload(repo)
 		if err != nil {
 			logger.Errorln("resume download failed:", err)
 		}
