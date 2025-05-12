@@ -8,8 +8,7 @@ import (
 )
 
 var (
-	lock   sync.RWMutex
-	queued int64
+	lock sync.RWMutex
 	// Telegram.MessageID => DownloadTask
 	downloading map[int64]*DownloadTask
 )
@@ -18,14 +17,6 @@ func init() {
 	logger := logfield.New(logfield.ComQueue).WithAction("init")
 
 	downloadRepo := database.NewRepository[repository.DownloadRepository]()
-
-	// load queue number
-
-	var err error
-	queued, err = downloadRepo.CountQueued()
-	if err != nil {
-		logger.Fatalln("count download failed:", err)
-	}
 
 	// resume downloads
 
