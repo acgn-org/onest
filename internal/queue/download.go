@@ -56,6 +56,7 @@ func AddDownloadQueue(model repository.Download) error {
 
 	if int(config.Telegram.Get().MaxParallelDownload) <= len(downloading) {
 		// skip and wait for trigger from supervisor
+		queued++
 		return nil
 	}
 

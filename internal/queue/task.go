@@ -70,12 +70,13 @@ func (task *DownloadTask) getVideoFile() (bool, error) {
 		return false, nil
 	}
 	task.state = video.Video
+	task.stateUpdatedAt = time.Now()
 	return true, nil
 }
 
 func (task *DownloadTask) setError(msg string, fatalNow bool) error {
 	logger := task.logger.WithField("msg", msg)
-	logger.Warnln("error updating")
+	logger.Warnln("error updated")
 
 	task.errorAt = time.Now()
 	task.errorCount++
