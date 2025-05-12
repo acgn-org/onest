@@ -72,7 +72,7 @@ func (s _Supervisor) TaskControl() {
 		downloadRepo := database.NewRepository[repository.DownloadRepository]()
 
 		for range numToDownload { // todo customizable download order
-			model, err := downloadRepo.FirstToDownload()
+			model, err := downloadRepo.EarliestToDownload()
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					// no more
