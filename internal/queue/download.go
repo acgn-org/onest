@@ -7,10 +7,7 @@ import (
 	"github.com/acgn-org/onest/repository"
 )
 
-func CleanDownload() error {
-	lock.Lock()
-	defer lock.Unlock()
-
+func clean() error {
 	downloading = make(map[int64]*DownloadTask)
 
 	if err := source.Telegram.RemoveDownloads(); err != nil {
@@ -20,6 +17,12 @@ func CleanDownload() error {
 		return err
 	}
 	return nil
+}
+
+func CleanDownload() error {
+	lock.Lock()
+	defer lock.Unlock()
+	return clean()
 }
 
 // create task and start

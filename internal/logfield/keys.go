@@ -6,11 +6,12 @@ const (
 )
 
 const (
-	ComServer   = "server"
-	ComConfig   = "config"
-	ComDatabase = "database"
-	ComSource   = "source"
-	ComTelegram = "source:telegram"
-	ComQueue    = "queue"
-	ComTask     = "queue:task"
+	ComServer          = "server"
+	ComConfig          = "config"
+	ComDatabase        = "database"
+	ComSource          = "source"
+	ComTelegram        = "source:telegram"
+	ComQueue           = "queue"
+	ComTask            = "queue:task"
+	ComQueueSupervisor = "queue:supervisor"
 )

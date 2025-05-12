@@ -48,6 +48,17 @@ func (task *DownloadTask) fatal() {
 	task.isFatal.Store(true)
 }
 
+func (task *DownloadTask) WriteFatalStateToDatabase() error {
+	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	defer downloadRepo.Rollback()
+
+	err := downloadRepo.UpdateDownloadFatal(task.RepoID)
+	if err != nil {
+		return err
+	}
+	return downloadRepo.Commit().Error
+}
+
 func (task *DownloadTask) getVideoFile() (bool, error) {
 	msg, err := source.Telegram.GetMessage(task.ChannelID, task.MsgID)
 	if err != nil {
@@ -66,11 +77,11 @@ func (task *DownloadTask) setError(msg string, fatalNow bool) error {
 	logger := task.logger.WithField("msg", msg)
 	logger.Warnln("error updating")
 
-	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
-	defer downloadRepo.Rollback()
-
 	task.errorAt = time.Now()
 	task.errorCount++
+
+	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	defer downloadRepo.Rollback()
 
 	if err := downloadRepo.UpdateDownloadError(task.RepoID, msg, task.errorAt.Unix()); err != nil {
 		logger.Errorln("save error message to database failed:", err)

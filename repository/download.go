@@ -43,6 +43,16 @@ func (repo DownloadRepository) UpdateDownloadError(id uint, err string, date int
 	return repo.DB.Model(&model).Select("error", "error_at").Updates(&model).Error
 }
 
+func (repo DownloadRepository) UpdateDownloadFatal(id uint) error {
+	model := Download{
+		ID:          id,
+		Downloading: false,
+		Downloaded:  true,
+		FatalError:  true,
+	}
+	return repo.DB.Model(&model).Select("downloading", "downloaded", "fatal_error").Updates(&model).Error
+}
+
 func (repo DownloadRepository) SetDownloading(id uint) error {
 	return repo.DB.Model(&Download{}).Where("id=?", id).Update("downloading", true).Error
 }

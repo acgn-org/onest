@@ -44,5 +44,5 @@ func init() {
 
 	// run supervisor
 
-	go supervisor()
+	supervisor()
 }
