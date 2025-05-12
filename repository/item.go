@@ -2,7 +2,6 @@ package repository
 
 type Item struct {
 	ID        uint  `gorm:"primarykey"`
-	RemoteID  uint  `gorm:"not null"`
 	ChannelID int64 `gorm:"not null"`
 
 	Name   string `gorm:"not null"`
