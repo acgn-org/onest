@@ -2,18 +2,18 @@ package main
 
 import (
 	"github.com/acgn-org/onest/internal/server"
-	"github.com/acgn-org/onest/web"
 	log "github.com/sirupsen/logrus"
+	"os"
 )
 
 func main() {
 	engine := server.NewEngine()
 
-	fs, err := web.Fs()
-	if err != nil {
-		log.Fatal("load web embed files failed, please ensure web/dist existing:", err)
+	addr := os.Getenv("ONEST_WEB_SERVER_ADDR")
+	if addr == "" {
+		addr = "http://localhost:5173"
 	}
-	webHandler, err := server.NewWebHandlerWithFS(fs)
+	webHandler, err := server.NewWebHandlerWithAddress(addr)
 	if err != nil {
 		log.Fatalln("create web handler failed:", err)
 	}
