@@ -143,7 +143,16 @@ func (s _Supervisor) WorkerListen() {
 				s.logger.Errorln("failed to create downloads with message:", err)
 				continue
 			}
-			// todo trigger refill download queue
+
+		default:
+			goto skip
 		}
+
+		select {
+		case s.ActivateTaskControl <- struct{}{}:
+		default:
+		}
+
+	skip:
 	}
 }
