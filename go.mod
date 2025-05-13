@@ -12,6 +12,7 @@ require (
 	github.com/knadh/koanf/v2 v2.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/zelenin/go-tdlib v0.7.6
+	golang.org/x/net v0.40.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.26.1
@@ -48,7 +49,6 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.17.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect

@@ -65,6 +65,10 @@ type Telegram struct {
 	filesDirectory    string
 }
 
+func (t Telegram) GetListener() *client.Listener {
+	return t.client.GetListener()
+}
+
 func (t Telegram) GetMessage(chatId, messageId int64) (*client.Message, error) {
 	return t.client.GetMessage(&client.GetMessageRequest{
 		ChatId:    chatId,

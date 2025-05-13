@@ -5,8 +5,10 @@ import (
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
+	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
 	log "github.com/sirupsen/logrus"
+	"github.com/zelenin/go-tdlib/client"
 	"gorm.io/gorm"
 	"time"
 )
@@ -16,6 +18,7 @@ func supervisor() {
 		logger: logfield.New(logfield.ComQueueSupervisor),
 	}
 	go instance.WorkerTaskControl()
+	go instance.WorkerListen()
 }
 
 type _Supervisor struct {
@@ -95,6 +98,31 @@ func (s _Supervisor) TaskControl() {
 			if err := startDownload(*model); err != nil {
 				s.logger.Errorln("error occurred while start download task:", err)
 			}
+		}
+	}
+}
+
+func (s _Supervisor) WorkerListen() {
+	listener := source.Telegram.GetListener()
+	defer listener.Close()
+
+	for {
+		update := <-listener.Updates
+
+		switch update.GetType() {
+		case client.TypeUpdateFile:
+			msg := update.(*client.UpdateFile)
+			lock.Lock()
+			for _, task := range downloading {
+				task.lock.Lock()
+				if task.state != nil && task.state.Id == msg.File.Id {
+					task.state = msg.File
+				}
+				task.lock.Unlock()
+			}
+			lock.Unlock()
+		case client.TypeUpdateNewMessage:
+			// todo match new downloads
 		}
 	}
 }

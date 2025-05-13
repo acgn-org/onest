@@ -39,6 +39,10 @@ func (repo DownloadRepository) GetDownloading() ([]Download, error) {
 	return downloads, repo.DB.Model(&Download{}).Preload("Item").Where("downloaded=? AND downloading=?", false, true).Find(&downloads).Error
 }
 
+func (repo DownloadRepository) SetDownloading(id uint) error {
+	return repo.DB.Model(&Download{}).Where("id=?", id).Update("downloading", true).Error
+}
+
 func (repo DownloadRepository) UpdateDownloadError(id uint, err string, date int64) error {
 	model := Download{
 		ID:      id,
@@ -58,6 +62,12 @@ func (repo DownloadRepository) UpdateDownloadFatal(id uint) error {
 	return repo.DB.Model(&model).Select("downloading", "downloaded", "fatal_error").Updates(&model).Error
 }
 
-func (repo DownloadRepository) SetDownloading(id uint) error {
-	return repo.DB.Model(&Download{}).Where("id=?", id).Update("downloading", true).Error
+func (repo DownloadRepository) UpdateDownloadComplete(id uint) error {
+	model := Download{
+		ID:          id,
+		Downloading: false,
+		Downloaded:  true,
+		FatalError:  false,
+	}
+	return repo.DB.Model(&model).Select("downloading", "downloaded", "fatal_error").Updates(&model).Error
 }
