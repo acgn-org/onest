@@ -1,4 +1,16 @@
-FROM acgn0rg/tdlib:golang AS builder
+FROM node:alpine AS frontend
+
+WORKDIR /build
+
+COPY web/package.json web/yarn.lock ./
+
+RUN yarn install --frozen-lockfile
+
+COPY web .
+
+RUN yarn build
+
+FROM acgn0rg/tdlib:golang AS backend
 ARG OnestVersion="unknown"
 
 WORKDIR /build
@@ -8,6 +20,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+COPY --from=frontend /build/dist ./web/dist
 
 RUN go build -trimpath \
       -ldflags "\
@@ -26,6 +39,6 @@ RUN apk update && \
 
 WORKDIR /data
 
-COPY --from=builder --chmod=755 /build/onest /usr/bin/onest
+COPY --from=backend --chmod=755 /build/onest /usr/bin/onest
 
 ENTRYPOINT [ "/usr/bin/onest" ]
