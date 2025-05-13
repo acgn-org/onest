@@ -13,6 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/zelenin/go-tdlib v0.7.6
 	golang.org/x/net v0.40.0
+	golang.org/x/time v0.11.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.26.1

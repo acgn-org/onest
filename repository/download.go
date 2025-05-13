@@ -1,5 +1,7 @@
 package repository
 
+import "github.com/zelenin/go-tdlib/client"
+
 type Download struct {
 	ID uint `gorm:"primarykey"`
 
@@ -8,7 +10,7 @@ type Download struct {
 
 	MsgID int64 `gorm:"not null"`
 	Text  string
-	Size  int32 `gorm:"not null"`
+	Size  int64 `gorm:"not null"`
 	Date  int32 `gorm:"index:idx_global_queue;not null;priority:3"`
 
 	Priority    int32 `gorm:"not null"`
@@ -37,6 +39,33 @@ func (repo DownloadRepository) EarliestToDownload() (*Download, error) {
 func (repo DownloadRepository) GetDownloading() ([]Download, error) {
 	var downloads []Download
 	return downloads, repo.DB.Model(&Download{}).Preload("Item").Where("downloaded=? AND downloading=?", false, true).Find(&downloads).Error
+}
+
+func (repo DownloadRepository) CreateWithMessages(item uint, priority int32, messages []*client.Message) ([]Download, error) {
+	var models = make([]Download, len(messages))
+	var i int
+	for _, message := range messages {
+		videoContent, ok := message.Content.(*client.MessageVideo)
+		if !ok {
+			continue
+		}
+
+		models[i] = Download{
+			ItemID:   item,
+			MsgID:    message.Id,
+			Text:     videoContent.Caption.Text,
+			Size:     videoContent.Video.Video.Size,
+			Date:     message.Date,
+			Priority: priority,
+		}
+		i++
+	}
+	models = models[:i]
+	if len(models) == 0 {
+		return models, nil
+	}
+
+	return models, repo.DB.Model(&Download{}).Create(&models).Error
 }
 
 func (repo DownloadRepository) SetDownloading(id uint) error {

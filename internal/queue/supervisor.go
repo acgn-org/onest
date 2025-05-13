@@ -110,19 +110,27 @@ func (s _Supervisor) WorkerListen() {
 		update := <-listener.Updates
 
 		switch update.GetType() {
+
 		case client.TypeUpdateFile:
-			msg := update.(*client.UpdateFile)
+			file := update.(*client.UpdateFile).File
 			lock.Lock()
 			for _, task := range downloading {
 				task.lock.Lock()
-				if task.state != nil && task.state.Id == msg.File.Id {
-					task.state = msg.File
+				if task.state != nil && task.state.Id == file.Id {
+					task.state = file
 				}
 				task.lock.Unlock()
 			}
 			lock.Unlock()
+
 		case client.TypeUpdateNewMessage:
-			// todo match new downloads
+			// match new downloads
+			err := ScanAndCreateNewDownloadTasks()
+			if err != nil {
+				s.logger.Errorln("failed to create downloads with message:", err)
+				continue
+			}
+			// todo trigger refill download queue
 		}
 	}
 }

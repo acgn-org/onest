@@ -1,11 +1,14 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
+	"golang.org/x/time/rate"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type Config struct {
@@ -52,6 +55,7 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 	return &Telegram{
 		logger:            c.Logger,
 		client:            _client,
+		rate:              rate.NewLimiter(rate.Every(time.Second), 5),
 		databaseDirectory: databaseDirectory,
 		filesDirectory:    filesDirectory,
 	}, nil
@@ -60,6 +64,7 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 type Telegram struct {
 	logger log.FieldLogger
 	client *client.Client
+	rate   *rate.Limiter
 
 	databaseDirectory string
 	filesDirectory    string
@@ -69,7 +74,19 @@ func (t Telegram) GetListener() *client.Listener {
 	return t.client.GetListener()
 }
 
+func (t Telegram) GetHistory(chatID, fromMessageID int64) (*client.Messages, error) {
+	_ = t.rate.Wait(context.Background())
+	return t.client.GetChatHistory(&client.GetChatHistoryRequest{
+		ChatId:        chatID,
+		FromMessageId: fromMessageID,
+		Offset:        0,
+		Limit:         99,
+		OnlyLocal:     false,
+	})
+}
+
 func (t Telegram) GetMessage(chatId, messageId int64) (*client.Message, error) {
+	_ = t.rate.Wait(context.Background())
 	return t.client.GetMessage(&client.GetMessageRequest{
 		ChatId:    chatId,
 		MessageId: messageId,
@@ -85,6 +102,7 @@ func (t Telegram) GetMessageVideo(msg *client.Message) (*client.Video, bool) {
 }
 
 func (t Telegram) DownloadFile(fileID, priority int32) (*client.File, error) {
+	_ = t.rate.Wait(context.Background())
 	t.logger.Debugf("download file %d with priotiry %d", fileID, priority)
 	return t.client.DownloadFile(&client.DownloadFileRequest{
 		FileId:      fileID,
@@ -96,6 +114,7 @@ func (t Telegram) DownloadFile(fileID, priority int32) (*client.File, error) {
 }
 
 func (t Telegram) RemoveDownloads() error {
+	_ = t.rate.Wait(context.Background())
 	_, err := t.client.RemoveAllFilesFromDownloads(&client.RemoveAllFilesFromDownloadsRequest{
 		OnlyActive:      false,
 		OnlyCompleted:   false,
