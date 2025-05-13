@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"errors"
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
@@ -9,30 +8,44 @@ import (
 	"github.com/acgn-org/onest/repository"
 	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
-	"gorm.io/gorm"
+	"sync/atomic"
 	"time"
 )
 
 func supervisor() {
 	instance := _Supervisor{
-		logger: logfield.New(logfield.ComQueueSupervisor),
+		logger:              logfield.New(logfield.ComQueueSupervisor),
+		Cleaned:             &atomic.Bool{},
+		ActivateTaskControl: make(chan struct{}),
 	}
 	go instance.WorkerTaskControl()
 	go instance.WorkerListen()
 }
 
 type _Supervisor struct {
-	logger log.FieldLogger
+	logger              log.FieldLogger
+	Cleaned             *atomic.Bool
+	ActivateTaskControl chan struct{}
 }
 
 func (s _Supervisor) WorkerTaskControl() {
+	var slowDown bool
 	for {
-		time.Sleep(time.Second * 10)
-		s.TaskControl()
+		sleep := time.Second * 10
+		if slowDown {
+			sleep = time.Minute * 5
+		}
+
+		select {
+		case <-time.After(sleep):
+		case <-s.ActivateTaskControl:
+		}
+
+		slowDown = s.TaskControl()
 	}
 }
 
-func (s _Supervisor) TaskControl() {
+func (s _Supervisor) TaskControl() (slowDown bool) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -71,35 +84,35 @@ func (s _Supervisor) TaskControl() {
 		task.lock.Unlock()
 	}
 
-	// clean up downloads
-	if len(downloading) == 0 {
-		err := clean()
-		if err != nil {
-			s.logger.Errorln("failed to clean up resources:", err)
-		}
-	}
-
 	// maintain number of parallel downloads
 	numToDownload := int(config.Telegram.Get().MaxParallelDownload) - len(downloading)
 	if numToDownload > 0 {
 		downloadRepo := database.NewRepository[repository.DownloadRepository]()
 
-		for range numToDownload { // todo customizable download order
-			model, err := downloadRepo.EarliestToDownload()
-			if err != nil {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					// no more
-					break
+		models, err := downloadRepo.EarliestToDownload(numToDownload)
+		if err != nil {
+			s.logger.Errorln("load download task from database failed:", err)
+		} else if len(models) != 0 {
+			s.Cleaned.Store(false)
+			for _, model := range models {
+				if err := startDownload(model); err != nil {
+					s.logger.Errorln("error occurred while start download task:", err)
 				}
-				s.logger.Errorln("load download task from database failed:", err)
-				continue
 			}
-
-			if err := startDownload(*model); err != nil {
-				s.logger.Errorln("error occurred while start download task:", err)
+		} else if len(downloading) == 0 {
+			// clean up downloads
+			if !s.Cleaned.Load() {
+				err := clean()
+				if err != nil {
+					s.logger.Errorln("failed to clean up resources:", err)
+				} else {
+					s.Cleaned.Store(true)
+				}
 			}
+			return true
 		}
 	}
+	return false
 }
 
 func (s _Supervisor) WorkerListen() {
