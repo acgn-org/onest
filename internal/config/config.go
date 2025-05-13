@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 )
 
 const EnvPrefix = "ONEST"
@@ -55,21 +56,14 @@ type ScopedConfig[T any] struct {
 	logger log.FieldLogger
 	scope  string
 	kEnv   *koanf.Koanf
-
-	lock  sync.RWMutex
-	value T
+	value  *atomic.Value
 }
 
 func (c *ScopedConfig[T]) Get() T {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
-	return c.value
+	return c.value.Load().(T)
 }
 
 func (c *ScopedConfig[T]) Save(value T) error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
 	kRaw := koanf.New(".")
 	err := kRaw.Load(structs.Provider(c.value, "yaml"), nil)
 	if err != nil {
@@ -117,7 +111,7 @@ func (c *ScopedConfig[T]) Save(value T) error {
 		}
 	}
 
-	c.value = value
+	c.value.Store(value)
 	return nil
 }
 
@@ -165,10 +159,13 @@ func LoadScoped[T any](scope string, defaults *T) *ScopedConfig[T] {
 	}); err != nil {
 		logger.Fatalln("unmarshal failed:", err)
 	}
+
+	var value atomic.Value
+	value.Store(conf)
 	return &ScopedConfig[T]{
 		logger: logger,
 		scope:  scope,
 		kEnv:   kEnv,
-		value:  conf,
+		value:  &value,
 	}
 }
