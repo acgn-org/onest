@@ -71,6 +71,7 @@ func NewWebHandlerWithAddress(addr string) (gin.HandlerFunc, error) {
 	}
 	proxy := httputil.NewSingleHostReverseProxy(u)
 	proxy.BufferPool = tools.BufferHttpUtil{}
+	proxy.Transport = &http.Transport{}
 
 	return func(ctx *gin.Context) {
 		if isNotWebRequest(ctx) {
