@@ -45,17 +45,27 @@ func (s _Supervisor) TaskControl() {
 			continue
 		}
 
-		// restart downloads with error
+		task.lock.Lock()
+
 		if !task.errorAt.IsZero() && time.Since(task.errorAt) > time.Second*10 {
+			// restart downloads with error
 			task.errorAt = time.Time{}
 			_ = task.UpdateOrDownload()
-			continue
-		}
-
-		// proactively update stats
-		if time.Since(task.stateUpdatedAt) > time.Second*15 {
+		} else if time.Since(task.stateUpdatedAt) > time.Second*15 {
+			// proactively update stats
 			_ = task.UpdateOrDownload()
 		}
+
+		// proceed downloads completed
+		if task.state != nil && task.state.Local.IsDownloadingCompleted {
+			if err := task.WriteFatalStateToDatabase(); err != nil {
+				s.logger.Errorln("ailed to write download task complete state into database:", err)
+			} else {
+				delete(downloading, key)
+			}
+		}
+
+		task.lock.Unlock()
 	}
 
 	// clean up downloads
@@ -66,7 +76,7 @@ func (s _Supervisor) TaskControl() {
 		}
 	}
 
-	// maintain parallel downloads
+	// maintain number of parallel downloads
 	numToDownload := int(config.Telegram.Get().MaxParallelDownload) - len(downloading)
 	if numToDownload > 0 {
 		downloadRepo := database.NewRepository[repository.DownloadRepository]()
