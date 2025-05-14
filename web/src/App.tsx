@@ -38,6 +38,7 @@ export const App: FC = () => {
                 height: "2.4rem",
                 marginLeft: "1rem",
                 marginRight: "0.6rem",
+                aspectRatio: 1,
               }}
             />
             <Title

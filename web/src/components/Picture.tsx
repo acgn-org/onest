@@ -32,7 +32,7 @@ const Picture: FC<PictureProps> = ({
     return new URL(`/src/assets/${name}.${type}`, import.meta.url).href;
   };
   return (
-    <picture className={className}>
+    <picture className={className} style={{ display: "flex" }}>
       {sources.map((source) => (
         <source
           key={JSON.stringify(source.fileType)}
