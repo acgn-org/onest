@@ -12,20 +12,20 @@ import (
 	"time"
 )
 
+var ActivateTaskControl = make(chan struct{})
+
 func supervisor() {
 	instance := _Supervisor{
-		logger:              logfield.New(logfield.ComQueueSupervisor),
-		Cleaned:             &atomic.Bool{},
-		ActivateTaskControl: make(chan struct{}),
+		logger:  logfield.New(logfield.ComQueueSupervisor),
+		Cleaned: &atomic.Bool{},
 	}
 	go instance.WorkerTaskControl()
 	go instance.WorkerListen()
 }
 
 type _Supervisor struct {
-	logger              log.FieldLogger
-	Cleaned             *atomic.Bool
-	ActivateTaskControl chan struct{}
+	logger  log.FieldLogger
+	Cleaned *atomic.Bool
 }
 
 func (s _Supervisor) WorkerTaskControl() {
@@ -38,7 +38,7 @@ func (s _Supervisor) WorkerTaskControl() {
 
 		select {
 		case <-time.After(sleep):
-		case <-s.ActivateTaskControl:
+		case <-ActivateTaskControl:
 		}
 
 		slowDown = s.TaskControl()
@@ -149,7 +149,7 @@ func (s _Supervisor) WorkerListen() {
 		}
 
 		select {
-		case s.ActivateTaskControl <- struct{}{}:
+		case ActivateTaskControl <- struct{}{}:
 		default:
 		}
 
