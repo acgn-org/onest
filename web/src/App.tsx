@@ -5,7 +5,8 @@ import { createTheme, MantineProvider } from "@mantine/core";
 
 const theme = createTheme({});
 
-import { AppShell, Burger } from "@mantine/core";
+import Picture from "@component/Picture.tsx";
+import { AppShell, Burger, Flex, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
 export const App: FC = () => {
@@ -24,7 +25,31 @@ export const App: FC = () => {
       >
         <AppShell.Header>
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <div>Logo</div>
+          <Flex
+            align={"center"}
+            style={{
+              height: "100%",
+            }}
+          >
+            <Picture
+              name={"logo"}
+              alt={"logo"}
+              imgStyle={{
+                height: "2.4rem",
+                marginLeft: "1rem",
+                marginRight: "0.6rem",
+              }}
+            />
+            <Title
+              order={3}
+              style={{
+                letterSpacing: 1,
+                fontWeight: "bolder",
+              }}
+            >
+              ONEST
+            </Title>
+          </Flex>
         </AppShell.Header>
 
         <AppShell.Navbar p="md">Navbar</AppShell.Navbar>
