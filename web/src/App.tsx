@@ -1,4 +1,5 @@
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
+import { Outlet, useNavigate, useMatches } from "react-router";
 
 import "@mantine/core/styles.css";
 import { createTheme, MantineProvider } from "@mantine/core";
@@ -6,11 +7,39 @@ import { createTheme, MantineProvider } from "@mantine/core";
 const theme = createTheme({});
 
 import Picture from "@component/Picture.tsx";
-import { AppShell, Burger, Group, Title, Badge, NavLink } from "@mantine/core";
+import { AppShell, Burger, Group, Title, NavLink } from "@mantine/core";
+import {
+  IconCloudDown,
+  IconCircleDottedLetterI,
+  IconLogs,
+} from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 
 export const App: FC = () => {
+  const nav = useNavigate();
+  const matches = useMatches();
+
   const [opened, { toggle }] = useDisclosure();
+
+  const renderNavLink = (
+    label: string,
+    href: string,
+    icon: ReactNode,
+    hrefMatch = href,
+  ) => {
+    return (
+      <NavLink
+        label={label}
+        leftSection={icon}
+        onClick={() => nav(href)}
+        active={
+          !!matches.find(
+            (match) => match.id !== "0" && match.pathname === hrefMatch,
+          )
+        }
+      />
+    );
+  };
 
   return (
     <MantineProvider defaultColorScheme="dark" theme={theme}>
@@ -53,9 +82,27 @@ export const App: FC = () => {
           </Group>
         </AppShell.Header>
 
-        <AppShell.Navbar p="md">Navbar</AppShell.Navbar>
+        <AppShell.Navbar p="md">
+          {renderNavLink(
+            "Downloads",
+            "/",
+            <IconCloudDown size={20} stroke={1.5} />,
+          )}
+          {renderNavLink(
+            "Time Machine",
+            "/time-machine",
+            <IconCircleDottedLetterI size={20} stroke={2} />,
+          )}
+          {renderNavLink(
+            "Log Stream",
+            "/log-stream",
+            <IconLogs size={20} stroke={2} />,
+          )}
+        </AppShell.Navbar>
 
-        <AppShell.Main>Main</AppShell.Main>
+        <AppShell.Main>
+          <Outlet />
+        </AppShell.Main>
       </AppShell>
     </MantineProvider>
   );
