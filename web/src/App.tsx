@@ -13,7 +13,7 @@ export const App: FC = () => {
   const [opened, { toggle }] = useDisclosure();
 
   return (
-    <MantineProvider theme={theme}>
+    <MantineProvider defaultColorScheme="dark" theme={theme}>
       <AppShell
         header={{ height: 60 }}
         navbar={{
@@ -35,9 +35,9 @@ export const App: FC = () => {
               name={"logo"}
               alt={"logo"}
               imgStyle={{
-                height: "2.4rem",
-                marginLeft: "1rem",
-                marginRight: "0.6rem",
+                height: "2.1rem",
+                marginLeft: "1.2rem",
+                marginRight: "0.4rem",
                 aspectRatio: 1,
               }}
             />
