@@ -7,7 +7,7 @@ import { createTheme, MantineProvider } from "@mantine/core";
 const theme = createTheme({});
 
 import Picture from "@component/Picture.tsx";
-import { AppShell, Burger, Group, Title, NavLink } from "@mantine/core";
+import { AppShell, Burger, Group, Flex, NavLink } from "@mantine/core";
 import {
   IconCloudDown,
   IconCircleDottedLetterI,
@@ -60,25 +60,25 @@ export const App: FC = () => {
               hiddenFrom="sm"
               size="sm"
             />
-            <Group h="100%" gap="sm">
+            <Flex h="100%" align="center">
               <Picture
                 name={"logo"}
                 alt={"logo"}
                 imgStyle={{
-                  height: "2.1rem",
+                  height: "2rem",
                   aspectRatio: 1,
                 }}
               />
-              <Title
-                order={3}
-                style={{
-                  letterSpacing: 1,
-                  fontWeight: "bolder",
+              <Picture
+                name={"title"}
+                alt={"ONEST"}
+                imgStyle={{
+                  marginLeft: "0.2rem",
+                  height: "2.1rem",
+                  aspectRatio: 1000 / 350,
                 }}
-              >
-                ONEST
-              </Title>
-            </Group>
+              />
+            </Flex>
           </Group>
         </AppShell.Header>
 
