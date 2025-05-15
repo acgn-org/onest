@@ -79,6 +79,7 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 		}
 
 		// proceed downloads completed
+		// todo place files
 		if task.state != nil && task.state.Local.IsDownloadingCompleted {
 			if err := task.WriteFatalStateToDatabase(); err != nil {
 				logger.Errorln("failed to write download task complete state into database:", err)

@@ -10,4 +10,7 @@ func Api(group *gin.RouterGroup) {
 
 	download := group.Group("download")
 	download.GET("tasks", api.GetDownloadTasks)
+
+	log := group.Group("log")
+	log.GET("watch", api.WatchLogs)
 }
