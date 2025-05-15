@@ -44,7 +44,11 @@ func (sub *Subscribe) Close() error {
 func (sub *Subscribe) receiveWorker() {
 	buf := list.New() // => [][]byte
 	for {
-		data := <-sub.receive
+		data, ok := <-sub.receive
+		if !ok {
+			close(sub.write)
+			return
+		}
 		buf.PushBack(data)
 
 		select {
@@ -57,7 +61,11 @@ func (sub *Subscribe) receiveWorker() {
 
 func (sub *Subscribe) sendWorker() {
 	for {
-		buf := <-sub.write
+		buf, ok := <-sub.write
+		if !ok {
+			close(sub.read)
+			return
+		}
 
 		var length int
 		for el := buf.Front(); el != nil; el = el.Next() {
