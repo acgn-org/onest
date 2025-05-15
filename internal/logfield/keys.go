@@ -14,4 +14,5 @@ const (
 	ComQueue           = "queue"
 	ComTask            = "queue:task"
 	ComQueueSupervisor = "queue:supervisor"
+	ComLogTee          = "logtee"
 )

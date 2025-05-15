@@ -5,15 +5,17 @@ import (
 )
 
 type _Server struct {
-	Host     string `yaml:"host"`
-	Port     uint16 `yaml:"port"`
-	LogLevel string `yaml:"log_level"`
+	Host        string `yaml:"host"`
+	Port        uint16 `yaml:"port"`
+	LogLevel    string `yaml:"log_level"`
+	LogRingSize int    `yaml:"log_ring_size"`
 }
 
 var Server = LoadScoped("server", &_Server{
-	Host:     "0.0.0.0",
-	Port:     80,
-	LogLevel: "info",
+	Host:        "0.0.0.0",
+	Port:        80,
+	LogLevel:    "info",
+	LogRingSize: 500,
 })
 
 func init() {
