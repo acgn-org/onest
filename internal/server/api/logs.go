@@ -21,6 +21,15 @@ func WatchLogs(ctx *gin.Context) {
 	}
 	defer conn.Close()
 
+	go func() {
+		for { // drop all messages
+			_, _, err := conn.ReadMessage()
+			if err != nil {
+				return
+			}
+		}
+	}()
+
 	sub := logtee.NewSubscribe()
 	defer sub.Close()
 
