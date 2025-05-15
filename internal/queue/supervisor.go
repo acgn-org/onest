@@ -50,11 +50,13 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 	defer lock.Unlock()
 
 	for key, task := range downloading {
+		logger := s.logger.WithField("task", key)
+
 		// remove tasks with fatal state
 		if task.isFatal.Load() {
 			err := task.WriteFatalStateToDatabase()
 			if err != nil {
-				s.logger.WithField("id", task.RepoID).Errorln("failed to write download task fatal state into database:", err)
+				logger.Errorln("failed to write download task fatal state into database:", err)
 			} else {
 				delete(downloading, key)
 			}
@@ -66,16 +68,20 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 		if !task.errorAt.IsZero() && time.Since(task.errorAt) > time.Second*10 {
 			// restart downloads with error
 			task.errorAt = time.Time{}
-			_ = task.UpdateOrDownload()
+			if err := task.UpdateOrDownload(); err != nil {
+				logger.Errorln("failed to restart task:", err)
+			}
 		} else if time.Since(task.stateUpdatedAt) > time.Second*15 {
 			// proactively update stats
-			_ = task.UpdateOrDownload()
+			if err := task.UpdateOrDownload(); err != nil {
+				logger.Errorln("failed to update task state:", err)
+			}
 		}
 
 		// proceed downloads completed
 		if task.state != nil && task.state.Local.IsDownloadingCompleted {
 			if err := task.WriteFatalStateToDatabase(); err != nil {
-				s.logger.Errorln("ailed to write download task complete state into database:", err)
+				logger.Errorln("failed to write download task complete state into database:", err)
 			} else {
 				delete(downloading, key)
 			}
