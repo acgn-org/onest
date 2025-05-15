@@ -29,6 +29,7 @@ func NewSubscribe() *Subscribe {
 		read:     make(chan [][]byte),
 	}
 	go sub.receiveWorker()
+	go sub.sendWorker()
 	return &sub
 }
 

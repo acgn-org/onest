@@ -44,7 +44,7 @@ func _CopyWorker() {
 		bufLock.Lock()
 		buf.Write(buffer[:n])
 		bufLock.Unlock()
-		tools.BufferCopy.Put(buf)
+		tools.BufferCopy.Put(buffer)
 
 		select {
 		case scan <- struct{}{}:
