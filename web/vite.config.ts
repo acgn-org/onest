@@ -9,6 +9,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      "@tabler/icons-react": "@tabler/icons-react/dist/esm/icons/index.mjs",
+
       "@": resolve(__dirname, "src"),
       "@component": resolve(__dirname, "src/components"),
     },
