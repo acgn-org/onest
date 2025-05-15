@@ -13,6 +13,7 @@ import {
   IconCloudDown,
   IconCircleDottedLetterI,
   IconLogs,
+  IconTemplate,
 } from "@tabler/icons-react";
 
 export const App: FC = () => {
@@ -89,6 +90,11 @@ export const App: FC = () => {
             <IconCloudDown size={20} stroke={1.5} />,
           )}
           {renderNavLink(
+            "Items",
+            "/items",
+            <IconTemplate size={20} stroke={1.5} />,
+          )}
+          {renderNavLink(
             "Time Machine",
             "/time-machine",
             <IconCircleDottedLetterI size={20} stroke={2} />,
@@ -96,7 +102,7 @@ export const App: FC = () => {
           {renderNavLink(
             "Log Stream",
             "/log-stream",
-            <IconLogs size={20} stroke={2} />,
+            <IconLogs size={20} stroke={1.8} />,
           )}
         </AppShell.Navbar>
 

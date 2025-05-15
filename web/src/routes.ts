@@ -14,6 +14,10 @@ const routes: RouteObject[] = [
         Component: Downloads,
       },
       {
+        path: "/items",
+        element: "Items",
+      },
+      {
         path: "/time-machine",
         element: "Time Machine",
       },
