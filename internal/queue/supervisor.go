@@ -68,12 +68,12 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 		if !task.errorAt.IsZero() && time.Since(task.errorAt) > time.Second*10 {
 			// restart downloads with error
 			task.errorAt = time.Time{}
-			if err := task.UpdateOrDownload(); err != nil {
+			if err := task.doUpdateOrDownload(); err != nil {
 				logger.Errorln("failed to restart task:", err)
 			}
 		} else if time.Since(task.stateUpdatedAt) > time.Second*15 {
 			// proactively update stats
-			if err := task.UpdateOrDownload(); err != nil {
+			if err := task.doUpdateOrDownload(); err != nil {
 				logger.Errorln("failed to update task state:", err)
 			}
 		}

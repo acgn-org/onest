@@ -23,7 +23,7 @@ func NewTask(model repository.Download) (*DownloadTask, error) {
 			WithField("id", model.ID),
 		priority: model.Priority,
 	}
-	return task, task.UpdateOrDownload()
+	return task, task.doUpdateOrDownload()
 }
 
 type DownloadTask struct {
@@ -44,7 +44,7 @@ type DownloadTask struct {
 }
 
 func (task *DownloadTask) fatal() {
-	task.logger.Errorln("task failed with too many or fatal errors")
+	task.logger.Errorln("task failed with too many errors or an fatal error")
 	task.isFatal.Store(true)
 }
 
@@ -76,7 +76,6 @@ func (task *DownloadTask) getVideoFile() (bool, error) {
 
 func (task *DownloadTask) setError(msg string, fatalNow bool) error {
 	logger := task.logger.WithField("msg", msg)
-	logger.Warnln("error updated")
 
 	task.errorAt = time.Now()
 	task.errorCount++
@@ -98,14 +97,7 @@ func (task *DownloadTask) setError(msg string, fatalNow bool) error {
 	return nil
 }
 
-func (task *DownloadTask) UpdateOrDownload() error {
-	if task.isFatal.Load() {
-		return nil
-	}
-
-	task.lock.Lock()
-	defer task.lock.Unlock()
-
+func (task *DownloadTask) doUpdateOrDownload() error {
 	if task.state == nil {
 		ok, err := task.getVideoFile()
 		if err != nil {
@@ -125,4 +117,15 @@ func (task *DownloadTask) UpdateOrDownload() error {
 		task.stateUpdatedAt = time.Now()
 	}
 	return nil
+}
+
+func (task *DownloadTask) UpdateOrDownload() error {
+	if task.isFatal.Load() {
+		return nil
+	}
+
+	task.lock.Lock()
+	defer task.lock.Unlock()
+
+	return task.doUpdateOrDownload()
 }
