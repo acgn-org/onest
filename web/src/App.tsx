@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from "react";
 import { Outlet, useNavigate, useMatches } from "react-router";
+import { useDisclosure } from "@mantine/hooks";
 
 import "@mantine/core/styles.css";
 import { createTheme, MantineProvider } from "@mantine/core";
@@ -13,7 +14,6 @@ import {
   IconCircleDottedLetterI,
   IconLogs,
 } from "@tabler/icons-react";
-import { useDisclosure } from "@mantine/hooks";
 
 export const App: FC = () => {
   const nav = useNavigate();
