@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/tools"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -65,6 +66,7 @@ func NewWebHandlerWithFS(fe fs.FS) (gin.HandlerFunc, error) {
 }
 
 func NewWebHandlerWithAddress(addr string) (gin.HandlerFunc, error) {
+	logger := logfield.New(logfield.ComServer).WithAction("live")
 	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
@@ -72,6 +74,9 @@ func NewWebHandlerWithAddress(addr string) (gin.HandlerFunc, error) {
 	proxy := httputil.NewSingleHostReverseProxy(u)
 	proxy.BufferPool = tools.BufferHttpUtil{}
 	proxy.Transport = &http.Transport{}
+	proxy.ErrorHandler = func(_ http.ResponseWriter, request *http.Request, err error) {
+		logger.WithField("url", request.URL.String()).Warnln("proxy error:", err)
+	}
 
 	return func(ctx *gin.Context) {
 		if isNotWebRequest(ctx) {
