@@ -3,13 +3,15 @@ package logtee
 import "container/list"
 
 type Subscribe struct {
-	element *list.Element
-	receive chan [][]byte
-	write   chan *list.List
-	read    chan [][]byte
+	element  *list.Element
+	prevLogs [][]byte
+	receive  chan [][]byte
+
+	write chan *list.List
+	read  chan [][]byte
 }
 
-func NewSubscribe() ([][]byte, *Subscribe) {
+func NewSubscribe() *Subscribe {
 	receive := make(chan [][]byte)
 
 	subLock.Lock()
@@ -20,13 +22,14 @@ func NewSubscribe() ([][]byte, *Subscribe) {
 	subLock.Unlock()
 
 	sub := Subscribe{
-		element: el,
-		receive: receive,
-		write:   make(chan *list.List),
-		read:    make(chan [][]byte),
+		element:  el,
+		prevLogs: ringLogs,
+		receive:  receive,
+		write:    make(chan *list.List),
+		read:     make(chan [][]byte),
 	}
 	go sub.receiveWorker()
-	return ringLogs, &sub
+	return &sub
 }
 
 func (sub *Subscribe) Listen() <-chan [][]byte {
@@ -60,6 +63,7 @@ func (sub *Subscribe) receiveWorker() {
 }
 
 func (sub *Subscribe) sendWorker() {
+	sub.read <- sub.prevLogs
 	for {
 		buf, ok := <-sub.write
 		if !ok {
