@@ -22,6 +22,22 @@ type Download struct {
 	ErrorAt    int64
 }
 
+type DownloadTask struct {
+	ID          uint         `json:"id"`
+	ItemID      uint         `json:"item_id"`
+	MsgID       int64        `json:"msg_id"`
+	Text        string       `json:"text"`
+	Size        int64        `json:"size"`
+	Date        int32        `json:"date"`
+	Priority    int32        `json:"priority"`
+	Downloading bool         `json:"downloading"`
+	Downloaded  bool         `json:"downloaded"`
+	FatalError  bool         `json:"fatal_error"`
+	Error       string       `json:"error"`
+	ErrorAt     int64        `json:"error_at"`
+	File        *client.File `json:"file,omitempty"`
+}
+
 type DownloadRepository struct {
 	Repository
 }
@@ -39,6 +55,10 @@ func (repo DownloadRepository) EarliestToDownload(limit int) ([]Download, error)
 func (repo DownloadRepository) GetDownloading() ([]Download, error) {
 	var downloads []Download
 	return downloads, repo.DB.Model(&Download{}).Preload("Item").Where("downloaded=? AND downloading=?", false, true).Find(&downloads).Error
+}
+
+func (repo DownloadRepository) GetDownloadTaskInfo(tasks []DownloadTask) error {
+	return repo.DB.Model(&Download{}).Omit("msg_id", "priority", "fatal_error").Where("id").Find(&tasks).Error
 }
 
 func (repo DownloadRepository) CreateWithMessages(item uint, priority int32, messages []*client.Message) ([]Download, error) {

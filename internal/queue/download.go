@@ -11,6 +11,33 @@ import (
 	"github.com/zelenin/go-tdlib/client"
 )
 
+func GetDownloading() ([]repository.DownloadTask, error) {
+	lock.RLock()
+	defer lock.RUnlock()
+
+	tasks := make([]repository.DownloadTask, 0, len(downloading))
+	for _, task := range downloading {
+		tasks = append(tasks, repository.DownloadTask{
+			ID:         task.RepoID,
+			MsgID:      task.MsgID,
+			Priority:   task.priority,
+			FatalError: task.isFatal.Load(),
+			File:       task.state,
+
+			ItemID:      0,
+			Text:        "",
+			Size:        0,
+			Date:        0,
+			Downloading: false,
+			Downloaded:  false,
+			Error:       "",
+			ErrorAt:     0,
+		})
+	}
+
+	return tasks, database.NewRepository[repository.DownloadRepository]().GetDownloadTaskInfo(tasks)
+}
+
 func clean() error {
 	downloading = make(map[uint]*DownloadTask)
 
