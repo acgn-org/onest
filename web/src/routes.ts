@@ -2,6 +2,8 @@ import { createBrowserRouter, type RouteObject } from "react-router";
 
 import App from "./App";
 
+import Downloads from "@page/Downloads";
+
 const routes: RouteObject[] = [
   {
     path: "/",
@@ -9,7 +11,7 @@ const routes: RouteObject[] = [
     children: [
       {
         index: true,
-        element: "Downloads",
+        Component: Downloads,
       },
       {
         path: "/time-machine",
