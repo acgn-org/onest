@@ -66,6 +66,9 @@ func startDownload(model repository.Download) error {
 			return err
 		}
 	}
+	if err := downloadRepo.Commit().Error; err != nil {
+		return err
+	}
 
 	task, err := NewTask(model)
 	downloading[model.ID] = task
