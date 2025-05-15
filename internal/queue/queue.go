@@ -10,7 +10,7 @@ import (
 var (
 	lock sync.RWMutex
 	// Telegram.MessageID => DownloadTask
-	downloading map[int64]*DownloadTask
+	downloading map[uint]*DownloadTask
 )
 
 func init() {
@@ -24,7 +24,7 @@ func init() {
 	if err != nil {
 		logger.Fatalln("load downloading failed:", err)
 	}
-	downloading = make(map[int64]*DownloadTask, len(downloadingSlice))
+	downloading = make(map[uint]*DownloadTask, len(downloadingSlice))
 
 	for _, repo := range downloadingSlice {
 		err := startDownload(repo)

@@ -12,7 +12,7 @@ import (
 )
 
 func clean() error {
-	downloading = make(map[int64]*DownloadTask)
+	downloading = make(map[uint]*DownloadTask)
 
 	if err := source.Telegram.RemoveDownloads(); err != nil {
 		return err
@@ -41,7 +41,7 @@ func startDownload(model repository.Download) error {
 	}
 
 	task, err := NewTask(model)
-	downloading[model.MsgID] = task
+	downloading[model.ID] = task
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func AddDownloadQueue(model repository.Download) error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	task, ok := downloading[model.MsgID]
+	task, ok := downloading[model.ID]
 	if ok {
 		return task.UpdateOrDownload()
 	}
