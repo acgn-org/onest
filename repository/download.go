@@ -47,6 +47,11 @@ func (repo DownloadRepository) CountQueued() (int64, error) {
 	return count, repo.DB.Model(&Download{}).Where("downloaded=? AND downloading=?", false, false).Count(&count).Error
 }
 
+func (repo DownloadRepository) FirstByID(id uint) (*Download, error) {
+	var download Download
+	return &download, repo.DB.Model(&Download{}).Where("id = ?", id).First(&download).Error
+}
+
 func (repo DownloadRepository) EarliestToDownload(limit int) ([]Download, error) {
 	var models []Download
 	return models, repo.DB.Model(&Download{}).Where("downloading=? AND downloaded=?", false, false).Order("date ASC").Limit(limit).Find(&models).Error

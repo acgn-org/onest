@@ -4,13 +4,14 @@ import "gorm.io/gorm/clause"
 
 type Item struct {
 	ID        uint  `gorm:"primarykey"`
-	ChannelID int64 `gorm:"not null"`
+	ChannelID int64 `gorm:"index:idx_channel_date;not null"`
 
-	Name   string `gorm:"not null"`
-	Regexp string `gorm:"not null"`
+	Name    string `gorm:"not null"`
+	Regexp  string `gorm:"not null"`
+	Pattern string `gorm:"not null"`
 
-	DateStart int32 `gorm:"not null"`
-	DateEnd   int32 `gorm:"not null"`
+	DateStart int32 `gorm:"index:idx_date;index:idx_channel_date;not null"`
+	DateEnd   int32 `gorm:"index:idx_date;index:idx_channel_date;not null"`
 
 	Process int64 `gorm:"not null"`
 
@@ -20,6 +21,11 @@ type Item struct {
 
 type ItemRepository struct {
 	Repository
+}
+
+func (repo ItemRepository) FirstItemByID(id uint) (*Item, error) {
+	var item Item
+	return &item, repo.DB.Model(&item).Where("id = ?", id).First(&item).Error
 }
 
 func (repo ItemRepository) GetAllForUpdates() ([]Item, error) {

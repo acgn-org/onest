@@ -18,7 +18,7 @@ func GetDownloading() ([]repository.DownloadTask, error) {
 	tasks := make([]repository.DownloadTask, 0, len(downloading))
 	for _, task := range downloading {
 		tasks = append(tasks, repository.DownloadTask{
-			ID:         task.RepoID,
+			ID:         task.ID,
 			MsgID:      task.MsgID,
 			Priority:   task.priority,
 			FatalError: task.isFatal.Load(),

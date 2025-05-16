@@ -54,7 +54,7 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 
 		// remove tasks with fatal state
 		if task.isFatal.Load() {
-			err := task.WriteFatalStateToDatabase()
+			err := task.writeFatalStateToDatabase()
 			if err != nil {
 				logger.Errorln("failed to write download task fatal state into database:", err)
 			} else {
@@ -79,10 +79,9 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 		}
 
 		// proceed downloads completed
-		// todo place files
 		if task.state != nil && task.state.Local.IsDownloadingCompleted {
-			if err := task.WriteFatalStateToDatabase(); err != nil {
-				logger.Errorln("failed to write download task complete state into database:", err)
+			if err := task.completeDownload(); err != nil {
+				logger.Errorln("failed to complete download task:", err)
 			} else {
 				delete(downloading, key)
 			}

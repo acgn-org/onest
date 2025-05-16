@@ -7,8 +7,11 @@ import (
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
+	"github.com/acgn-org/onest/tools"
 	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
+	"os"
+	"path"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,7 +19,7 @@ import (
 
 func NewTask(model repository.Download) (*DownloadTask, error) {
 	task := &DownloadTask{
-		RepoID:    model.ID,
+		ID:        model.ID,
 		ChannelID: model.Item.ChannelID,
 		MsgID:     model.MsgID,
 		logger: logfield.New(logfield.ComTask).
@@ -27,7 +30,8 @@ func NewTask(model repository.Download) (*DownloadTask, error) {
 }
 
 type DownloadTask struct {
-	RepoID    uint
+	ID uint
+
 	ChannelID int64
 	MsgID     int64
 
@@ -48,14 +52,50 @@ func (task *DownloadTask) fatal() {
 	task.isFatal.Store(true)
 }
 
-func (task *DownloadTask) WriteFatalStateToDatabase() error {
+func (task *DownloadTask) writeFatalStateToDatabase() error {
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
-	err := downloadRepo.UpdateDownloadFatal(task.RepoID)
+	err := downloadRepo.UpdateDownloadFatal(task.ID)
 	if err != nil {
 		return err
 	}
+	return downloadRepo.Commit().Error
+}
+
+func (task *DownloadTask) completeDownload() error {
+	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	defer downloadRepo.Rollback()
+
+	download, err := downloadRepo.FirstByID(task.ID)
+	if err != nil {
+		return err
+	}
+
+	err = downloadRepo.UpdateDownloadComplete(task.ID)
+	if err != nil {
+		return err
+	}
+
+	itemRepo := repository.ItemRepository{Repository: downloadRepo.Repository}
+	item, err := itemRepo.FirstItemByID(download.ItemID)
+	if err != nil {
+		return err
+	}
+
+	targetPath := item.TargetPath
+	targetName, err := tools.ConvertWithPattern(download.Text, item.Regexp, item.Pattern)
+	if err != nil {
+		task.logger.Errorln("convert target path failed:", err)
+		return err
+	}
+
+	err = os.Rename(task.state.Local.Path, path.Join(targetPath, targetName))
+	if err != nil {
+		task.logger.Errorln("move file failed:", err)
+		return err
+	}
+
 	return downloadRepo.Commit().Error
 }
 
@@ -83,7 +123,7 @@ func (task *DownloadTask) setError(msg string, fatalNow bool) error {
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
-	if err := downloadRepo.UpdateDownloadError(task.RepoID, msg, task.errorAt.Unix()); err != nil {
+	if err := downloadRepo.UpdateDownloadError(task.ID, msg, task.errorAt.Unix()); err != nil {
 		logger.Errorln("save error message to database failed:", err)
 		return err
 	}
