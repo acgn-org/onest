@@ -28,16 +28,15 @@ export const App: FC = () => {
     icon: ReactNode,
     hrefMatch = href,
   ) => {
+    const active = !!matches.find(
+      (match) => match.id !== "0" && match.pathname === hrefMatch,
+    );
     return (
       <NavLink
         label={label}
         leftSection={icon}
-        onClick={() => nav(href)}
-        active={
-          !!matches.find(
-            (match) => match.id !== "0" && match.pathname === hrefMatch,
-          )
-        }
+        onClick={() => !active && nav(href) && opened && toggle()}
+        active={active}
       />
     );
   };
