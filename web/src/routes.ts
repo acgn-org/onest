@@ -3,6 +3,7 @@ import { createBrowserRouter, type RouteObject } from "react-router";
 import App from "./App";
 
 import Downloads from "@page/Downloads";
+import LogStream from "@page/LogStream";
 
 const routes: RouteObject[] = [
   {
@@ -23,7 +24,11 @@ const routes: RouteObject[] = [
       },
       {
         path: "/log-stream",
-        element: "Log Stream",
+        Component: LogStream,
+      },
+      {
+        path: "*",
+        element: "NotFound",
       },
     ],
   },

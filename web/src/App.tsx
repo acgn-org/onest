@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from "react";
+import { type FC, type ReactNode, useMemo } from "react";
 import { Outlet, useNavigate, useMatches } from "react-router";
 import { useDisclosure } from "@mantine/hooks";
 
@@ -8,7 +8,15 @@ import { createTheme, MantineProvider } from "@mantine/core";
 const theme = createTheme({});
 
 import Picture from "@component/Picture.tsx";
-import { AppShell, Burger, Group, Flex, NavLink } from "@mantine/core";
+import {
+  AppShell,
+  Burger,
+  Group,
+  Flex,
+  NavLink,
+  Container,
+  Title,
+} from "@mantine/core";
 import {
   IconCloudDown,
   IconCircleDottedLetterI,
@@ -16,30 +24,50 @@ import {
   IconTemplate,
 } from "@tabler/icons-react";
 
+type NavItem = {
+  label: string;
+  href: string;
+  icon: ReactNode;
+};
+
+const navItems: NavItem[] = [
+  {
+    label: "Downloads",
+    href: "/",
+    icon: <IconCloudDown size={20} stroke={1.5} />,
+  },
+  {
+    label: "Items",
+    href: "/items",
+    icon: <IconTemplate size={20} stroke={1.5} />,
+  },
+  {
+    label: "Time Machine",
+    href: "/time-machine",
+    icon: <IconCircleDottedLetterI size={20} stroke={2} />,
+  },
+  {
+    label: "Log Stream",
+    href: "/log-stream",
+    icon: <IconLogs size={20} stroke={1.8} />,
+  },
+];
+
 export const App: FC = () => {
   const nav = useNavigate();
   const matches = useMatches();
 
   const [opened, { toggle }] = useDisclosure();
 
-  const renderNavLink = (
-    label: string,
-    href: string,
-    icon: ReactNode,
-    hrefMatch = href,
-  ) => {
-    const active = !!matches.find(
-      (match) => match.id !== "0" && match.pathname === hrefMatch,
-    );
-    return (
-      <NavLink
-        label={label}
-        leftSection={icon}
-        onClick={() => !active && nav(href) && opened && toggle()}
-        active={active}
-      />
-    );
-  };
+  const activeNavItem = useMemo(
+    () =>
+      navItems.find((item) =>
+        matches.find(
+          (match) => match.id !== "0" && match.pathname === item.href,
+        ),
+      ),
+    [matches],
+  );
 
   return (
     <MantineProvider defaultColorScheme="dark" theme={theme}>
@@ -83,30 +111,21 @@ export const App: FC = () => {
         </AppShell.Header>
 
         <AppShell.Navbar p="md">
-          {renderNavLink(
-            "Downloads",
-            "/",
-            <IconCloudDown size={20} stroke={1.5} />,
-          )}
-          {renderNavLink(
-            "Items",
-            "/items",
-            <IconTemplate size={20} stroke={1.5} />,
-          )}
-          {renderNavLink(
-            "Time Machine",
-            "/time-machine",
-            <IconCircleDottedLetterI size={20} stroke={2} />,
-          )}
-          {renderNavLink(
-            "Log Stream",
-            "/log-stream",
-            <IconLogs size={20} stroke={1.8} />,
-          )}
+          {navItems.map((item) => (
+            <NavLink
+              label={item.label}
+              leftSection={item.icon}
+              onClick={() => nav(item.href) && opened && toggle()}
+              active={item === activeNavItem}
+            />
+          ))}
         </AppShell.Navbar>
 
         <AppShell.Main>
-          <Outlet />
+          <Container>
+            <Title order={2}>{activeNavItem?.label ?? "404"}</Title>
+            <Outlet />
+          </Container>
         </AppShell.Main>
       </AppShell>
     </MantineProvider>
