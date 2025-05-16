@@ -19,10 +19,6 @@ const routes: RouteObject[] = [
         element: "Items",
       },
       {
-        path: "/time-machine",
-        element: "Time Machine",
-      },
-      {
         path: "/log-stream",
         Component: LogStream,
       },

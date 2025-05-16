@@ -17,12 +17,7 @@ import {
   Container,
   Title,
 } from "@mantine/core";
-import {
-  IconCloudDown,
-  IconCircleDottedLetterI,
-  IconLogs,
-  IconTemplate,
-} from "@tabler/icons-react";
+import { IconCloudDown, IconLogs, IconTemplate } from "@tabler/icons-react";
 
 type NavItem = {
   label: string;
@@ -40,11 +35,6 @@ const navItems: NavItem[] = [
     label: "Items",
     href: "/items",
     icon: <IconTemplate size={20} stroke={1.5} />,
-  },
-  {
-    label: "Time Machine",
-    href: "/time-machine",
-    icon: <IconCircleDottedLetterI size={20} stroke={2} />,
   },
   {
     label: "Log Stream",
