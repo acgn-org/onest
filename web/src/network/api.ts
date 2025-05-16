@@ -1,9 +1,9 @@
 import axios, { AxiosError } from "axios";
 
-const BaseUrl = "/api/";
+export const baseUrl = "/api/";
 
 const api = axios.create({
-  baseURL: BaseUrl,
+  baseURL: baseUrl,
 });
 
 function ErrHandler(err: AxiosError<any>): AxiosError {
