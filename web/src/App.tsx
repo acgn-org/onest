@@ -113,6 +113,7 @@ export const App: FC = () => {
         <AppShell.Navbar p="md">
           {navItems.map((item) => (
             <NavLink
+              key={item.href}
               label={item.label}
               leftSection={item.icon}
               onClick={() => nav(item.href) && opened && toggle()}
@@ -121,8 +122,20 @@ export const App: FC = () => {
           ))}
         </AppShell.Navbar>
 
-        <AppShell.Main>
-          <Container>
+        <AppShell.Main
+          style={{
+            display: "flex",
+          }}
+        >
+          <Container
+            styles={{
+              root: {
+                display: "flex",
+                flexDirection: "column",
+                flexGrow: 1,
+              },
+            }}
+          >
             <Title order={2}>{activeNavItem?.label ?? "404"}</Title>
             <Outlet />
           </Container>
