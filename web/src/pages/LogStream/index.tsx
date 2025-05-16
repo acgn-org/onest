@@ -1,7 +1,16 @@
-import { type FC, useState, memo } from "react";
+import { type FC, useState, memo, useRef, useEffect } from "react";
 import useWebsocket from "@hook/useWebsocket.ts";
 
-import { ScrollArea, Paper } from "@mantine/core";
+import {
+  ScrollArea,
+  Paper,
+  Stack,
+  Flex,
+  Checkbox,
+  NumberInput,
+  Text,
+  LoadingOverlay,
+} from "@mantine/core";
 
 import AnsiToHtml from "ansi-to-html";
 const ansiConverter = new AnsiToHtml();
@@ -26,9 +35,13 @@ const LogLine = memo<LogProps>(
 );
 
 export const LogStream: FC = () => {
+  const [follow, setFollow] = useState(true);
+  const lines = useRef(500);
+
+  const viewportRef = useRef<HTMLDivElement>(null);
   const [logs, setLogs] = useState<LogProps[]>([]);
 
-  useWebsocket("log/watch", {
+  const { conn, connected } = useWebsocket("log/watch", {
     onMessage: async (msg) => {
       const text = await (msg.data as Blob).text();
       setLogs((logs) => {
@@ -39,8 +52,8 @@ export const LogStream: FC = () => {
             text: text,
           },
         ];
-        if (val.length > 500) {
-          val.splice(0, val.length - 500);
+        if (val.length > lines.current) {
+          val.splice(0, val.length - lines.current);
         }
         return val;
       });
@@ -48,20 +61,54 @@ export const LogStream: FC = () => {
     onOpen: () => setLogs([]),
   });
 
+  useEffect(() => {
+    if (follow)
+      viewportRef.current?.scrollTo({
+        top: viewportRef.current!.scrollHeight,
+      });
+  }, [follow, logs]);
+
   return (
-    <div
+    <Stack
       style={{
         flexGrow: 1,
-        marginTop: "1.5rem",
-        overflow: "hidden",
+        marginTop: "1rem",
       }}
     >
+      <Flex gap="lg" align={"center"}>
+        <Checkbox
+          variant="outline"
+          label="Follow"
+          checked={follow}
+          onChange={(ev) => setFollow(ev.target.checked)}
+        />
+        <Flex gap="sm" align="center">
+          <NumberInput
+            min={10}
+            allowDecimal={false}
+            size="xs"
+            w="75"
+            defaultValue={500}
+            onBlur={(ev) => {
+              const value = parseInt(ev.target.value);
+              if (value) {
+                const shouldReconnect = value > lines.current;
+                lines.current = value;
+                if (shouldReconnect) conn.current?.close();
+              }
+            }}
+          />
+          <Text size="sm">Lines</Text>
+        </Flex>
+      </Flex>
       <Paper
         component={ScrollArea}
+        viewportRef={viewportRef}
         type="auto"
-        offsetScrollbars
+        offsetScrollbars="present"
         radius="md"
         p="md"
+        h="calc(100dvh - 12rem)"
         styles={{
           root: {
             backgroundColor: "#000",
@@ -69,11 +116,17 @@ export const LogStream: FC = () => {
           },
         }}
       >
+        <LoadingOverlay
+          visible={!connected}
+          zIndex={1000}
+          overlayProps={{ radius: "sm", blur: 2 }}
+          transitionProps={{transition: 'fade', duration: 100}}
+        />
         {logs.map((log) => (
           <LogLine key={log.id} {...log} />
         ))}
       </Paper>
-    </div>
+    </Stack>
   );
 };
 export default LogStream;

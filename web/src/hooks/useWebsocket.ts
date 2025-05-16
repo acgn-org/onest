@@ -36,6 +36,9 @@ const useWebsocket = (url: string | null, options?: options) => {
     conn.current?.send(JSON.stringify({ type: "heartbeat" }));
   };
 
+  useEffect(() => {
+    if (!connected) handleConnect(); // immediately retry
+  }, [connected]);
   useInterval(handleConnect, url !== null && !connected ? 5000 : null);
   useInterval(handlerHeartbeat, connected ? 20000 : null);
 
@@ -52,6 +55,6 @@ const useWebsocket = (url: string | null, options?: options) => {
     optionsRef.current = options;
   }, [options]);
 
-  return [conn, connected];
+  return { conn, connected };
 };
 export default useWebsocket;
