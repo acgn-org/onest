@@ -137,6 +137,12 @@ func (s _Supervisor) WorkerListen() {
 				task.lock.Lock()
 				if task.state != nil && task.state.Id == file.Id {
 					task.state = file
+					if file.Local.IsDownloadingCompleted {
+						err := task.completeDownload()
+						if err != nil {
+							s.logger.Errorln("failed to complete download task:", err)
+						}
+					}
 				}
 				task.lock.Unlock()
 			}
