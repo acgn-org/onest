@@ -105,11 +105,11 @@ func (task *DownloadTask) getVideoFile() (bool, error) {
 		_ = task.setError(err.Error(), false)
 		return false, err
 	}
-	video, ok := source.Telegram.GetMessageVideo(msg)
+	messageVideo, ok := source.Telegram.GetMessageVideo(msg)
 	if !ok {
 		return false, nil
 	}
-	task.state = video.Video
+	task.state = messageVideo.Video.Video
 	task.stateUpdatedAt = time.Now()
 	return true, nil
 }

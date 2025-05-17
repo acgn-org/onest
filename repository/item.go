@@ -1,6 +1,9 @@
 package repository
 
-import "gorm.io/gorm/clause"
+import (
+	"github.com/jinzhu/copier"
+	"gorm.io/gorm/clause"
+)
 
 type Item struct {
 	ID        uint  `gorm:"primarykey"`
@@ -19,8 +22,26 @@ type Item struct {
 	TargetPath string `gorm:"not null"`
 }
 
+type ItemForm struct {
+	ChannelID  int64  `json:"channel_id" form:"channel_id" binding:"required"`
+	Name       string `json:"name" form:"name" binding:"required"`
+	Regexp     string `json:"regexp" form:"regexp" binding:"required"`
+	Pattern    string `json:"pattern" form:"pattern" binding:"required"`
+	Process    int64  `json:"process" form:"process" binding:"required"`
+	Priority   int32  `json:"priority" form:"priority" binding:"min=1,max=32"`
+	TargetPath string `json:"target_path" form:"target_path" binding:"required"`
+}
+
 type ItemRepository struct {
 	Repository
+}
+
+func (repo ItemRepository) CreateWithForm(form *ItemForm) (*Item, error) {
+	var item Item
+	if err := copier.Copy(&item, form); err != nil {
+		panic(err)
+	}
+	return &item, repo.DB.Model(&Item{}).Create(&item).Error
 }
 
 func (repo ItemRepository) FirstItemByID(id uint) (*Item, error) {

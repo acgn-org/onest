@@ -1,12 +1,13 @@
 package response
 
 import (
+	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
 
 func Error(ctx *gin.Context, msg *Msg, args ...any) {
-	log.WithFields(log.Fields{
+	logfield.New(logfield.ComServer).WithAction("response").WithFields(log.Fields{
 		"code": msg.Code,
 		"msg":  msg.Msg,
 	}).Debugln(args)

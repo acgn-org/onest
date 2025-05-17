@@ -38,6 +38,11 @@ type DownloadTask struct {
 	File        *client.File `json:"file,omitempty"`
 }
 
+type DownloadForm struct {
+	MsgID    int64 `json:"msg_id" form:"msg_id" binding:"required"`
+	Priority int32 `json:"priority" form:"priority" binding:"min=1,max=32"`
+}
+
 type DownloadRepository struct {
 	Repository
 }

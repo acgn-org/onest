@@ -93,12 +93,12 @@ func (t Telegram) GetMessage(chatId, messageId int64) (*client.Message, error) {
 	})
 }
 
-func (t Telegram) GetMessageVideo(msg *client.Message) (*client.Video, bool) {
+func (t Telegram) GetMessageVideo(msg *client.Message) (*client.MessageVideo, bool) {
 	msgVideo, ok := msg.Content.(*client.MessageVideo)
 	if !ok {
 		return nil, false
 	}
-	return msgVideo.Video, true
+	return msgVideo, true
 }
 
 func (t Telegram) DownloadFile(fileID, priority int32) (*client.File, error) {

@@ -7,6 +7,7 @@ const (
 	cErrUnexpected
 	_
 	cErrNotFound
+	cErrTelegram
 )
 
 type Msg struct {
@@ -35,5 +36,9 @@ var (
 	ErrNotFound = &Msg{
 		Code: cErrNotFound,
 		Msg:  "not found",
+	}
+	ErrTelegram = &Msg{
+		Code: cErrTelegram,
+		Msg:  "telegram error",
 	}
 )
