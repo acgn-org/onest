@@ -49,6 +49,11 @@ func (repo ItemRepository) FirstItemByID(id uint) (*Item, error) {
 	return &item, repo.DB.Model(&item).Where("id = ?", id).First(&item).Error
 }
 
+func (repo ItemRepository) FirstItemByIDForUpdates(id uint) (*Item, error) {
+	var item Item
+	return &item, repo.DB.Model(&item).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id).First(&item).Error
+}
+
 func (repo ItemRepository) GetAllForUpdates() ([]Item, error) {
 	var items []Item
 	return items, repo.DB.Model(&Item{}).Clauses(clause.Locking{Strength: "UPDATE"}).Find(&items).Error

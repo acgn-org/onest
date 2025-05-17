@@ -113,7 +113,22 @@ func (t Telegram) DownloadFile(fileID, priority int32) (*client.File, error) {
 	})
 }
 
-func (t Telegram) RemoveDownloads() error {
+func (t Telegram) CancelDownloadFile(fileID int32) error {
+	_, err := t.client.CancelDownloadFile(&client.CancelDownloadFileRequest{
+		FileId: fileID,
+	})
+	return err
+}
+
+func (t Telegram) RemoveFileFromDownloads(fileID int32) error {
+	_, err := t.client.RemoveFileFromDownloads(&client.RemoveFileFromDownloadsRequest{
+		FileId:          fileID,
+		DeleteFromCache: true,
+	})
+	return err
+}
+
+func (t Telegram) RemoveAllDownloads() error {
 	_ = t.rate.Wait(context.Background())
 	_, err := t.client.RemoveAllFilesFromDownloads(&client.RemoveAllFilesFromDownloadsRequest{
 		OnlyActive:      false,

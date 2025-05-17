@@ -41,7 +41,7 @@ func GetDownloading() ([]repository.DownloadTask, error) {
 func clean() error {
 	downloading = make(map[uint]*DownloadTask)
 
-	if err := source.Telegram.RemoveDownloads(); err != nil {
+	if err := source.Telegram.RemoveAllDownloads(); err != nil {
 		return err
 	}
 	if err := source.Telegram.CleanDownloadDirectory(); err != nil {

@@ -169,3 +169,22 @@ func (task *DownloadTask) UpdateOrDownload() error {
 
 	return task.doUpdateOrDownload()
 }
+
+func (task *DownloadTask) Terminate() error {
+	task.lock.Lock()
+	defer task.lock.Unlock()
+
+	if task.isFatal.Load() {
+		return nil
+	}
+
+	if task.state != nil {
+		if !task.state.Local.IsDownloadingCompleted {
+			if err := source.Telegram.CancelDownloadFile(task.state.Id); err != nil {
+				return err
+			}
+		}
+		return source.Telegram.RemoveFileFromDownloads(task.state.Id)
+	}
+	return nil
+}

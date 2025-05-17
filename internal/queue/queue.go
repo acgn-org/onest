@@ -37,3 +37,22 @@ func init() {
 
 	supervisor()
 }
+
+func RemoveTasks(ids ...uint) {
+	logger := logfield.New(logfield.ComQueue).WithAction("remove")
+
+	lock.Lock()
+	defer lock.Unlock()
+
+	for _, id := range ids {
+		task, ok := downloading[id]
+		if !ok {
+			continue
+		}
+
+		if err := task.Terminate(); err != nil {
+			logger.Warnf("terminate task %d with error: %v", id, err)
+		}
+		delete(downloading, id)
+	}
+}

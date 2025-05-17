@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/queue"
@@ -8,7 +9,9 @@ import (
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"regexp"
+	"strconv"
 )
 
 func GetItems(ctx *gin.Context) {
@@ -88,6 +91,54 @@ func NewItem(ctx *gin.Context) {
 	select {
 	case <-queue.ActivateTaskControl:
 	default:
+	}
+
+	response.Default(ctx)
+}
+
+func DeleteItem(ctx *gin.Context) {
+	var form struct {
+		DeleteTargetPath bool `json:"delete_target_path" form:"delete_target_path"`
+	}
+	if err := ctx.ShouldBind(&form); err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	idStr := ctx.Param("id")
+	id64, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+	id := uint(id64)
+
+	itemRepo := database.BeginRepository[repository.ItemRepository]()
+	defer itemRepo.Rollback()
+
+	_, err = itemRepo.FirstItemByIDForUpdates(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.Error(ctx, response.ErrNotFound)
+			return
+		}
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	downloadRepo := repository.DownloadRepository{Repository: itemRepo.Repository}
+
+	downloadIDs, err := downloadRepo.GetIDByItemForUpdates(id)
+	if err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	queue.RemoveTasks(downloadIDs...)
+
+	if err := itemRepo.Commit().Error; err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
 	}
 
 	response.Default(ctx)

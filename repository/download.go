@@ -1,6 +1,9 @@
 package repository
 
-import "github.com/zelenin/go-tdlib/client"
+import (
+	"github.com/zelenin/go-tdlib/client"
+	"gorm.io/gorm/clause"
+)
 
 type Download struct {
 	ID uint `gorm:"primarykey"`
@@ -60,6 +63,11 @@ func (repo DownloadRepository) FirstByID(id uint) (*Download, error) {
 func (repo DownloadRepository) EarliestToDownload(limit int) ([]Download, error) {
 	var models []Download
 	return models, repo.DB.Model(&Download{}).Where("downloading=? AND downloaded=?", false, false).Order("date ASC").Limit(limit).Find(&models).Error
+}
+
+func (repo DownloadRepository) GetIDByItemForUpdates(itemID uint) ([]uint, error) {
+	var ids []uint
+	return ids, repo.DB.Model(&Download{}).Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").Where("item_id = ?", itemID).Find(&ids).Error
 }
 
 func (repo DownloadRepository) GetDownloading() ([]Download, error) {
