@@ -1,6 +1,10 @@
 import { type FC, useMemo, useState } from "react";
 import dayjs from "dayjs";
 
+import NewItemModal from "./NewItemModal";
+
+import { Group, Button } from "@mantine/core";
+
 import useSWR from "swr";
 import api from "@/network/api.ts";
 
@@ -21,6 +25,20 @@ export const Items: FC = () => {
     },
   );
 
-  return <></>;
+  const [onNewItem, setOnNewItem] = useState(false);
+
+  return (
+    <>
+      <Group gap={"sm"} my={20}>
+        <Button onClick={() => setOnNewItem(true)}>New</Button>
+      </Group>
+
+      <NewItemModal
+        open={onNewItem}
+        onClose={() => setOnNewItem(false)}
+        onItemMutate={() => mutate()}
+      />
+    </>
+  );
 };
 export default Items;
