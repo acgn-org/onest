@@ -4,6 +4,7 @@ import App from "./App";
 
 import Downloads from "@page/Downloads";
 import LogStream from "@page/LogStream";
+import Items from "@page/Items";
 
 const routes: RouteObject[] = [
   {
@@ -16,7 +17,7 @@ const routes: RouteObject[] = [
       },
       {
         path: "/items",
-        element: "Items",
+        Component: Items,
       },
       {
         path: "/log-stream",

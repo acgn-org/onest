@@ -108,7 +108,7 @@ export const LogStream: FC = () => {
         offsetScrollbars="present"
         radius="md"
         p="md"
-        h="calc(100dvh - 12rem)"
+        h="calc(100dvh - 13rem)"
         styles={{
           root: {
             backgroundColor: "#000",
