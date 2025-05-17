@@ -1,6 +1,7 @@
 import { type FC, type ReactNode, useMemo } from "react";
 import { Outlet, useNavigate, useMatches } from "react-router";
 import { useDisclosure } from "@mantine/hooks";
+import { Toaster } from "react-hot-toast";
 
 import "@mantine/core/styles.css";
 import { createTheme, MantineProvider } from "@mantine/core";
@@ -61,6 +62,16 @@ export const App: FC = () => {
 
   return (
     <MantineProvider defaultColorScheme="dark" theme={theme}>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            borderRadius: "20px",
+            background: "#353535",
+            color: "#fff",
+          },
+        }}
+      />
       <AppShell
         header={{ height: 60 }}
         navbar={{
