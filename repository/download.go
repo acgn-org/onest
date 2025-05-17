@@ -14,9 +14,9 @@ type Download struct {
 	MsgID int64 `gorm:"not null"`
 	Text  string
 	Size  int64 `gorm:"not null"`
-	Date  int32 `gorm:"index:idx_global_queue;not null;priority:3"`
+	Date  int32 `gorm:"index:idx_global_queue,sort:asc;not null;priority:4"`
 
-	Priority    int32 `gorm:"not null"`
+	Priority    int32 `gorm:"index:idx_global_queue,sort:desc;priority:3;not null"`
 	Downloading bool  `gorm:"index:idx_global_queue;default:false;priority:2"`
 	Downloaded  bool  `gorm:"index:idx_global_queue;default:false;priority:1"`
 
@@ -60,9 +60,9 @@ func (repo DownloadRepository) FirstByID(id uint) (*Download, error) {
 	return &download, repo.DB.Model(&Download{}).Where("id = ?", id).First(&download).Error
 }
 
-func (repo DownloadRepository) EarliestToDownload(limit int) ([]Download, error) {
+func (repo DownloadRepository) GetForDownload(limit int) ([]Download, error) {
 	var models []Download
-	return models, repo.DB.Model(&Download{}).Where("downloading=? AND downloaded=?", false, false).Order("date ASC").Limit(limit).Find(&models).Error
+	return models, repo.DB.Model(&Download{}).Where("downloading=? AND downloaded=?", false, false).Order("priority DESC,date ASC").Limit(limit).Find(&models).Error
 }
 
 func (repo DownloadRepository) GetIDByItemForUpdates(itemID uint) ([]uint, error) {
