@@ -18,6 +18,41 @@ func GetDownloadTasks(ctx *gin.Context) {
 	response.Success(ctx, tasks)
 }
 
+func UpdateDownloadPriority(ctx *gin.Context) {
+	var form struct {
+		Priority int32 `json:"priority" form:"priority" binding:"min=1,max=32"`
+	}
+	if err := ctx.ShouldBind(&form); err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	id, err := tools.IDFromParam(ctx, "id")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	defer downloadRepo.Rollback()
+
+	ok, err := downloadRepo.UpdatePriority(id, form.Priority)
+	if err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	} else if !ok {
+		response.Error(ctx, response.ErrNotFound)
+		return
+	}
+
+	if err := downloadRepo.Commit().Error; err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	queue.UpdatePriority(id, form.Priority)
+}
+
 func DeleteDownload(ctx *gin.Context) {
 	id, err := tools.IDFromParam(ctx, "id")
 	if err != nil {
@@ -28,8 +63,12 @@ func DeleteDownload(ctx *gin.Context) {
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
-	if err := downloadRepo.DeleteByID(id); err != nil {
+	ok, err := downloadRepo.DeleteByID(id)
+	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	} else if !ok {
+		response.Error(ctx, response.ErrNotFound)
 		return
 	}
 

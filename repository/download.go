@@ -110,6 +110,11 @@ func (repo DownloadRepository) SetDownloading(id uint) error {
 	return repo.DB.Model(&Download{}).Where("id=?", id).Update("downloading", true).Error
 }
 
+func (repo DownloadRepository) UpdatePriority(id uint, priority int32) (bool, error) {
+	result := repo.DB.Model(&Download{}).Where("id=?", id).Update("priority", priority)
+	return result.RowsAffected > 0, result.Error
+}
+
 func (repo DownloadRepository) UpdateDownloadError(id uint, err string, date int64) error {
 	model := Download{
 		ID:      id,
@@ -139,6 +144,7 @@ func (repo DownloadRepository) UpdateDownloadComplete(id uint) error {
 	return repo.DB.Model(&model).Select("downloading", "downloaded", "fatal_error").Updates(&model).Error
 }
 
-func (repo DownloadRepository) DeleteByID(id uint) error {
-	return repo.DB.Model(&Download{}).Where("id=?", id).Delete(nil).Error
+func (repo DownloadRepository) DeleteByID(id uint) (bool, error) {
+	result := repo.DB.Model(&Download{}).Where("id=?", id).Delete(nil)
+	return result.RowsAffected > 0, result.Error
 }

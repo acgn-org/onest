@@ -38,9 +38,22 @@ func init() {
 	supervisor()
 }
 
-func RemoveTasks(ids ...uint) {
-	logger := logfield.New(logfield.ComQueue).WithAction("remove")
+func UpdatePriority(id uint, priority int32) {
+	lock.Lock()
+	defer lock.Unlock()
 
+	download, ok := downloading[id]
+	if !ok {
+		return
+	}
+	download.priority = priority
+	err := download.UpdateOrDownload()
+	if err != nil {
+		logfield.New(logfield.ComQueue).WithAction("update").Warnf("update priority of task %d to %d failed: %v", id, priority, err)
+	}
+}
+
+func RemoveTasks(ids ...uint) {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -51,7 +64,7 @@ func RemoveTasks(ids ...uint) {
 		}
 
 		if err := task.Terminate(); err != nil {
-			logger.Warnf("terminate task %d with error: %v", id, err)
+			logfield.New(logfield.ComQueue).WithAction("remove").Warnf("terminate task %d with error: %v", id, err)
 		}
 		delete(downloading, id)
 	}
