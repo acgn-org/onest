@@ -141,5 +141,10 @@ func DeleteItem(ctx *gin.Context) {
 		return
 	}
 
+	select {
+	case <-queue.ActivateTaskControl:
+	default:
+	}
+
 	response.Default(ctx)
 }
