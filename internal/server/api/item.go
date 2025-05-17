@@ -8,10 +8,10 @@ import (
 	"github.com/acgn-org/onest/internal/server/response"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
+	"github.com/acgn-org/onest/tools"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"regexp"
-	"strconv"
 )
 
 func GetItems(ctx *gin.Context) {
@@ -38,7 +38,7 @@ func GetItems(ctx *gin.Context) {
 
 func NewItem(ctx *gin.Context) {
 	var form struct {
-		repository.ItemForm
+		repository.NewItemForm
 		Downloads []repository.DownloadForm `json:"downloads" form:"downloads"`
 	}
 	if err := ctx.ShouldBind(&form); err != nil {
@@ -55,7 +55,7 @@ func NewItem(ctx *gin.Context) {
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
 	defer itemRepo.Rollback()
 
-	item, err := itemRepo.CreateWithForm(&form.ItemForm)
+	item, err := itemRepo.CreateWithForm(&form.NewItemForm)
 	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
@@ -105,13 +105,11 @@ func DeleteItem(ctx *gin.Context) {
 		return
 	}
 
-	idStr := ctx.Param("id")
-	id64, err := strconv.ParseUint(idStr, 10, 64)
+	id, err := tools.IDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return
 	}
-	id := uint(id64)
 
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
 	defer itemRepo.Rollback()
@@ -144,6 +142,50 @@ func DeleteItem(ctx *gin.Context) {
 	select {
 	case <-queue.ActivateTaskControl:
 	default:
+	}
+
+	response.Default(ctx)
+}
+
+func PatchItem(ctx *gin.Context) {
+	var form struct {
+		Name       string `json:"name" form:"name"`
+		Regexp     string `json:"regexp" form:"regexp"`
+		Pattern    string `json:"pattern" form:"pattern"`
+		TargetPath string `json:"target_path" form:"target_path"`
+	}
+	if err := ctx.ShouldBind(&form); err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	id, err := tools.IDFromParam(ctx, "id")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	itemRepo := database.BeginRepository[repository.ItemRepository]()
+	defer itemRepo.Rollback()
+
+	ok, err := itemRepo.UpdatesItemByID(&repository.Item{
+		ID:         id,
+		Name:       form.Name,
+		Regexp:     form.Regexp,
+		Pattern:    form.Pattern,
+		TargetPath: form.TargetPath,
+	})
+	if err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	} else if !ok {
+		response.Error(ctx, response.ErrNotFound)
+		return
+	}
+
+	if err := itemRepo.Commit().Error; err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
 	}
 
 	response.Default(ctx)

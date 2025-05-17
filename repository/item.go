@@ -22,7 +22,7 @@ type Item struct {
 	TargetPath string `gorm:"not null"`
 }
 
-type ItemForm struct {
+type NewItemForm struct {
 	ChannelID  int64  `json:"channel_id" form:"channel_id" binding:"required"`
 	Name       string `json:"name" form:"name" binding:"required"`
 	Regexp     string `json:"regexp" form:"regexp" binding:"required"`
@@ -36,7 +36,7 @@ type ItemRepository struct {
 	Repository
 }
 
-func (repo ItemRepository) CreateWithForm(form *ItemForm) (*Item, error) {
+func (repo ItemRepository) CreateWithForm(form *NewItemForm) (*Item, error) {
 	var item Item
 	if err := copier.Copy(&item, form); err != nil {
 		panic(err)
@@ -71,4 +71,9 @@ func (repo ItemRepository) UpdateProcess(id uint, process int64, dateEnd int32) 
 		DateEnd: dateEnd,
 	}
 	return repo.DB.Model(&model).Select("process", "date_end").Updates(&model).Error
+}
+
+func (repo ItemRepository) UpdatesItemByID(model *Item) (bool, error) {
+	result := repo.DB.Model(&model).Updates(&model)
+	return result.RowsAffected > 0, result.Error
 }
