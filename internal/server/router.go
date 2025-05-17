@@ -8,6 +8,9 @@ import (
 func Api(group *gin.RouterGroup) {
 	group.Any("realsearch/*path", api.RealSearchProxy())
 
+	item := group.Group("item")
+	item.GET("active", api.GetItems)
+
 	download := group.Group("download")
 	download.GET("tasks", api.GetDownloadTasks)
 

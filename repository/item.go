@@ -10,7 +10,7 @@ type Item struct {
 	Regexp  string `gorm:"not null"`
 	Pattern string `gorm:"not null"`
 
-	DateStart int32 `gorm:"index:idx_date;index:idx_channel_date;not null"`
+	DateStart int32 `gorm:"not null"`
 	DateEnd   int32 `gorm:"index:idx_date;index:idx_channel_date;not null"`
 
 	Process int64 `gorm:"not null"`
@@ -31,6 +31,11 @@ func (repo ItemRepository) FirstItemByID(id uint) (*Item, error) {
 func (repo ItemRepository) GetAllForUpdates() ([]Item, error) {
 	var items []Item
 	return items, repo.DB.Model(&Item{}).Clauses(clause.Locking{Strength: "UPDATE"}).Find(&items).Error
+}
+
+func (repo ItemRepository) GetWithDateEnd(dateEnd int32) ([]Item, error) {
+	var items []Item
+	return items, repo.DB.Model(&Item{}).Where("date_end > ?", dateEnd).Find(&items).Error
 }
 
 func (repo ItemRepository) UpdateProcess(id uint, process int64, dateEnd int32) error {
