@@ -16,6 +16,7 @@ func Api(group *gin.RouterGroup) {
 
 	download := group.Group("download")
 	download.GET("tasks", api.GetDownloadTasks)
+	download.DELETE("/:id", api.DeleteDownload)
 
 	log := group.Group("log")
 	log.GET("watch", api.WatchLogs)

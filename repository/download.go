@@ -138,3 +138,7 @@ func (repo DownloadRepository) UpdateDownloadComplete(id uint) error {
 	}
 	return repo.DB.Model(&model).Select("downloading", "downloaded", "fatal_error").Updates(&model).Error
 }
+
+func (repo DownloadRepository) DeleteByID(id uint) error {
+	return repo.DB.Model(&Download{}).Where("id=?", id).Delete(nil).Error
+}
