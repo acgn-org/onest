@@ -1,4 +1,4 @@
-import type { FC } from "react";
+import { type FC, useState } from "react";
 
 import {
   Modal,
@@ -7,7 +7,10 @@ import {
   Stack,
   NumberInput,
   Flex,
+  ActionIcon,
 } from "@mantine/core";
+import { IconClipboard } from "@tabler/icons-react";
+import toast from "react-hot-toast";
 
 export interface NewItemModalProps {
   open: boolean;
@@ -20,6 +23,26 @@ export const NewItemModal: FC<NewItemModalProps> = ({
   onClose,
   onItemMutate,
 }) => {
+  const [id, setId] = useState("");
+
+  const onPasteId = async () => {
+    if (!navigator.clipboard?.readText) {
+      toast.error("https context is required")
+      return
+    }
+
+    try {
+      const idText = await navigator.clipboard.readText();
+      if (!isNaN(parseInt(idText))) {
+        setId(idText);
+      } else {
+        toast.error(`'${idText}' is not valid number`);
+      }
+    } catch (err: unknown) {
+      toast.error(`read clipboard failed: ${err}`);
+    }
+  };
+
   return (
     <Modal title={"New Item"} opened={open} onClose={onClose} centered>
       <form>
@@ -29,6 +52,13 @@ export const NewItemModal: FC<NewItemModalProps> = ({
             placeholder="Get ID from RealSearch Schedule"
             required
             type="number"
+            value={id}
+            onChange={(ev) => setId(ev.target.value)}
+            rightSection={
+              <ActionIcon size="sm" variant="default" onClick={onPasteId}>
+                <IconClipboard />
+              </ActionIcon>
+            }
           />
           <TextInput label="Name" placeholder="Custom name for item" required />
           <NumberInput
