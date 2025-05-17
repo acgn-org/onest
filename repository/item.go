@@ -6,20 +6,20 @@ import (
 )
 
 type Item struct {
-	ID        uint  `gorm:"primarykey"`
-	ChannelID int64 `gorm:"index:idx_channel_date;not null"`
+	ID        uint  `gorm:"primarykey" json:"id"`
+	ChannelID int64 `gorm:"index:idx_channel_date;not null" json:"channel_id"`
 
-	Name    string `gorm:"not null"`
-	Regexp  string `gorm:"not null"`
-	Pattern string `gorm:"not null"`
+	Name    string `gorm:"not null" json:"name"`
+	Regexp  string `gorm:"not null" json:"regexp"`
+	Pattern string `gorm:"not null" json:"pattern"`
 
-	DateStart int32 `gorm:"not null"`
-	DateEnd   int32 `gorm:"index:idx_date;index:idx_channel_date;not null"`
+	DateStart int32 `gorm:"not null" json:"date_start"`
+	DateEnd   int32 `gorm:"index:idx_date;index:idx_channel_date;not null" json:"date_end"`
 
-	Process int64 `gorm:"not null"`
+	Process int64 `gorm:"not null" json:"process"`
 
-	Priority   int32  `gorm:"not null"`
-	TargetPath string `gorm:"not null"`
+	Priority   int32  `gorm:"not null" json:"priority"`
+	TargetPath string `gorm:"not null" json:"target_path"`
 }
 
 type NewItemForm struct {

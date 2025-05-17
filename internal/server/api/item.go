@@ -16,7 +16,7 @@ import (
 
 func GetItems(ctx *gin.Context) {
 	var form struct {
-		ActiveAfter uint16 `form:"active_after" json:"active_after"`
+		ActiveAfter int32 `form:"active_after" json:"active_after" binding:"min=0"`
 	}
 	if err := ctx.ShouldBind(&form); err != nil {
 		response.Error(ctx, response.ErrForm, err)
@@ -24,7 +24,7 @@ func GetItems(ctx *gin.Context) {
 	}
 
 	itemRepo := database.NewRepository[repository.ItemRepository]()
-	items, err := itemRepo.GetWithDateEnd(int32(form.ActiveAfter))
+	items, err := itemRepo.GetWithDateEnd(form.ActiveAfter)
 	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
