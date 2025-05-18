@@ -6,7 +6,7 @@ import NewItemModal from "./NewItemModal";
 import { Group, Button } from "@mantine/core";
 
 import useSWR from "swr";
-import api from "@/network/api.ts";
+import api from "@network/api.ts";
 
 export const Items: FC = () => {
   const [activeDays, setActiveDays] = useState(30);
@@ -15,7 +15,7 @@ export const Items: FC = () => {
     [activeDays],
   );
 
-  const { data: items, mutate } = useSWR<Item.Item[]>(
+  const { data: items, mutate } = useSWR<Item.Local[]>(
     `item/active?active_after=${activeAfter}`,
     (url: string) => api.get(url).then((res) => res.data.data),
     {

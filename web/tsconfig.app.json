@@ -27,7 +27,8 @@
       "@/*": ["./src/*"],
       "@component/*": ["./src/components/*"],
       "@page/*": ["./src/pages/*"],
-      "@hook/*": ["./src/hooks/*"]
+      "@hook/*": ["./src/hooks/*"],
+      "@network/*": ["./src/network/*"]
     }
   },
   "include": ["src"]

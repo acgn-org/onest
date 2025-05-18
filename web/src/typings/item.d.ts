@@ -1,5 +1,5 @@
 namespace Item {
-  type Item = {
+  type Local = {
     id: number;
     channel_id: number;
     name: string;
@@ -10,5 +10,15 @@ namespace Item {
     process: number;
     priority: number;
     target_path: string;
+  };
+
+  type Remote = {
+    id: number;
+    rule_id: number;
+    name: string;
+    name_cn: string;
+    name_en: string;
+    date_start: number;
+    date_end: number;
   };
 }
