@@ -19,6 +19,7 @@ namespace RealSearch {
   };
 
   type MatchedRaw = Raw & {
+    selected: boolean;
     matched: boolean;
     matched_text: string;
   };

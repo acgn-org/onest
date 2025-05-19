@@ -130,7 +130,12 @@ export const NewItemModal: FC<NewItemModalProps> = ({
       );
       setItemInfo(data.item);
       setItemRaws(
-        data.data.map((raw) => ({ ...raw, matched: true, matched_text: "" })),
+        data.data.map((raw) => ({
+          ...raw,
+          selected: true,
+          matched: true,
+          matched_text: "",
+        })),
       );
       if (!name) useNewItem.setState({ name: data.item.name });
       if (!regexpStr)
@@ -231,13 +236,20 @@ export const NewItemModal: FC<NewItemModalProps> = ({
               <Accordion variant="filled">
                 {itemRaws!
                   .sort((a, b) => a.date - b.date)
-                  .map((raw) => (
+                  .map((raw, index) => (
                     <Accordion.Item key={raw.id} value={`${raw.id}`}>
                       <Accordion.Control
                         icon={
                           <Checkbox
-                            defaultChecked
+                            checked={raw.matched && raw.selected}
+                            disabled={!raw.matched}
                             onClick={(ev) => ev.stopPropagation()}
+                            onChange={(ev) =>
+                              setItemRaws((raws) => {
+                                raws![index].selected = ev.target.checked;
+                                return [...raws!];
+                              })
+                            }
                           />
                         }
                       >
