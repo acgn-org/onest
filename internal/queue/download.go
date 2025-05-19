@@ -110,7 +110,7 @@ func ScanAndCreateNewDownloadTasks() error {
 	}
 	for _, item := range items {
 		logger := logger.WithField("item", item.Name)
-		savepoint := fmt.Sprintf("%d", item.ID)
+		savepoint := fmt.Sprintf("sp%d", item.ID)
 		var latest *client.Message
 		var fromMessageID int64 = 0
 

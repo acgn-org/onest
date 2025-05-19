@@ -82,6 +82,13 @@ func NewItem(ctx *gin.Context) {
 			Priority: download.Priority,
 		})
 	}
+	if len(downloadModels) != 0 {
+		downloadRepo := repository.DownloadRepository{Repository: itemRepo.Repository}
+		if err := downloadRepo.CreateAll(downloadModels); err != nil {
+			response.Error(ctx, response.ErrDBOperation, err)
+			return
+		}
+	}
 
 	if err := itemRepo.Commit().Error; err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)

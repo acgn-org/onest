@@ -55,28 +55,8 @@ func (repo DownloadRepository) CountQueued() (int64, error) {
 	return count, repo.DB.Model(&Download{}).Where("downloaded=? AND downloading=?", false, false).Count(&count).Error
 }
 
-func (repo DownloadRepository) FirstByID(id uint) (*Download, error) {
-	var download Download
-	return &download, repo.DB.Model(&Download{}).Where("id = ?", id).First(&download).Error
-}
-
-func (repo DownloadRepository) GetForDownload(limit int) ([]Download, error) {
-	var models []Download
-	return models, repo.DB.Model(&Download{}).Where("downloading=? AND downloaded=?", false, false).Order("priority DESC,date ASC").Limit(limit).Find(&models).Error
-}
-
-func (repo DownloadRepository) GetIDByItemForUpdates(itemID uint) ([]uint, error) {
-	var ids []uint
-	return ids, repo.DB.Model(&Download{}).Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").Where("item_id = ?", itemID).Find(&ids).Error
-}
-
-func (repo DownloadRepository) GetDownloading() ([]Download, error) {
-	var downloads []Download
-	return downloads, repo.DB.Model(&Download{}).Preload("Item").Where("downloaded=? AND downloading=?", false, true).Find(&downloads).Error
-}
-
-func (repo DownloadRepository) GetDownloadTaskInfo(tasks []DownloadTask) error {
-	return repo.DB.Model(&Download{}).Omit("msg_id", "priority", "fatal_error").Where("id").Find(&tasks).Error
+func (repo DownloadRepository) CreateAll(models []Download) error {
+	return repo.DB.Create(&models).Error
 }
 
 func (repo DownloadRepository) CreateWithMessages(item uint, priority int32, messages []*client.Message) ([]Download, error) {
@@ -104,6 +84,30 @@ func (repo DownloadRepository) CreateWithMessages(item uint, priority int32, mes
 	}
 
 	return models, repo.DB.Model(&Download{}).Create(&models).Error
+}
+
+func (repo DownloadRepository) FirstByID(id uint) (*Download, error) {
+	var download Download
+	return &download, repo.DB.Model(&Download{}).Where("id = ?", id).First(&download).Error
+}
+
+func (repo DownloadRepository) GetForDownload(limit int) ([]Download, error) {
+	var models []Download
+	return models, repo.DB.Model(&Download{}).Where("downloading=? AND downloaded=?", false, false).Order("priority DESC,date ASC").Limit(limit).Find(&models).Error
+}
+
+func (repo DownloadRepository) GetIDByItemForUpdates(itemID uint) ([]uint, error) {
+	var ids []uint
+	return ids, repo.DB.Model(&Download{}).Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").Where("item_id = ?", itemID).Find(&ids).Error
+}
+
+func (repo DownloadRepository) GetDownloading() ([]Download, error) {
+	var downloads []Download
+	return downloads, repo.DB.Model(&Download{}).Preload("Item").Where("downloaded=? AND downloading=?", false, true).Find(&downloads).Error
+}
+
+func (repo DownloadRepository) GetDownloadTaskInfo(tasks []DownloadTask) error {
+	return repo.DB.Model(&Download{}).Omit("msg_id", "priority", "fatal_error").Where("id").Find(&tasks).Error
 }
 
 func (repo DownloadRepository) SetDownloading(id uint) error {
