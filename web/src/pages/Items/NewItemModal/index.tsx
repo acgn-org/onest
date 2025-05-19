@@ -21,6 +21,7 @@ import { IconClipboard } from "@tabler/icons-react";
 
 import useNewItem from "@store/new_item.ts";
 
+import useRealSearchRules from "@hook/useRealSearchRules.ts";
 import api from "@network/api.ts";
 
 export interface NewItemModalProps {
@@ -34,18 +35,22 @@ export const NewItemModal: FC<NewItemModalProps> = ({
   onClose,
   onItemMutate,
 }) => {
+  const { data: rules } = useRealSearchRules({
+    onError: (err) => toast.error(`load rules failed: ${err}`),
+  });
+
   const [loading, setLoading] = useState(false);
   const [id, setId] = useState("");
 
-  const name = useNewItem(state => state.name)
-  const resetExtendedForm = useNewItem(state => state.resetStates)
+  const name = useNewItem((state) => state.name);
+  const resetExtendedForm = useNewItem((state) => state.resetStates);
 
   const [itemData, setItemData] = useState<RealSearch.ScheduleItem | null>(
     null,
   );
   useEffect(() => {
     setItemData(null);
-    resetExtendedForm()
+    resetExtendedForm();
   }, [id]);
 
   const onPasteId = async () => {
@@ -81,7 +86,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
         `/realsearch/time_machine/item/${idParsed}/raws`,
       );
       setItemData(data);
-      if (!name) useNewItem.setState({name: data.item.name});
+      if (!name) useNewItem.setState({ name: data.item.name });
     } catch (err: unknown) {
       toast.error(`load item data failed: ${err}`);
     }
@@ -126,7 +131,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
             placeholder="Custom name for item."
             required={!!itemData}
             value={name}
-            onChange={(ev) => useNewItem.setState({name: ev.target.value})}
+            onChange={(ev) => useNewItem.setState({ name: ev.target.value })}
           />
           <TextInput
             label="Target Path"
@@ -146,6 +151,8 @@ export const NewItemModal: FC<NewItemModalProps> = ({
                 placeholder="Pattern for rename file. e.g. S01E${1}"
                 required
               />
+
+              <Divider mt="sm" />
 
               <Accordion variant="filled">
                 {itemData.data
@@ -172,7 +179,13 @@ export const NewItemModal: FC<NewItemModalProps> = ({
                           TODO MATCHED NAME
                         </Stack>
                       </Accordion.Control>
-                      <Accordion.Panel>{raw.text}</Accordion.Panel>
+                      <Accordion.Panel
+                        style={{
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
+                        {raw.text}
+                      </Accordion.Panel>
                     </Accordion.Item>
                   ))}
               </Accordion>
@@ -180,7 +193,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
           )}
 
           <Flex justify="end" mt="md">
-            <Button type="submit" loading={loading}>
+            <Button type="submit" loading={loading} disabled={!rules}>
               {itemData ? "Create" : "Fetch Data"}
             </Button>
           </Flex>

@@ -17,4 +17,13 @@ namespace RealSearch {
     link: string;
     date: number;
   };
+
+  type Rule = {
+    id: number;
+    name: string;
+    cn_index: number;
+    en_index: number;
+    channel_id: number;
+    channel_name: string;
+  };
 }
