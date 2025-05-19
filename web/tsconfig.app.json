@@ -28,7 +28,8 @@
       "@component/*": ["./src/components/*"],
       "@page/*": ["./src/pages/*"],
       "@hook/*": ["./src/hooks/*"],
-      "@network/*": ["./src/network/*"]
+      "@network/*": ["./src/network/*"],
+      "@store/*": ["./src/store/*"],
     }
   },
   "include": ["src"]

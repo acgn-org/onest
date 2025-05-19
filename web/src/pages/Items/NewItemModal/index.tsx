@@ -19,6 +19,8 @@ import {
 } from "@mantine/core";
 import { IconClipboard } from "@tabler/icons-react";
 
+import useNewItem from "@store/new_item.ts";
+
 import api from "@network/api.ts";
 
 export interface NewItemModalProps {
@@ -33,8 +35,18 @@ export const NewItemModal: FC<NewItemModalProps> = ({
   onItemMutate,
 }) => {
   const [loading, setLoading] = useState(false);
-
   const [id, setId] = useState("");
+
+  const name = useNewItem(state => state.name)
+  const resetExtendedForm = useNewItem(state => state.resetStates)
+
+  const [itemData, setItemData] = useState<RealSearch.ScheduleItem | null>(
+    null,
+  );
+  useEffect(() => {
+    setItemData(null);
+    resetExtendedForm()
+  }, [id]);
 
   const onPasteId = async () => {
     if (!navigator.clipboard?.readText) {
@@ -54,15 +66,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({
     }
   };
 
-  const [itemData, setItemData] = useState<RealSearch.ScheduleItem | null>(
-    null,
-  );
-  useEffect(() => {
-    setItemData(null);
-  }, [id]);
-
-  const [name, setName] = useState("");
-
   const onLoadItemData = async () => {
     const idParsed = parseInt(id);
     if (isNaN(idParsed)) {
@@ -78,7 +81,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
         `/realsearch/time_machine/item/${idParsed}/raws`,
       );
       setItemData(data);
-      if (!name) setName(data.item.name);
+      if (!name) useNewItem.setState({name: data.item.name});
     } catch (err: unknown) {
       toast.error(`load item data failed: ${err}`);
     }
@@ -123,7 +126,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
             placeholder="Custom name for item."
             required={!!itemData}
             value={name}
-            onChange={(ev) => setName(ev.target.value)}
+            onChange={(ev) => useNewItem.setState({name: ev.target.value})}
           />
           <TextInput
             label="Target Path"
