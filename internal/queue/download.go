@@ -76,7 +76,7 @@ func startDownload(channelId int64, download repository.Download) error {
 		return err
 	}
 
-	return downloadRepo.Commit().Error
+	return nil
 }
 
 func AddDownloadQueue(channelId int64, model repository.Download) error {
