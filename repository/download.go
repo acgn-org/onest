@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"encoding/json"
 	"github.com/zelenin/go-tdlib/client"
 	"gorm.io/gorm/clause"
 )
@@ -26,19 +27,19 @@ type Download struct {
 }
 
 type DownloadTask struct {
-	ID          uint         `json:"id"`
-	ItemID      uint         `json:"item_id"`
-	MsgID       int64        `json:"msg_id"`
-	Text        string       `json:"text"`
-	Size        int64        `json:"size"`
-	Date        int32        `json:"date"`
-	Priority    int32        `json:"priority"`
-	Downloading bool         `json:"downloading"`
-	Downloaded  bool         `json:"downloaded"`
-	FatalError  bool         `json:"fatal_error"`
-	Error       string       `json:"error"`
-	ErrorAt     int64        `json:"error_at"`
-	File        *client.File `json:"file,omitempty" gorm:"-"`
+	ID          uint            `json:"id"`
+	ItemID      uint            `json:"item_id"`
+	MsgID       int64           `json:"msg_id"`
+	Text        string          `json:"text"`
+	Size        int64           `json:"size"`
+	Date        int32           `json:"date"`
+	Priority    int32           `json:"priority"`
+	Downloading bool            `json:"downloading"`
+	Downloaded  bool            `json:"downloaded"`
+	FatalError  bool            `json:"fatal_error"`
+	Error       string          `json:"error"`
+	ErrorAt     int64           `json:"error_at"`
+	File        json.RawMessage `json:"file,omitempty" gorm:"-"`
 }
 
 type DownloadForm struct {

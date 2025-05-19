@@ -10,6 +10,7 @@ import (
 	"github.com/acgn-org/onest/tools"
 	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
+	"io"
 	"os"
 	"path"
 	"sync"
@@ -95,10 +96,41 @@ func (task *DownloadTask) completeDownload() error {
 		task.logger.Errorln("create target directory failed:", err)
 		return err
 	}
-	err = os.Rename(task.state.Local.Path, path.Join(targetPath, targetName))
+	fullPath := path.Join(targetPath, targetName)
+	err = os.Rename(task.state.Local.Path, fullPath)
 	if err != nil {
-		task.logger.Errorln("move file failed:", err)
-		return err
+		var linkError *os.LinkError
+		if errors.As(err, &linkError) {
+			fileSource, err := os.OpenFile(task.state.Local.Path, os.O_RDONLY, 0600)
+			if err != nil {
+				task.logger.Errorln("open source file failed:", err)
+				return err
+			}
+			defer fileSource.Close()
+
+			fileTarget, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, config.FilePerm)
+			if err != nil {
+				task.logger.Errorln("create file failed:", err)
+				return err
+			}
+			defer fileTarget.Close()
+
+			buffer := tools.BufferCopy.Get().([]byte)
+			defer tools.BufferCopy.Put(buffer)
+			_, err = io.CopyBuffer(fileTarget, fileSource, buffer)
+			if err != nil {
+				task.logger.Errorln("copy file failed:", err)
+				return err
+			}
+
+			err = os.Remove(task.state.Local.Path)
+			if err != nil {
+				task.logger.Errorln("remove source file failed:", err)
+			}
+		} else {
+			task.logger.Errorln("move file failed:", err)
+			return err
+		}
 	}
 
 	return downloadRepo.Commit().Error

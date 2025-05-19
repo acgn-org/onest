@@ -2,6 +2,7 @@ package queue
 
 import (
 	"container/list"
+	"encoding/json"
 	"fmt"
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
@@ -17,12 +18,21 @@ func GetDownloading() ([]repository.DownloadTask, error) {
 
 	tasks := make([]repository.DownloadTask, 0, len(downloading))
 	for _, task := range downloading {
+		var stateEncoded json.RawMessage
+		if task.state != nil {
+			var err error
+			stateEncoded, err = task.state.MarshalJSON()
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		tasks = append(tasks, repository.DownloadTask{
 			ID:         task.ID,
 			MsgID:      task.MsgID,
 			Priority:   task.priority,
 			FatalError: task.isFatal.Load(),
-			File:       task.state,
+			File:       stateEncoded,
 
 			ItemID:      0,
 			Text:        "",
