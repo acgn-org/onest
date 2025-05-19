@@ -96,7 +96,7 @@ func (task *DownloadTask) completeDownload() error {
 		task.logger.Errorln("create target directory failed:", err)
 		return err
 	}
-	fullPath := path.Join(targetPath, targetName)
+	fullPath := path.Join(targetPath, targetName) + path.Ext(task.state.Local.Path)
 	err = os.Rename(task.state.Local.Path, fullPath)
 	if err != nil {
 		var linkError *os.LinkError
