@@ -90,7 +90,7 @@ func (task *DownloadTask) completeDownload() error {
 		return err
 	}
 
-	err = os.MkdirAll(targetPath, os.ModePerm)
+	err = os.MkdirAll(targetPath, config.FilePerm)
 	if err != nil {
 		task.logger.Errorln("create target directory failed:", err)
 		return err
