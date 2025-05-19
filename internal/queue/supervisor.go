@@ -161,10 +161,6 @@ func (s _Supervisor) WorkerListen() {
 				}
 			}
 
-		default:
-			goto skip
 		}
-
-	skip:
 	}
 }

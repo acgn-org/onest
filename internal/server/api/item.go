@@ -96,7 +96,7 @@ func NewItem(ctx *gin.Context) {
 	}
 
 	select {
-	case <-queue.ActivateTaskControl:
+	case queue.ActivateTaskControl <- struct{}{}:
 	default:
 	}
 
@@ -147,7 +147,7 @@ func DeleteItem(ctx *gin.Context) {
 	}
 
 	select {
-	case <-queue.ActivateTaskControl:
+	case queue.ActivateTaskControl <- struct{}{}:
 	default:
 	}
 
