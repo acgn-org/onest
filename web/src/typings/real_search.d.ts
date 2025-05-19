@@ -18,6 +18,11 @@ namespace RealSearch {
     date: number;
   };
 
+  type MatchedRaw = Raw & {
+    matched: boolean;
+    matched_text: string;
+  };
+
   type Rule = {
     id: number;
     name: string;

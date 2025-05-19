@@ -65,13 +65,36 @@ export const NewItemModal: FC<NewItemModalProps> = ({
     }
   }, [regexpStr]);
 
-  const [itemData, setItemData] = useState<RealSearch.ScheduleItem | null>(
+  const [itemInfo, setItemInfo] = useState<Item.Remote | null>(null);
+  const [itemRaws, setItemRaws] = useState<RealSearch.MatchedRaw[] | null>(
     null,
   );
   useEffect(() => {
-    setItemData(null);
+    setItemInfo(null);
+    setItemRaws(null);
     resetExtendedForm();
   }, [id]);
+  useEffect(() => {
+    if (regexp && pattern)
+      setItemRaws((raws) => {
+        if (!raws) return raws;
+        for (const raw of raws) {
+          raw.matched = regexp.test(raw.text);
+          const matches = regexp.exec(raw.text);
+          const matchesObj = Object.fromEntries(
+            (matches ?? []).map((v, i) => [String(i), v]),
+          );
+          raw.matched_text = pattern.replace(
+            /\$(\w+)|\$\{([^}]+)\}/g,
+            (_, key1, key2) => {
+              const key = key1 || key2;
+              return matchesObj[key] ?? "";
+            },
+          );
+        }
+        return [...raws];
+      });
+  }, [itemRaws, regexp, pattern]);
 
   const onPasteId = async () => {
     if (!navigator.clipboard?.readText) {
@@ -105,7 +128,10 @@ export const NewItemModal: FC<NewItemModalProps> = ({
       } = await api.get<{ data: RealSearch.ScheduleItem }>(
         `/realsearch/time_machine/item/${idParsed}/raws`,
       );
-      setItemData(data);
+      setItemInfo(data.item);
+      setItemRaws(
+        data.data.map((raw) => ({ ...raw, matched: true, matched_text: "" })),
+      );
       if (!name) useNewItem.setState({ name: data.item.name });
       if (!regexpStr)
         useNewItem.setState({
@@ -118,11 +144,21 @@ export const NewItemModal: FC<NewItemModalProps> = ({
     setLoading(false);
   };
 
+  const renderConvertedFilename = (text: string, suffix: string) => {
+    if (!regexp || !pattern)
+      return (
+        <Text c="dimmed">
+          Regexp or pattern is empty, input something first
+        </Text>
+      );
+    return <Text>{`${text}.${suffix}`}</Text>;
+  };
+
   return (
     <Modal title={"New Item"} size={"lg"} opened={open} onClose={onClose}>
       <form
         onSubmit={(ev) =>
-          (itemData ? undefined : onLoadItemData()) && ev.preventDefault()
+          (itemInfo ? undefined : onLoadItemData()) && ev.preventDefault()
         }
       >
         <Stack align="stretch">
@@ -130,7 +166,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
             <TextInput
               flex={1}
               label="Schedule ID"
-              placeholder="Get ID from RealSearch Schedule."
+              placeholder="ID from RealSearch Schedule."
               required
               type="number"
               min={1}
@@ -148,27 +184,27 @@ export const NewItemModal: FC<NewItemModalProps> = ({
               min={1}
               max={32}
               defaultValue={16}
-              required={!!itemData}
+              required={!!itemInfo}
             />
           </Group>
           <TextInput
             label="Name"
             placeholder="Custom name for item."
-            required={!!itemData}
+            required={!!itemInfo}
             value={name}
             onChange={(ev) => useNewItem.setState({ name: ev.target.value })}
           />
           <TextInput
             label="Target Path"
             placeholder="A directory to place downloaded files."
-            required={!!itemData}
+            required={!!itemInfo}
             value={targetPath}
             onChange={(ev) =>
               useNewItem.setState({ target_path: ev.target.value })
             }
           />
 
-          {itemData && (
+          {itemInfo && (
             <>
               <TextInput
                 label="Text Regexp"
@@ -193,7 +229,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
               <Divider mt="sm" />
 
               <Accordion variant="filled">
-                {itemData.data
+                {itemRaws!
                   .sort((a, b) => a.date - b.date)
                   .map((raw) => (
                     <Accordion.Item key={raw.id} value={`${raw.id}`}>
@@ -214,7 +250,10 @@ export const NewItemModal: FC<NewItemModalProps> = ({
                               {(raw.size / 1024 / 1024).toFixed(0)} MB
                             </Badge>
                           </Group>
-                          TODO MATCHED NAME
+                          {renderConvertedFilename(
+                            raw.matched_text,
+                            raw.file_suffix,
+                          )}
                         </Stack>
                       </Accordion.Control>
                       <Accordion.Panel
@@ -232,7 +271,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
 
           <Flex justify="end" mt="md">
             <Button type="submit" loading={!rules || loading}>
-              {itemData ? "Create" : "Fetch Data"}
+              {itemInfo ? "Create" : "Fetch Data"}
             </Button>
           </Flex>
         </Stack>
