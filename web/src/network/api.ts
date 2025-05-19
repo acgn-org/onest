@@ -6,20 +6,11 @@ const api = axios.create({
   baseURL: baseUrl,
 });
 
-function ErrHandler(err: AxiosError<any>): AxiosError {
-  switch (true) {
-    case err.name === "CanceledError":
-      err.message = "";
-      break;
-    case err && err.response && err.response.data && err.response.data.msg:
-      err.message = err.response.data.msg;
-      break;
-  }
-  return err;
-}
-
-api.interceptors.response.use(undefined, (err: AxiosError) => {
-  return Promise.reject(ErrHandler(err));
+api.interceptors.response.use(undefined, (err: AxiosError<any>) => {
+  if (err.name === "CanceledError") return new Promise(() => {});
+  if (err && err.response && err.response.data && err.response.data.msg)
+    err.toString = () => err.response!.data.msg;
+  return Promise.reject(err);
 });
 
 export default api;
