@@ -39,6 +39,7 @@ func (s _Supervisor) WorkerTaskControl() {
 		select {
 		case <-time.After(sleep):
 		case <-ActivateTaskControl:
+			s.logger.Debugln("activate task control by signal")
 		}
 
 		slowDown = s.TaskControl()
@@ -149,19 +150,19 @@ func (s _Supervisor) WorkerListen() {
 
 		case client.TypeUpdateNewMessage:
 			// match new downloads
-			err := ScanAndCreateNewDownloadTasks()
+			created, err := ScanAndCreateNewDownloadTasks()
 			if err != nil {
 				s.logger.Errorln("failed to create downloads with message:", err)
 				continue
+			} else if created > 0 {
+				select {
+				case ActivateTaskControl <- struct{}{}:
+				default:
+				}
 			}
 
 		default:
 			goto skip
-		}
-
-		select {
-		case ActivateTaskControl <- struct{}{}:
-		default:
 		}
 
 	skip:

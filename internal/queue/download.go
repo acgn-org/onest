@@ -96,7 +96,7 @@ func AddDownloadQueue(model repository.Download) error {
 	return startDownload(model)
 }
 
-func ScanAndCreateNewDownloadTasks() error {
+func ScanAndCreateNewDownloadTasks() (int, error) {
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
 	defer itemRepo.Rollback()
 
@@ -106,8 +106,9 @@ func ScanAndCreateNewDownloadTasks() error {
 
 	items, err := itemRepo.GetAllForUpdates()
 	if err != nil {
-		return err
+		return 0, err
 	}
+	var created int
 	for _, item := range items {
 		logger := logger.WithField("item", item.Name)
 		savepoint := fmt.Sprintf("sp%d", item.ID)
@@ -156,6 +157,7 @@ func ScanAndCreateNewDownloadTasks() error {
 		}
 
 		// create download models
+		created += messageList.Len()
 		el := messageList.Front()
 	createDownloadTask:
 		if _, err := downloadRepo.CreateWithMessages(item.ID, item.Priority, el.Value.([]*client.Message)); err != nil {
@@ -169,5 +171,5 @@ func ScanAndCreateNewDownloadTasks() error {
 		}
 	}
 
-	return itemRepo.Commit().Error
+	return created, itemRepo.Commit().Error
 }
