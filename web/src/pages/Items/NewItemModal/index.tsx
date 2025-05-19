@@ -41,9 +41,29 @@ export const NewItemModal: FC<NewItemModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [id, setId] = useState("");
+  useEffect(() => {
+    if (open) setId("");
+  }, [open]);
 
   const name = useNewItem((state) => state.name);
+  const targetPath = useNewItem((state) => state.target_path);
+  const regexpStr = useNewItem((state) => state.regexp);
+  const pattern = useNewItem((state) => state.pattern);
   const resetExtendedForm = useNewItem((state) => state.resetStates);
+
+  const [regexp, setRegexp] = useState<RegExp | null>(null);
+  const [regexpError, setRegexpError] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (regexpStr) {
+      try {
+        const newRegexp = new RegExp(regexpStr, "mu");
+        setRegexpError(undefined);
+        setRegexp(newRegexp);
+      } catch (err: unknown) {
+        setRegexpError(`${err}`);
+      }
+    }
+  }, [regexpStr]);
 
   const [itemData, setItemData] = useState<RealSearch.ScheduleItem | null>(
     null,
@@ -87,6 +107,11 @@ export const NewItemModal: FC<NewItemModalProps> = ({
       );
       setItemData(data);
       if (!name) useNewItem.setState({ name: data.item.name });
+      if (!regexpStr)
+        useNewItem.setState({
+          regexp:
+            rules?.find((rule) => (rule.id = data.item.rule_id))?.regexp ?? "",
+        });
     } catch (err: unknown) {
       toast.error(`load item data failed: ${err}`);
     }
@@ -137,6 +162,10 @@ export const NewItemModal: FC<NewItemModalProps> = ({
             label="Target Path"
             placeholder="A directory to place downloaded files."
             required={!!itemData}
+            value={targetPath}
+            onChange={(ev) =>
+              useNewItem.setState({ target_path: ev.target.value })
+            }
           />
 
           {itemData && (
@@ -145,11 +174,20 @@ export const NewItemModal: FC<NewItemModalProps> = ({
                 label="Text Regexp"
                 placeholder="Regular expression for parsing msg text."
                 required
+                value={regexpStr}
+                onChange={(ev) =>
+                  useNewItem.setState({ regexp: ev.target.value })
+                }
+                error={regexpError}
               />
               <TextInput
                 label="Target Pattern"
                 placeholder="Pattern for rename file. e.g. S01E${1}"
                 required
+                value={pattern}
+                onChange={(ev) =>
+                  useNewItem.setState({ pattern: ev.target.value })
+                }
               />
 
               <Divider mt="sm" />
@@ -193,7 +231,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
           )}
 
           <Flex justify="end" mt="md">
-            <Button type="submit" loading={loading} disabled={!rules}>
+            <Button type="submit" loading={!rules || loading}>
               {itemData ? "Create" : "Fetch Data"}
             </Button>
           </Flex>

@@ -21,6 +21,7 @@ namespace RealSearch {
   type Rule = {
     id: number;
     name: string;
+    regexp: string;
     cn_index: number;
     en_index: number;
     channel_id: number;
