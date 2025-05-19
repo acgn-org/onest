@@ -38,7 +38,7 @@ type DownloadTask struct {
 	FatalError  bool         `json:"fatal_error"`
 	Error       string       `json:"error"`
 	ErrorAt     int64        `json:"error_at"`
-	File        *client.File `json:"file,omitempty"`
+	File        *client.File `json:"file,omitempty" gorm:"-"`
 }
 
 type DownloadForm struct {
