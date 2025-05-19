@@ -90,6 +90,11 @@ func (task *DownloadTask) completeDownload() error {
 		return err
 	}
 
+	err = os.MkdirAll(targetPath, os.ModePerm)
+	if err != nil {
+		task.logger.Errorln("create target directory failed:", err)
+		return err
+	}
 	err = os.Rename(task.state.Local.Path, path.Join(targetPath, targetName))
 	if err != nil {
 		task.logger.Errorln("move file failed:", err)
