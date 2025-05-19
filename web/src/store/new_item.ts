@@ -5,6 +5,7 @@ interface NewItemState {
   target_path: string;
   regexp: string;
   pattern: string;
+  priority: number;
 }
 
 const NewItemInitial: NewItemState = {
@@ -12,6 +13,7 @@ const NewItemInitial: NewItemState = {
   target_path: "",
   regexp: "",
   pattern: "",
+  priority: 16,
 };
 
 interface NewItemActions {

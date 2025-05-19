@@ -22,6 +22,7 @@ namespace RealSearch {
     selected: boolean;
     matched: boolean;
     matched_text: string;
+    priority: number | undefined;
   };
 
   type Rule = {

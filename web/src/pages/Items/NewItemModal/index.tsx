@@ -16,8 +16,14 @@ import {
   Text,
   Badge,
   Accordion,
+  Alert,
 } from "@mantine/core";
-import { IconClipboard } from "@tabler/icons-react";
+import {
+  IconClipboard,
+  IconInfoCircle,
+  IconPlus,
+  IconMinus,
+} from "@tabler/icons-react";
 
 import useNewItem from "@store/new_item.ts";
 
@@ -49,6 +55,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
   const targetPath = useNewItem((state) => state.target_path);
   const regexpStr = useNewItem((state) => state.regexp);
   const pattern = useNewItem((state) => state.pattern);
+  const priority = useNewItem((state) => state.priority);
   const resetExtendedForm = useNewItem((state) => state.resetStates);
 
   const [regexp, setRegexp] = useState<RegExp | null>(null);
@@ -75,25 +82,35 @@ export const NewItemModal: FC<NewItemModalProps> = ({
     resetExtendedForm();
   }, [id]);
   useEffect(() => {
-    if (regexp && pattern)
-      setItemRaws((raws) => {
-        if (!raws) return raws;
-        for (const raw of raws) {
-          raw.matched = regexp.test(raw.text);
-          const matches = regexp.exec(raw.text);
-          const matchesObj = Object.fromEntries(
-            (matches ?? []).map((v, i) => [String(i), v]),
-          );
-          raw.matched_text = pattern.replace(
-            /\$(\w+)|\$\{([^}]+)\}/g,
-            (_, key1, key2) => {
-              const key = key1 || key2;
-              return matchesObj[key] ?? "";
-            },
-          );
-        }
-        return [...raws];
-      });
+    if (regexp) {
+      if (pattern)
+        setItemRaws((raws) => {
+          if (!raws) return raws;
+          for (const raw of raws) {
+            raw.matched = regexp.test(raw.text);
+            const matches = regexp.exec(raw.text);
+            const matchesObj = Object.fromEntries(
+              (matches ?? []).map((v, i) => [String(i), v]),
+            );
+            raw.matched_text = pattern.replace(
+              /\$(\w+)|\$\{([^}]+)\}/g,
+              (_, key1, key2) => {
+                const key = key1 || key2;
+                return matchesObj[key] ?? "";
+              },
+            );
+          }
+          return [...raws];
+        });
+      else
+        setItemRaws((raws) => {
+          if (!raws) return raws;
+          for (const raw of raws) {
+            raw.matched = regexp.test(raw.text);
+          }
+          return [...raws];
+        });
+    }
   }, [itemRaws, regexp, pattern]);
 
   const onPasteId = async () => {
@@ -126,7 +143,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
       const {
         data: { data },
       } = await api.get<{ data: RealSearch.ScheduleItem }>(
-        `/realsearch/time_machine/item/${idParsed}/raws`,
+        `realsearch/time_machine/item/${idParsed}/raws`,
       );
       setItemInfo(data.item);
       setItemRaws(
@@ -135,6 +152,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
           selected: true,
           matched: true,
           matched_text: "",
+          priority: undefined,
         })),
       );
       if (!name) useNewItem.setState({ name: data.item.name });
@@ -149,22 +167,92 @@ export const NewItemModal: FC<NewItemModalProps> = ({
     setLoading(false);
   };
 
-  const renderConvertedFilename = (text: string, suffix: string) => {
+  const onSetItemPriority = (
+    index: number,
+    itemPriority: number | undefined,
+    decrease?: boolean,
+  ) => {
+    if (itemPriority === undefined) itemPriority = priority;
+    if (!decrease) {
+      if (itemPriority < 32) itemPriority++;
+    } else {
+      if (itemPriority > 1) itemPriority--;
+    }
+    setItemRaws((raws) => {
+      raws![index].priority = itemPriority;
+      return [...raws!];
+    });
+  };
+
+  const onCreate = async () => {
+    setLoading(true);
+    try {
+      const channel_id = rules?.find(
+        (rule) => rule.id === itemInfo!.rule_id,
+      )?.channel_id;
+      if (!channel_id) {
+        toast.error(`specific rule ${itemInfo!.rule_id} not found`);
+        return;
+      }
+
+      let process: number | undefined;
+      for (const raw of itemRaws!) {
+        if (!process || raw.msg_id > process) process = raw.msg_id;
+      }
+      if (!process) {
+        toast.error("at least one raw info should be loaded");
+        return;
+      }
+
+      await api.post(`item/`, {
+        name,
+        channel_id: channel_id,
+        regexp: regexpStr,
+        pattern,
+        process,
+        target_path: targetPath,
+        priority,
+        downloads: itemRaws!
+          .filter((raw) => raw.matched && raw.selected)
+          .map((raw) => ({
+            msg_id: raw.msg_id,
+            priority: raw.priority ?? priority,
+          })),
+      });
+      onItemMutate();
+      onClose()
+    } catch (err: unknown) {
+      toast.error(`create item failed: ${err}`);
+    }
+    setLoading(false);
+  };
+
+  const renderConvertedFilename = (raw: RealSearch.MatchedRaw) => {
+    if (!raw.matched)
+      return (
+        <Alert
+          variant="transparent"
+          color="red"
+          title="The regular expression does not match the text."
+          icon={<IconInfoCircle />}
+        />
+      );
     if (!regexp || !pattern)
       return (
         <Text c="dimmed">
           Regexp or pattern is empty, input something first
         </Text>
       );
-    return <Text>{`${text}.${suffix}`}</Text>;
+    return <Text>{`${raw.matched_text}.${raw.file_suffix}`}</Text>;
   };
 
   return (
     <Modal title={"New Item"} size={"lg"} opened={open} onClose={onClose}>
       <form
-        onSubmit={(ev) =>
-          (itemInfo ? undefined : onLoadItemData()) && ev.preventDefault()
-        }
+        onSubmit={(ev) => {
+          ev.preventDefault();
+          return itemInfo ? onCreate() : onLoadItemData();
+        }}
       >
         <Stack align="stretch">
           <Group>
@@ -188,8 +276,13 @@ export const NewItemModal: FC<NewItemModalProps> = ({
               label="Default Priority"
               min={1}
               max={32}
-              defaultValue={16}
               required={!!itemInfo}
+              value={priority}
+              onChange={(val) => {
+                if (typeof val === "string") val = parseInt(val);
+                if (!isNaN(val) && val >= 1 && val <= 32)
+                  useNewItem.setState({ priority: val });
+              }}
             />
           </Group>
           <TextInput
@@ -261,11 +354,42 @@ export const NewItemModal: FC<NewItemModalProps> = ({
                             <Badge color="blue" size="sm" variant="light">
                               {(raw.size / 1024 / 1024).toFixed(0)} MB
                             </Badge>
+                            <div onClick={(ev) => ev.stopPropagation()}>
+                              <ActionIcon.Group>
+                                <ActionIcon
+                                  variant="default"
+                                  size={18}
+                                  radius="md"
+                                  onClick={() =>
+                                    onSetItemPriority(index, raw.priority, true)
+                                  }
+                                >
+                                  <IconMinus color="var(--mantine-color-red-text)" />
+                                </ActionIcon>
+                                <ActionIcon.GroupSection
+                                  variant="default"
+                                  size={13}
+                                  bg="var(--mantine-color-body)"
+                                  h={18}
+                                  w={32}
+                                  c={raw.priority ? undefined : "dimmed"}
+                                >
+                                  {raw.priority || priority}
+                                </ActionIcon.GroupSection>
+                                <ActionIcon
+                                  variant="default"
+                                  size={18}
+                                  radius="md"
+                                  onClick={() =>
+                                    onSetItemPriority(index, raw.priority)
+                                  }
+                                >
+                                  <IconPlus color="var(--mantine-color-teal-text)" />
+                                </ActionIcon>
+                              </ActionIcon.Group>
+                            </div>
                           </Group>
-                          {renderConvertedFilename(
-                            raw.matched_text,
-                            raw.file_suffix,
-                          )}
+                          {renderConvertedFilename(raw)}
                         </Stack>
                       </Accordion.Control>
                       <Accordion.Panel
