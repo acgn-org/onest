@@ -131,6 +131,7 @@ func (s _Supervisor) WorkerListen() {
 		switch update.GetType() {
 
 		case client.TypeUpdateFile:
+			var isFileCompleted bool
 			file := update.(*client.UpdateFile).File
 			lock.Lock()
 			for _, task := range downloading {
@@ -138,6 +139,7 @@ func (s _Supervisor) WorkerListen() {
 				if task.state != nil && task.state.Id == file.Id {
 					task.state = file
 					if file.Local.IsDownloadingCompleted {
+						isFileCompleted = true
 						err := task.completeDownload()
 						if err != nil {
 							s.logger.Errorln("failed to complete download task:", err)
@@ -147,6 +149,12 @@ func (s _Supervisor) WorkerListen() {
 				task.lock.Unlock()
 			}
 			lock.Unlock()
+			if isFileCompleted {
+				select {
+				case ActivateTaskControl <- struct{}{}:
+				default:
+				}
+			}
 
 		case client.TypeUpdateNewMessage:
 			// match new downloads

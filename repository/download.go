@@ -106,8 +106,9 @@ func (repo DownloadRepository) GetDownloading() ([]Download, error) {
 	return downloads, repo.DB.Model(&Download{}).Preload("Item").Where("downloaded=? AND downloading=?", false, true).Find(&downloads).Error
 }
 
-func (repo DownloadRepository) GetDownloadTaskInfo(tasks *[]DownloadTask) error {
-	return repo.DB.Model(&Download{}).Omit("msg_id", "priority", "fatal_error").Where("id").Find(tasks).Error
+func (repo DownloadRepository) GetDownloadTaskByID(ids ...uint) ([]DownloadTask, error) {
+	var tasks []DownloadTask
+	return tasks, repo.DB.Model(&Download{}).Omit("fatal_error").Where("id IN ?", ids).Find(&tasks).Error
 }
 
 func (repo DownloadRepository) SetDownloading(id uint) error {

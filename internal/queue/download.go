@@ -15,14 +15,25 @@ func GetDownloading() ([]repository.DownloadTask, error) {
 	lock.RLock()
 	defer lock.RUnlock()
 
-	tasks := make([]repository.DownloadTask, 0, len(downloading))
-	for _, task := range downloading {
-		tasks = append(tasks, repository.DownloadTask{
-			ID: task.ID,
-		})
+	if len(downloading) == 0 {
+		return make([]repository.DownloadTask, 0), nil
 	}
 
-	return tasks, database.NewRepository[repository.DownloadRepository]().GetDownloadTaskInfo(&tasks)
+	taskIds := make([]uint, 0, len(downloading))
+	for k := range downloading {
+		taskIds = append(taskIds, k)
+	}
+
+	tasks, err := database.NewRepository[repository.DownloadRepository]().GetDownloadTaskByID(taskIds...)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, task := range tasks {
+		tasks[i].File = downloading[task.ID].state
+	}
+
+	return tasks, nil
 }
 
 func clean() error {
@@ -112,7 +123,7 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 	fetchMessage:
 		messages, err := source.Telegram.GetHistory(item.ChannelID, fromMessageID)
 		if err != nil {
-			logger.Errorf("get chat %d history failed: %v", item.ID, err)
+			logger.Errorf("get chat %d history failed: %v", item.ChannelID, err)
 			continue
 		}
 		fromMessageID = messages.Messages[0].Id
