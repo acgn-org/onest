@@ -101,7 +101,7 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 		} else if len(models) != 0 {
 			s.Cleaned.Store(false)
 			for _, model := range models {
-				if err := startDownload(model); err != nil {
+				if err := startDownload(model.Item.ChannelID, model); err != nil {
 					s.logger.Errorln("error occurred while start download task:", err)
 				}
 			}

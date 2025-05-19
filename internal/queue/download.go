@@ -57,12 +57,12 @@ func CleanDownload() error {
 }
 
 // create task and start
-func startDownload(model repository.Download) error {
+func startDownload(channelId int64, download repository.Download) error {
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
-	if !model.Downloading {
-		if err := downloadRepo.SetDownloading(model.ID); err != nil {
+	if !download.Downloading {
+		if err := downloadRepo.SetDownloading(download.ID); err != nil {
 			return err
 		}
 	}
@@ -70,8 +70,8 @@ func startDownload(model repository.Download) error {
 		return err
 	}
 
-	task, err := NewTask(model)
-	downloading[model.ID] = task
+	task, err := NewTask(channelId, download)
+	downloading[download.ID] = task
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func startDownload(model repository.Download) error {
 	return downloadRepo.Commit().Error
 }
 
-func AddDownloadQueue(model repository.Download) error {
+func AddDownloadQueue(channelId int64, model repository.Download) error {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -93,7 +93,7 @@ func AddDownloadQueue(model repository.Download) error {
 		return nil
 	}
 
-	return startDownload(model)
+	return startDownload(channelId, model)
 }
 
 func ScanAndCreateNewDownloadTasks() (int, error) {

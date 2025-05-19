@@ -17,10 +17,10 @@ import (
 	"time"
 )
 
-func NewTask(model repository.Download) (*DownloadTask, error) {
+func NewTask(channelId int64, model repository.Download) (*DownloadTask, error) {
 	task := &DownloadTask{
 		ID:        model.ID,
-		ChannelID: model.Item.ChannelID,
+		ChannelID: channelId,
 		MsgID:     model.MsgID,
 		logger: logfield.New(logfield.ComTask).
 			WithField("id", model.ID),
