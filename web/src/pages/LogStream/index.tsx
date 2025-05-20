@@ -16,30 +16,31 @@ import AnsiToHtml from "ansi-to-html";
 const ansiConverter = new AnsiToHtml();
 
 interface LogProps {
-  id: string;
   text: string;
+  wrap?: boolean;
 }
 
 const LogLine = memo<LogProps>(
-  ({ text }) => {
+  ({ text, wrap }) => {
     return (
       <pre
-        style={{ margin: "unset" }}
+        style={{ margin: "unset", whiteSpace: wrap ? "pre-wrap" : undefined }}
         dangerouslySetInnerHTML={{
           __html: ansiConverter.toHtml(text),
         }}
       />
     );
   },
-  () => true,
+  (prev, next) => prev.wrap === next.wrap,
 );
 
 export const LogStream: FC = () => {
   const [follow, setFollow] = useState(true);
+  const [wrap, setWrap] = useState(false);
   const lines = useRef(500);
 
   const viewportRef = useRef<HTMLDivElement>(null);
-  const [logs, setLogs] = useState<LogProps[]>([]);
+  const [logs, setLogs] = useState<{ id: string; text: string }[]>([]);
 
   const { conn, connected } = useWebsocket("log/watch", {
     onMessage: async (msg) => {
@@ -82,6 +83,12 @@ export const LogStream: FC = () => {
           checked={follow}
           onChange={(ev) => setFollow(ev.target.checked)}
         />
+        <Checkbox
+          variant="outline"
+          label="Wrap"
+          checked={wrap}
+          onChange={(ev) => setWrap(ev.target.checked)}
+        />
         <Flex gap="sm" align="center">
           <NumberInput
             min={10}
@@ -120,10 +127,10 @@ export const LogStream: FC = () => {
           visible={!connected}
           zIndex={1000}
           overlayProps={{ radius: "sm", blur: 2 }}
-          transitionProps={{transition: 'fade', duration: 100}}
+          transitionProps={{ transition: "fade", duration: 100 }}
         />
         {logs.map((log) => (
-          <LogLine key={log.id} {...log} />
+          <LogLine key={log.id} wrap={wrap} text={log.text} />
         ))}
       </Paper>
     </Stack>
