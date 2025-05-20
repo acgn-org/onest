@@ -30,7 +30,17 @@ func GetDownloading() ([]repository.DownloadTask, error) {
 	}
 
 	for i, task := range tasks {
-		tasks[i].File = downloading[task.ID].state
+		taskQueue := downloading[task.ID]
+
+		state := taskQueue.state.Load()
+		if state != nil {
+			tasks[i].File = state.File
+		}
+
+		tasks[i].FatalError = taskQueue.log.isFatal.Load()
+		errorState := taskQueue.log.error.Load()
+		tasks[i].Error = errorState.Err
+		tasks[i].ErrorAt = errorState.At.Unix()
 	}
 
 	return tasks, nil

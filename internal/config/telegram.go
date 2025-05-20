@@ -7,7 +7,7 @@ type _Telegram struct {
 	ApiHash             string `yaml:"api_hash"`
 	DataFolder          string `yaml:"data_folder"`
 	MaxParallelDownload uint8  `yaml:"max_parallel_download"`
-	MaxDownloadError    uint8  `yaml:"max_download_error"`
+	MaxDownloadError    uint32 `yaml:"max_download_error"`
 }
 
 var Telegram = LoadScoped("telegram", &_Telegram{

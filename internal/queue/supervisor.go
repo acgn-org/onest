@@ -54,8 +54,8 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 		logger := s.logger.WithField("task", key)
 
 		// remove tasks with fatal state
-		if task.isFatal.Load() {
-			err := task.writeFatalStateToDatabase()
+		if task.log.isFatal.Load() {
+			err := task._WriteFatalStateToDatabase()
 			if err != nil {
 				logger.Errorln("failed to write download task fatal state into database:", err)
 			} else {
@@ -64,31 +64,21 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 			continue
 		}
 
-		task.lock.Lock()
-
-		if !task.errorAt.IsZero() && time.Since(task.errorAt) > time.Second*10 {
-			// restart downloads with error
-			task.errorAt = time.Time{}
-			if err := task.doUpdateOrDownload(); err != nil {
-				logger.Errorln("failed to restart task:", err)
-			}
-		} else if time.Since(task.stateUpdatedAt) > time.Second*15 {
-			// proactively update stats
-			if err := task.doUpdateOrDownload(); err != nil {
+		if state := task.state.Load(); state == nil || time.Since(state.UpdatedAt) > time.Second*10 {
+			// proactively update stats, or restart downloads with error
+			if err := task.UpdateOrDownload(); err != nil {
 				logger.Errorln("failed to update task state:", err)
 			}
 		}
 
 		// proceed downloads completed
-		if task.state != nil && task.state.Local.IsDownloadingCompleted {
-			if err := task.completeDownload(); err != nil {
+		if state := task.state.Load(); state != nil && state.File.Local.IsDownloadingCompleted {
+			if err := task.CompleteDownload(); err != nil {
 				logger.Errorln("failed to complete download task:", err)
 			} else {
 				delete(downloading, key)
 			}
 		}
-
-		task.lock.Unlock()
 	}
 
 	// maintain number of parallel downloads
@@ -135,18 +125,19 @@ func (s _Supervisor) WorkerListen() {
 			file := update.(*client.UpdateFile).File
 			lock.Lock()
 			for _, task := range downloading {
-				task.lock.Lock()
-				if task.state != nil && task.state.Id == file.Id {
-					task.state = file
+				if state := task.state.Load(); state != nil && state.File.Id == file.Id {
+					task.state.Store(&TaskFileState{
+						File:      file,
+						UpdatedAt: time.Now(),
+					})
 					if file.Local.IsDownloadingCompleted {
 						isFileCompleted = true
-						err := task.completeDownload()
+						err := task.CompleteDownload()
 						if err != nil {
 							s.logger.Errorln("failed to complete download task:", err)
 						}
 					}
 				}
-				task.lock.Unlock()
 			}
 			lock.Unlock()
 			if isFileCompleted {
