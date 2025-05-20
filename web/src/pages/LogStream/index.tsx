@@ -12,6 +12,8 @@ import {
   LoadingOverlay,
 } from "@mantine/core";
 
+import useLogStore from "@store/log.ts";
+
 import AnsiToHtml from "ansi-to-html";
 const ansiConverter = new AnsiToHtml();
 
@@ -35,9 +37,9 @@ const LogLine = memo<LogProps>(
 );
 
 export const LogStream: FC = () => {
-  const [follow, setFollow] = useState(true);
-  const [wrap, setWrap] = useState(false);
-  const lines = useRef(500);
+  const follow = useLogStore((state) => state.follow);
+  const wrap = useLogStore((state) => state.wrap);
+  const lines = useLogStore((state) => state.lines);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [logs, setLogs] = useState<{ id: string; text: string }[]>([]);
@@ -53,8 +55,9 @@ export const LogStream: FC = () => {
             text: text,
           },
         ];
-        if (val.length > lines.current) {
-          val.splice(0, val.length - lines.current);
+        const lines = useLogStore.getState().lines;
+        if (val.length > lines) {
+          val.splice(0, val.length - lines);
         }
         return val;
       });
@@ -81,13 +84,13 @@ export const LogStream: FC = () => {
           variant="outline"
           label="Follow"
           checked={follow}
-          onChange={(ev) => setFollow(ev.target.checked)}
+          onChange={(ev) => useLogStore.setState({ follow: ev.target.checked })}
         />
         <Checkbox
           variant="outline"
           label="Wrap"
           checked={wrap}
-          onChange={(ev) => setWrap(ev.target.checked)}
+          onChange={(ev) => useLogStore.setState({ wrap: ev.target.checked })}
         />
         <Flex gap="sm" align="center">
           <NumberInput
@@ -99,8 +102,8 @@ export const LogStream: FC = () => {
             onBlur={(ev) => {
               const value = parseInt(ev.target.value);
               if (value) {
-                const shouldReconnect = value > lines.current;
-                lines.current = value;
+                const shouldReconnect = value > lines && logs.length === lines;
+                useLogStore.setState({ lines: value });
                 if (shouldReconnect) conn.current?.close();
               }
             }}
