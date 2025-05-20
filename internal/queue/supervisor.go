@@ -124,7 +124,7 @@ func (s _Supervisor) WorkerListen() {
 			var isFileCompleted bool
 			file := update.(*client.UpdateFile).File
 			lock.Lock()
-			for _, task := range downloading {
+			for id, task := range downloading {
 				if state := task.state.Load(); state != nil && state.File.Id == file.Id {
 					task.state.Store(&TaskFileState{
 						File:      file,
@@ -135,6 +135,8 @@ func (s _Supervisor) WorkerListen() {
 						err := task.CompleteDownload()
 						if err != nil {
 							s.logger.Errorln("failed to complete download task:", err)
+						} else {
+							delete(downloading, id)
 						}
 					}
 				}
