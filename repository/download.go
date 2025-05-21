@@ -108,7 +108,12 @@ func (repo DownloadRepository) GetDownloading() ([]Download, error) {
 
 func (repo DownloadRepository) GetDownloadTaskByID(ids ...uint) ([]DownloadTask, error) {
 	var tasks []DownloadTask
-	return tasks, repo.DB.Model(&Download{}).Omit("fatal_error").Where("id IN ?", ids).Find(&tasks).Error
+	return tasks, repo.DB.Model(&Download{}).Where("id IN ?", ids).Find(&tasks).Error
+}
+
+func (repo DownloadRepository) GetByItemID(id uint) ([]DownloadTask, error) {
+	var tasks []DownloadTask
+	return tasks, repo.DB.Model(&Download{}).Where("item_id = ?", id).Find(&tasks).Error
 }
 
 func (repo DownloadRepository) SetDownloading(id uint) error {

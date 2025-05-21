@@ -14,6 +14,28 @@ import (
 	"regexp"
 )
 
+func GetItemDownloads(ctx *gin.Context) {
+	id, err := tools.IDFromParam(ctx, "id")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	downloadRepo := database.NewRepository[repository.DownloadRepository]()
+	tasks, err := downloadRepo.GetDownloadTaskByID(id)
+	if err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	queue.MigrateDownloadTaskInfo(tasks)
+
+	if tasks == nil {
+		tasks = make([]repository.DownloadTask, 0)
+	}
+	response.Success(ctx, tasks)
+}
+
 func GetItems(ctx *gin.Context) {
 	var form struct {
 		ActiveAfter int32 `form:"active_after" json:"active_after" binding:"min=0"`

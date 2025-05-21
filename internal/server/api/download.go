@@ -15,6 +15,9 @@ func GetDownloadTasks(ctx *gin.Context) {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
 	}
+	if tasks == nil {
+		tasks = make([]repository.DownloadTask, 0)
+	}
 	response.Success(ctx, tasks)
 }
 

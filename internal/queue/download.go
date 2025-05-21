@@ -13,24 +13,34 @@ import (
 
 func GetDownloading() ([]repository.DownloadTask, error) {
 	lock.RLock()
-	defer lock.RUnlock()
-
-	if len(downloading) == 0 {
-		return make([]repository.DownloadTask, 0), nil
-	}
 
 	taskIds := make([]uint, 0, len(downloading))
 	for k := range downloading {
 		taskIds = append(taskIds, k)
 	}
 
+	lock.RUnlock()
+
 	tasks, err := database.NewRepository[repository.DownloadRepository]().GetDownloadTaskByID(taskIds...)
 	if err != nil {
 		return nil, err
 	}
 
+	if len(tasks) != 0 {
+		MigrateDownloadTaskInfo(tasks)
+	}
+	return tasks, nil
+}
+
+func MigrateDownloadTaskInfo(tasks []repository.DownloadTask) {
+	lock.RLock()
+	defer lock.RUnlock()
+
 	for i, task := range tasks {
-		taskQueue := downloading[task.ID]
+		taskQueue, ok := downloading[task.ID]
+		if !ok {
+			continue
+		}
 
 		state := taskQueue.state.Load()
 		if state != nil {
@@ -42,8 +52,6 @@ func GetDownloading() ([]repository.DownloadTask, error) {
 		tasks[i].Error = errorState.Err
 		tasks[i].ErrorAt = errorState.At.Unix()
 	}
-
-	return tasks, nil
 }
 
 func clean() error {
