@@ -54,9 +54,9 @@ func (repo ItemRepository) FirstItemByIDForUpdates(id uint) (*Item, error) {
 	return &item, repo.DB.Model(&item).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id).First(&item).Error
 }
 
-func (repo ItemRepository) GetAllForUpdates() ([]Item, error) {
+func (repo ItemRepository) GetForUpdates(dateEndAfter int32) ([]Item, error) {
 	var items []Item
-	return items, repo.DB.Model(&Item{}).Clauses(clause.Locking{Strength: "UPDATE"}).Find(&items).Error
+	return items, repo.DB.Model(&Item{}).Where("date_end >= ?", dateEndAfter).Clauses(clause.Locking{Strength: "UPDATE"}).Find(&items).Error
 }
 
 func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {

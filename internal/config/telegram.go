@@ -8,12 +8,14 @@ type _Telegram struct {
 	DataFolder          string `yaml:"data_folder"`
 	MaxParallelDownload uint8  `yaml:"max_parallel_download"`
 	MaxDownloadError    uint32 `yaml:"max_download_error"`
+	ScanThresholdDays   uint16 `yaml:"scan_threshold_days"`
 }
 
 var Telegram = LoadScoped("telegram", &_Telegram{
 	DataFolder:          "tdlib",
 	MaxParallelDownload: 3,
 	MaxDownloadError:    5,
+	ScanThresholdDays:   32,
 })
 
 func init() {

@@ -9,6 +9,7 @@ import (
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
 	"github.com/zelenin/go-tdlib/client"
+	"time"
 )
 
 func GetDownloading() ([]repository.DownloadTask, error) {
@@ -120,7 +121,7 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 
 	logger := logfield.New(logfield.ComQueue).WithAction("add downloads with message")
 
-	items, err := itemRepo.GetAllForUpdates()
+	items, err := itemRepo.GetForUpdates(int32(time.Now().Add(-time.Duration(config.Telegram.Get().ScanThresholdDays) * time.Hour * 24).Unix()))
 	if err != nil {
 		return 0, err
 	}
