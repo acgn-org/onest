@@ -62,8 +62,7 @@ func (repo ItemRepository) GetAllForUpdates() ([]Item, error) {
 func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {
 	var itemsToDownload []Item
 	if err := repo.DB.Model(&Item{}).Where(
-		"EXISTS (?)", repo.DB.Model(&Download{}).Where("downloads.item_id = items.id").Limit(1),
-		dateEnd,
+		"EXISTS (?)", repo.DB.Model(&Download{}).Where("downloads.item_id = items.id AND downloads.downloaded = ?", false).Limit(1),
 	).Find(&itemsToDownload).Error; err != nil {
 		return nil, err
 	}

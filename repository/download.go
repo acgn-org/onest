@@ -8,17 +8,17 @@ import (
 type Download struct {
 	ID uint `gorm:"primarykey"`
 
-	ItemID uint `gorm:"index;not null"`
+	ItemID uint `gorm:"index:idx_item_active;not null"`
 	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE"`
 
 	MsgID int64 `gorm:"not null"`
 	Text  string
 	Size  int64 `gorm:"not null"`
-	Date  int32 `gorm:"index:idx_global_queue,sort:asc;not null;priority:4"`
+	Date  int32 `gorm:"index:idx_global_queue,priority:4,sort:asc;not null"`
 
-	Priority    int32 `gorm:"index:idx_global_queue,sort:desc;priority:3;not null"`
-	Downloading bool  `gorm:"index:idx_global_queue;default:false;priority:2"`
-	Downloaded  bool  `gorm:"index:idx_global_queue;default:false;priority:1"`
+	Priority    int32 `gorm:"index:idx_global_queue,priority:3,sort:desc;not null"`
+	Downloading bool  `gorm:"index:idx_global_queue,priority:2;default:false"`
+	Downloaded  bool  `gorm:"index:idx_global_queue,priority:1;index:idx_item_active;default:false;not null"`
 
 	FatalError bool
 	Error      string
