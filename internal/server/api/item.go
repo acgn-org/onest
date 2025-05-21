@@ -46,7 +46,7 @@ func GetItems(ctx *gin.Context) {
 	}
 
 	itemRepo := database.NewRepository[repository.ItemRepository]()
-	items, err := itemRepo.GetWithDateEnd(form.ActiveAfter)
+	items, err := itemRepo.GetActive(form.ActiveAfter)
 	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return

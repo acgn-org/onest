@@ -7,14 +7,14 @@ import (
 
 type Item struct {
 	ID        uint  `gorm:"primarykey" json:"id"`
-	ChannelID int64 `gorm:"index:idx_channel_date;not null" json:"channel_id"`
+	ChannelID int64 `gorm:"not null" json:"channel_id"`
 
 	Name    string `gorm:"not null" json:"name"`
 	Regexp  string `gorm:"not null" json:"regexp"`
 	Pattern string `gorm:"not null" json:"pattern"`
 
 	DateStart int32 `gorm:"not null" json:"date_start"`
-	DateEnd   int32 `gorm:"index:idx_date;index:idx_channel_date;not null" json:"date_end"`
+	DateEnd   int32 `gorm:"index:idx_date;not null" json:"date_end"`
 
 	Process int64 `gorm:"not null" json:"process"`
 
@@ -59,9 +59,29 @@ func (repo ItemRepository) GetAllForUpdates() ([]Item, error) {
 	return items, repo.DB.Model(&Item{}).Clauses(clause.Locking{Strength: "UPDATE"}).Find(&items).Error
 }
 
-func (repo ItemRepository) GetWithDateEnd(dateEnd int32) ([]Item, error) {
-	var items []Item
-	return items, repo.DB.Model(&Item{}).Where("date_end > ?", dateEnd).Find(&items).Error
+func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {
+	var itemsToDownload []Item
+	if err := repo.DB.Model(&Item{}).Where(
+		"EXISTS (?)", repo.DB.Model(&Download{}).Where("downloads.item_id = items.id").Limit(1),
+		dateEnd,
+	).Find(&itemsToDownload).Error; err != nil {
+		return nil, err
+	}
+
+	var itemsToDownloadIds = make([]uint, len(itemsToDownload))
+	for i, item := range itemsToDownload {
+		itemsToDownloadIds[i] = item.ID
+	}
+
+	var itemsRecentlyActive []Item
+	if err := repo.DB.Model(&Item{}).Where("ID NOT IN (?) AND date_end > ?", itemsToDownloadIds, dateEnd).Find(&itemsRecentlyActive).Error; err != nil {
+		return nil, err
+	}
+
+	var result = make([]Item, 0, len(itemsToDownload)+len(itemsRecentlyActive))
+	result = append(result, itemsToDownload...)
+	result = append(result, itemsRecentlyActive...)
+	return result, nil
 }
 
 func (repo ItemRepository) UpdateProcess(id uint, process int64, dateEnd int32) error {
