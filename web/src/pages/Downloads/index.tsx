@@ -1,6 +1,6 @@
 import { type FC } from "react";
 
-import { Flex, Card, Text, Badge } from "@mantine/core";
+import {} from "@mantine/core";
 
 import useSWR from "swr";
 import api from "@network/api.ts";
@@ -17,15 +17,6 @@ export const Downloads: FC = () => {
     },
   );
 
-  return (
-    <>
-      <Flex>
-        <Flex>{/*status*/}</Flex>
-        <Flex>{/*form*/}</Flex>
-      </Flex>
-
-      <Flex>{/*downloading*/}</Flex>
-    </>
-  );
+  return <></>;
 };
 export default Downloads;

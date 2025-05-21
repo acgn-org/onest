@@ -13,14 +13,14 @@ const routes: RouteObject[] = [
     children: [
       {
         index: true,
-        Component: Downloads,
-      },
-      {
-        path: "/items",
         Component: Items,
       },
       {
-        path: "/log-stream",
+        path: "downloads",
+        Component: Downloads,
+      },
+      {
+        path: "log-stream",
         Component: LogStream,
       },
       {

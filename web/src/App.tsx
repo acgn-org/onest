@@ -28,14 +28,14 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    label: "Downloads",
+    label: "Items",
     href: "/",
-    icon: <IconCloudDown size={20} stroke={1.5} />,
+    icon: <IconTemplate size={20} stroke={1.5} />,
   },
   {
-    label: "Items",
-    href: "/items",
-    icon: <IconTemplate size={20} stroke={1.5} />,
+    label: "Downloads",
+    href: "/downloads",
+    icon: <IconCloudDown size={20} stroke={1.5} />,
   },
   {
     label: "Log Stream",
