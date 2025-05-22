@@ -3,7 +3,15 @@ import dayjs from "dayjs";
 
 import NewItemModal from "./NewItemModal";
 
-import { Group, Flex, Button, SegmentedControl } from "@mantine/core";
+import {
+  Group,
+  Flex,
+  Button,
+  SegmentedControl,
+  NumberInput,
+  Text,
+  Transition,
+} from "@mantine/core";
 
 import useSWR from "swr";
 import api from "@network/api.ts";
@@ -33,22 +41,53 @@ export const Items: FC = () => {
 
   return (
     <>
-      <Flex align="center" justify="space-between">
+      <Flex
+        justify="space-between"
+        align={{ base: "flex-start", xs: "center" }}
+        direction={{ base: "column", xs: "row" }}
+      >
         <Group gap={"sm"} my={20}>
           <Button onClick={() => setOnNewItem(true)}>New</Button>
         </Group>
-        <SegmentedControl
-          withItemsBorders={false}
-          data={[
-            { label: "Active", value: "active" },
-            { label: "Error", value: "error" },
-            { label: "All", value: "all" },
-          ]}
-          value={viewMode}
-          onChange={(val) =>
-            useItemStore.setState({ view_mode: val as Item.ViewMode })
-          }
-        />
+
+        <Group gap={"lg"}>
+          <Transition
+            mounted={viewMode === "active"}
+            transition="fade"
+            duration={200}
+            timingFunction="ease-out"
+          >
+            {(styles) => (
+              <Flex gap="sm" align="center" style={styles}>
+                <NumberInput
+                  min={0}
+                  allowDecimal={false}
+                  size="xs"
+                  w="60"
+                  value={activeDays}
+                  onChange={(val) => {
+                    if (typeof val === "string") val = parseInt(val);
+                    if (!isNaN(val))
+                      useItemStore.setState({ active_days: val });
+                  }}
+                />
+                <Text size="sm">Days</Text>
+              </Flex>
+            )}
+          </Transition>
+          <SegmentedControl
+            withItemsBorders={false}
+            data={[
+              { label: "Active", value: "active" },
+              { label: "Error", value: "error" },
+              { label: "All", value: "all" },
+            ]}
+            value={viewMode}
+            onChange={(val) =>
+              useItemStore.setState({ view_mode: val as Item.ViewMode })
+            }
+          />
+        </Group>
       </Flex>
 
       <NewItemModal
