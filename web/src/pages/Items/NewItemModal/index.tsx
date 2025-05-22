@@ -25,7 +25,7 @@ import {
   IconMinus,
 } from "@tabler/icons-react";
 
-import useNewItem from "@store/new_item.ts";
+import useNewItem from "@store/new-item.ts";
 
 import useRealSearchRules from "@hook/useRealSearchRules.ts";
 import api from "@network/api.ts";

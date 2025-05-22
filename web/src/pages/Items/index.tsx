@@ -8,8 +8,10 @@ import { Group, Button } from "@mantine/core";
 import useSWR from "swr";
 import api from "@network/api.ts";
 
+import useItemStore from "@store/item.ts";
+
 export const Items: FC = () => {
-  const [activeDays, setActiveDays] = useState(30);
+  const activeDays = useItemStore((state) => state.active_after_days);
   const activeAfter = useMemo(
     () => dayjs().subtract(activeDays, "day").unix(),
     [activeDays],
