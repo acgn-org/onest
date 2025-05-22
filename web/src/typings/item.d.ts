@@ -21,4 +21,6 @@ namespace Item {
     date_start: number;
     date_end: number;
   };
+
+  type ViewMode = "active" | "error" | "all";
 }

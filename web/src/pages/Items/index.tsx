@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 
 import NewItemModal from "./NewItemModal";
 
-import { Group, Button } from "@mantine/core";
+import { Group, Flex, Button, SegmentedControl } from "@mantine/core";
 
 import useSWR from "swr";
 import api from "@network/api.ts";
@@ -11,14 +11,16 @@ import api from "@network/api.ts";
 import useItemStore from "@store/item.ts";
 
 export const Items: FC = () => {
-  const activeDays = useItemStore((state) => state.active_after_days);
+  const viewMode = useItemStore((state) => state.view_mode);
+
+  const activeDays = useItemStore((state) => state.active_days);
   const activeAfter = useMemo(
-    () => dayjs().subtract(activeDays, "day").unix(),
-    [activeDays],
+    () => (viewMode === "all" ? 0 : dayjs().subtract(activeDays, "day").unix()),
+    [activeDays, viewMode],
   );
 
   const { data: items, mutate } = useSWR<Item.Local[]>(
-    `item/active?active_after=${activeAfter}`,
+    `item/${viewMode === "error" ? "error" : `active?active_after=${activeAfter}`}`,
     (url: string) => api.get(url).then((res) => res.data.data),
     {
       revalidateOnFocus: true,
@@ -31,9 +33,23 @@ export const Items: FC = () => {
 
   return (
     <>
-      <Group gap={"sm"} my={20}>
-        <Button onClick={() => setOnNewItem(true)}>New</Button>
-      </Group>
+      <Flex align="center" justify="space-between">
+        <Group gap={"sm"} my={20}>
+          <Button onClick={() => setOnNewItem(true)}>New</Button>
+        </Group>
+        <SegmentedControl
+          withItemsBorders={false}
+          data={[
+            { label: "Active", value: "active" },
+            { label: "Error", value: "error" },
+            { label: "All", value: "all" },
+          ]}
+          value={viewMode}
+          onChange={(val) =>
+            useItemStore.setState({ view_mode: val as Item.ViewMode })
+          }
+        />
+      </Flex>
 
       <NewItemModal
         open={onNewItem}
