@@ -116,7 +116,8 @@ func (task *DownloadTask) _WriteFatalStateToDatabase() error {
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
-	err := downloadRepo.UpdateDownloadFatal(task.ID)
+	errorState := task.log.error.Load()
+	err := downloadRepo.UpdateDownloadFatal(task.ID, errorState.Err, errorState.At.Unix())
 	if err != nil {
 		return err
 	}
