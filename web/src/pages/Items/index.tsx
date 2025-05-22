@@ -1,4 +1,4 @@
-import { type FC, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import dayjs from "dayjs";
 import styles from "./styles.module.css";
@@ -17,6 +17,7 @@ import {
   Loader,
   Table,
   ScrollArea,
+  Space,
 } from "@mantine/core";
 
 import useSWR from "swr";
@@ -34,7 +35,12 @@ export const Items: FC = () => {
   );
   const [activeAfterDebounced] = useDebouncedValue(activeAfter, 300);
 
-  const { data: items, mutate } = useSWR<Item.Local[]>(
+  const {
+    data: items,
+    mutate,
+    isLoading,
+    isValidating,
+  } = useSWR<Item.Local[]>(
     `item/${viewMode === "error" ? "error" : `active?active_after=${activeAfterDebounced}`}`,
     (url: string) => api.get(url).then((res) => res.data.data),
     {
@@ -43,6 +49,10 @@ export const Items: FC = () => {
       refreshWhenOffline: true,
     },
   );
+  const [itemsDisplay, setItemsDisplay] = useState(items);
+  useEffect(() => {
+    if (items) setItemsDisplay(items);
+  }, [items]);
 
   const [onNewItem, setOnNewItem] = useState(false);
 
@@ -53,14 +63,20 @@ export const Items: FC = () => {
         align={{ base: "flex-start", xs: "center" }}
         direction={{ base: "column", xs: "row" }}
       >
-        <Group gap={"sm"} my={20}>
+        <Group gap={"md"} my={20}>
           <Button onClick={() => setOnNewItem(true)}>New</Button>
+          <Transition
+            mounted={!items || isLoading || isValidating}
+            duration={200}
+            timingFunction="ease-in-out"
+          >
+            {(styles) => <Loader style={styles} size="sm" />}
+          </Transition>
         </Group>
 
         <Flex gap={"lg"} direction={{ base: "row-reverse", xs: "row" }}>
           <Transition
             mounted={viewMode === "active"}
-            transition="fade"
             duration={200}
             timingFunction="ease-out"
           >
@@ -97,32 +113,33 @@ export const Items: FC = () => {
         </Flex>
       </Flex>
 
-      {!items || items.length === 0 ? (
-        <Flex flex={1} align="center" justify="center">
-          {!items ? <Loader /> : <Empty />}
-        </Flex>
-      ) : (
-        <ScrollArea type="auto">
-          <Table withRowBorders={false} className={styles.table}>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Td>ID</Table.Td>
-                <Table.Td>Channel</Table.Td>
-                <Table.Td>Name</Table.Td>
-                <Table.Td>Updated At</Table.Td>
-                <Table.Td>Priority</Table.Td>
-                <Table.Td></Table.Td>
-              </Table.Tr>
-            </Table.Thead>
+      <ScrollArea type="auto">
+        <Table withRowBorders={false} className={styles.table}>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Td>ID</Table.Td>
+              <Table.Td>Channel</Table.Td>
+              <Table.Td>Name</Table.Td>
+              <Table.Td>Updated At</Table.Td>
+              <Table.Td>Priority</Table.Td>
+              <Table.Td></Table.Td>
+            </Table.Tr>
+          </Table.Thead>
 
-            <Table.Tbody>
-              {items.map((item) => (
-                <ItemTr key={item.id} item={item} />
-              ))}
-            </Table.Tbody>
-          </Table>
-        </ScrollArea>
+          <Table.Tbody>
+            {itemsDisplay &&
+              itemsDisplay.map((item) => <ItemTr key={item.id} item={item} />)}
+          </Table.Tbody>
+        </Table>
+      </ScrollArea>
+
+      {itemsDisplay && itemsDisplay.length === 0 && (
+        <Flex flex={1} align="center" justify="center">
+          <Empty />
+        </Flex>
       )}
+
+      <Space h={10} />
 
       <NewItemModal
         open={onNewItem}
