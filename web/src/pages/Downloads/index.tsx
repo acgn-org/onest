@@ -1,9 +1,10 @@
 import { type FC } from "react";
 
-import {} from "@mantine/core";
+import { Flex } from "@mantine/core";
 
 import useSWR from "swr";
 import api from "@network/api.ts";
+import Empty from "@component/Empty";
 
 export const Downloads: FC = () => {
   const { data: tasks } = useSWR<Download.Task[]>(
@@ -17,6 +18,12 @@ export const Downloads: FC = () => {
     },
   );
 
-  return <></>;
+  return (
+    <>
+      <Flex flex={1} justify="center">
+        <Empty />
+      </Flex>
+    </>
+  );
 };
 export default Downloads;

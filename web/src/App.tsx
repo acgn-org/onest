@@ -8,7 +8,7 @@ import { createTheme, MantineProvider } from "@mantine/core";
 
 const theme = createTheme({});
 
-import Picture from "@component/Picture.tsx";
+import Picture from "@component/Picture";
 import {
   AppShell,
   Burger,

@@ -2,7 +2,7 @@ import { type FC, useMemo, useState } from "react";
 import dayjs from "dayjs";
 
 import NewItemModal from "./NewItemModal";
-
+import Empty from "@component/Empty";
 import {
   Group,
   Flex,
@@ -88,6 +88,10 @@ export const Items: FC = () => {
             }
           />
         </Group>
+      </Flex>
+
+      <Flex flex={1} justify="center">
+        <Empty />
       </Flex>
 
       <NewItemModal

@@ -5,7 +5,7 @@ interface ItemState {
   view_mode: Item.ViewMode;
 }
 
-export const useItemStore = create<ItemState>()((set) => ({
+export const useItemStore = create<ItemState>()((_) => ({
   active_days: 32,
   view_mode: "active",
 }));
