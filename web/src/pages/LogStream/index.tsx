@@ -1,4 +1,5 @@
 import { type FC, useState, memo, useRef, useEffect } from "react";
+import { useDebouncedValue } from "@mantine/hooks";
 import useWebsocket from "@hook/useWebsocket.ts";
 
 import {
@@ -39,7 +40,15 @@ const LogLine = memo<LogProps>(
 export const LogStream: FC = () => {
   const follow = useLogStore((state) => state.follow);
   const wrap = useLogStore((state) => state.wrap);
+
   const lines = useLogStore((state) => state.lines);
+  const linesRef = useRef(lines);
+  const [linesDebounced] = useDebouncedValue(lines, 300);
+  useEffect(() => {
+    if (linesDebounced > linesRef.current && logs.length === linesRef.current)
+      conn.current?.close();
+    linesRef.current = linesDebounced;
+  }, [linesDebounced]);
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [logs, setLogs] = useState<{ id: string; text: string }[]>([]);
@@ -99,13 +108,9 @@ export const LogStream: FC = () => {
             size="xs"
             w="75"
             defaultValue={500}
-            onBlur={(ev) => {
-              const value = parseInt(ev.target.value);
-              if (value) {
-                const shouldReconnect = value > lines && logs.length === lines;
-                useLogStore.setState({ lines: value });
-                if (shouldReconnect) conn.current?.close();
-              }
+            onChange={(value) => {
+              if (typeof value === "string") value = parseInt(value);
+              if (!isNaN(value)) useLogStore.setState({ lines: value });
             }}
           />
           <Text size="sm">Lines</Text>
