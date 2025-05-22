@@ -247,7 +247,7 @@ func (task *DownloadTask) UpdateOrDownload() error {
 		state = task.state.Load()
 	}
 
-	file, err := source.Telegram.DownloadFile(state.File.Id, task.priority.Load())
+	file, err := source.Telegram.DownloadFile(state.File.Id, task.priority.Load(), false)
 	if err != nil {
 		task.log.Errorln("request download failed:", err)
 	} else {

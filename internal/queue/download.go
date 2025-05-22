@@ -61,7 +61,7 @@ func clean() error {
 	if err := source.Telegram.RemoveAllDownloads(); err != nil {
 		return err
 	}
-	if err := source.Telegram.CleanDownloadDirectory(); err != nil {
+	if err := source.Telegram.CleanDownloadDirectoryVideos(); err != nil {
 		return err
 	}
 	return nil

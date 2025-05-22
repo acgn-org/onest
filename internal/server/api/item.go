@@ -15,7 +15,7 @@ import (
 )
 
 func GetItemDownloads(ctx *gin.Context) {
-	id, err := tools.IDFromParam(ctx, "id")
+	id, err := tools.UintIDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return
@@ -148,7 +148,7 @@ func DeleteItem(ctx *gin.Context) {
 		return
 	}
 
-	id, err := tools.IDFromParam(ctx, "id")
+	id, err := tools.UintIDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return
@@ -202,7 +202,7 @@ func PatchItem(ctx *gin.Context) {
 		return
 	}
 
-	id, err := tools.IDFromParam(ctx, "id")
+	id, err := tools.UintIDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return

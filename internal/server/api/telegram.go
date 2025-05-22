@@ -3,18 +3,12 @@ package api
 import (
 	"github.com/acgn-org/onest/internal/server/response"
 	"github.com/acgn-org/onest/internal/source"
+	"github.com/acgn-org/onest/tools"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 func GetChat(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	if idStr == "" {
-		response.Error(ctx, response.ErrForm)
-		return
-	}
-
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	id, err := tools.Int64IDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return
@@ -27,4 +21,29 @@ func GetChat(ctx *gin.Context) {
 	}
 
 	response.Success(ctx, info)
+}
+
+func GetChatPhoto(ctx *gin.Context) {
+	id, err := tools.Int64IDFromParam(ctx, "id")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	info, err := source.Telegram.GetChat(id)
+	if err != nil {
+		response.Error(ctx, response.ErrTelegram, err)
+		return
+	}
+
+	if !info.Photo.Big.Local.IsDownloadingCompleted {
+		file, err := source.Telegram.DownloadFile(info.Photo.Big.Id, 32, true)
+		if err != nil {
+			response.Error(ctx, response.ErrTelegram, err)
+			return
+		}
+		info.Photo.Big.Local = file.Local
+	}
+
+	ctx.File(info.Photo.Big.Local.Path)
 }

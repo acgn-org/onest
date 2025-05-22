@@ -7,6 +7,7 @@ import (
 	"github.com/zelenin/go-tdlib/client"
 	"golang.org/x/time/rate"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 )
@@ -55,7 +56,7 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 	return &Telegram{
 		logger:            c.Logger,
 		client:            _client,
-		rate:              rate.NewLimiter(rate.Every(time.Second), 5),
+		rate:              rate.NewLimiter(rate.Every(time.Second)/2, 3),
 		databaseDirectory: databaseDirectory,
 		filesDirectory:    filesDirectory,
 	}, nil
@@ -108,7 +109,7 @@ func (t Telegram) GetMessageVideo(msg *client.Message) (*client.MessageVideo, bo
 	return msgVideo, true
 }
 
-func (t Telegram) DownloadFile(fileID, priority int32) (*client.File, error) {
+func (t Telegram) DownloadFile(fileID, priority int32, synchronous bool) (*client.File, error) {
 	_ = t.rate.Wait(context.Background())
 	t.logger.Debugf("download file %d with priotiry %d", fileID, priority)
 	return t.client.DownloadFile(&client.DownloadFileRequest{
@@ -116,7 +117,7 @@ func (t Telegram) DownloadFile(fileID, priority int32) (*client.File, error) {
 		Priority:    priority,
 		Offset:      0,
 		Limit:       0,
-		Synchronous: false,
+		Synchronous: synchronous,
 	})
 }
 
@@ -151,20 +152,23 @@ func (t Telegram) RemoveAllDownloads() error {
 	return nil
 }
 
-func (t Telegram) CleanDownloadDirectory() error {
+func (t Telegram) CleanDownloadDirectoryVideos() error {
 	dirContents, err := os.ReadDir(t.filesDirectory)
 	if err != nil {
 		return fmt.Errorf("could not read directory contents: %w", err)
 	}
 	for _, entry := range dirContents {
-		pathname := filepath.Join(t.filesDirectory, entry.Name())
-		err = os.RemoveAll(pathname)
-		if err != nil {
-			return fmt.Errorf("could not remove file '%s': %w", pathname, err)
+		filename := entry.Name()
+		if ext := path.Ext(filename); ext == ".mp4" || ext == ".mkv" {
+			pathname := filepath.Join(t.filesDirectory, filename)
+			err = os.RemoveAll(pathname)
+			if err != nil {
+				return fmt.Errorf("could not remove file '%s': %w", pathname, err)
+			}
 		}
 	}
 
-	t.logger.Debugln("removed all files in download directory")
+	t.logger.Debugln("removed all video files in download directory")
 
 	return nil
 }

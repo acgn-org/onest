@@ -30,7 +30,7 @@ func UpdateDownloadPriority(ctx *gin.Context) {
 		return
 	}
 
-	id, err := tools.IDFromParam(ctx, "id")
+	id, err := tools.UintIDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return
@@ -57,7 +57,7 @@ func UpdateDownloadPriority(ctx *gin.Context) {
 }
 
 func DeleteDownload(ctx *gin.Context) {
-	id, err := tools.IDFromParam(ctx, "id")
+	id, err := tools.UintIDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return
