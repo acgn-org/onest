@@ -25,4 +25,7 @@ func Api(group *gin.RouterGroup) {
 
 	log := group.Group("log")
 	log.GET("watch", api.WatchLogs)
+
+	telegram := group.Group("telegram")
+	telegram.GET("chat/:id", api.GetChat)
 }

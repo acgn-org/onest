@@ -85,6 +85,13 @@ func (t Telegram) GetHistory(chatID, fromMessageID int64) (*client.Messages, err
 	})
 }
 
+func (t Telegram) GetChat(id int64) (*client.Chat, error) {
+	_ = t.rate.Wait(context.Background())
+	return t.client.GetChat(&client.GetChatRequest{
+		ChatId: id,
+	})
+}
+
 func (t Telegram) GetMessage(chatId, messageId int64) (*client.Message, error) {
 	_ = t.rate.Wait(context.Background())
 	return t.client.GetMessage(&client.GetMessageRequest{
