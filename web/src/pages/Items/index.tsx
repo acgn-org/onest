@@ -1,4 +1,5 @@
 import { type FC, useMemo, useState } from "react";
+import { useDebouncedValue } from "@mantine/hooks";
 import dayjs from "dayjs";
 
 import NewItemModal from "./NewItemModal";
@@ -11,6 +12,8 @@ import {
   NumberInput,
   Text,
   Transition,
+  Loader,
+  Table,
 } from "@mantine/core";
 
 import useSWR from "swr";
@@ -26,9 +29,10 @@ export const Items: FC = () => {
     () => (viewMode === "all" ? 0 : dayjs().subtract(activeDays, "day").unix()),
     [activeDays, viewMode],
   );
+  const [activeAfterDebounced] = useDebouncedValue(activeAfter, 300);
 
   const { data: items, mutate } = useSWR<Item.Local[]>(
-    `item/${viewMode === "error" ? "error" : `active?active_after=${activeAfter}`}`,
+    `item/${viewMode === "error" ? "error" : `active?active_after=${activeAfterDebounced}`}`,
     (url: string) => api.get(url).then((res) => res.data.data),
     {
       revalidateOnFocus: true,
@@ -90,9 +94,13 @@ export const Items: FC = () => {
         </Group>
       </Flex>
 
-      <Flex flex={1} justify="center">
-        <Empty />
-      </Flex>
+      {!items || items.length === 0 ? (
+        <Flex flex={1} align="center" justify="center">
+          {!items ? <Loader /> : <Empty />}
+        </Flex>
+      ) : (
+        <Table></Table>
+      )}
 
       <NewItemModal
         open={onNewItem}

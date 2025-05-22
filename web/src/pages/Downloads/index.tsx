@@ -20,7 +20,7 @@ export const Downloads: FC = () => {
 
   return (
     <>
-      <Flex flex={1} justify="center">
+      <Flex flex={1} align="center" justify="center">
         <Empty />
       </Flex>
     </>
