@@ -67,13 +67,16 @@ func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {
 		return nil, err
 	}
 
-	var itemsToDownloadIds = make([]uint, len(itemsToDownload))
-	for i, item := range itemsToDownload {
-		itemsToDownloadIds[i] = item.ID
-	}
-
 	var itemsRecentlyActive []Item
-	if err := repo.DB.Model(&Item{}).Where("id NOT IN (?) AND date_end > ?", itemsToDownloadIds, dateEnd).Find(&itemsRecentlyActive).Error; err != nil {
+	tx := repo.DB.Model(&Item{})
+	if len(itemsToDownload) > 0 {
+		var itemsToDownloadIds = make([]uint, len(itemsToDownload))
+		for i, item := range itemsToDownload {
+			itemsToDownloadIds[i] = item.ID
+		}
+		tx = tx.Where("id NOT IN (?)", itemsToDownloadIds)
+	}
+	if err := repo.DB.Model(&Item{}).Where("date_end > ?", dateEnd).Find(&itemsRecentlyActive).Error; err != nil {
 		return nil, err
 	}
 
