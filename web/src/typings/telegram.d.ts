@@ -30,4 +30,32 @@ namespace Telegram {
     local: LocalFile;
     remote: RemoteFile;
   };
+
+  type ChatType = Meta & {
+    supergroup_id: number;
+    is_channel: boolean;
+  };
+
+  type MiniThumbnail = Meta & {
+    width: number;
+    height: number;
+    data: string;
+  };
+
+  type ChatPhotoInfo = Meta & {
+    small: File;
+    big: File;
+    minithumbnail: MiniThumbnail;
+    has_animation: boolean;
+    is_personal: boolean;
+  };
+
+  type Chat = Meta & {
+    id: number;
+    chat_id: number;
+    title: string;
+    type: ChatType;
+    photo: ChatPhotoInfo;
+    data: number;
+  };
 }

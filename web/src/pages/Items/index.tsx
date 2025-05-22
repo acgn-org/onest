@@ -1,7 +1,9 @@
 import { type FC, useMemo, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import dayjs from "dayjs";
+import styles from "./styles.module.css";
 
+import ItemTr from "./ItemTr";
 import NewItemModal from "./NewItemModal";
 import Empty from "@component/Empty";
 import {
@@ -14,6 +16,7 @@ import {
   Transition,
   Loader,
   Table,
+  ScrollArea,
 } from "@mantine/core";
 
 import useSWR from "swr";
@@ -54,7 +57,7 @@ export const Items: FC = () => {
           <Button onClick={() => setOnNewItem(true)}>New</Button>
         </Group>
 
-        <Group gap={"lg"}>
+        <Flex gap={"lg"} direction={{ base: "row-reverse", xs: "row" }}>
           <Transition
             mounted={viewMode === "active"}
             transition="fade"
@@ -91,7 +94,7 @@ export const Items: FC = () => {
               useItemStore.setState({ view_mode: val as Item.ViewMode })
             }
           />
-        </Group>
+        </Flex>
       </Flex>
 
       {!items || items.length === 0 ? (
@@ -99,7 +102,26 @@ export const Items: FC = () => {
           {!items ? <Loader /> : <Empty />}
         </Flex>
       ) : (
-        <Table></Table>
+        <ScrollArea type="auto">
+          <Table withRowBorders={false} className={styles.table}>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Td>ID</Table.Td>
+                <Table.Td>Channel</Table.Td>
+                <Table.Td>Name</Table.Td>
+                <Table.Td>Updated At</Table.Td>
+                <Table.Td>Priority</Table.Td>
+                <Table.Td></Table.Td>
+              </Table.Tr>
+            </Table.Thead>
+
+            <Table.Tbody>
+              {items.map((item) => (
+                <ItemTr key={item.id} item={item} />
+              ))}
+            </Table.Tbody>
+          </Table>
+        </ScrollArea>
       )}
 
       <NewItemModal
