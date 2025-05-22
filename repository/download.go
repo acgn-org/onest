@@ -8,7 +8,7 @@ import (
 type Download struct {
 	ID uint `gorm:"primarykey"`
 
-	ItemID uint `gorm:"index:idx_item_active;not null"`
+	ItemID uint `gorm:"index:idx_item_active;index:idx_item_error;not null"`
 	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE"`
 
 	MsgID int64 `gorm:"not null"`
@@ -22,7 +22,7 @@ type Download struct {
 
 	FatalError bool
 	Error      string
-	ErrorAt    int64
+	ErrorAt    int64 `gorm:"index:idx_item_error;default:0;not null"`
 }
 
 type DownloadTask struct {

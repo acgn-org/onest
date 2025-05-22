@@ -36,7 +36,7 @@ func GetItemDownloads(ctx *gin.Context) {
 	response.Success(ctx, tasks)
 }
 
-func GetItems(ctx *gin.Context) {
+func GetActiveItems(ctx *gin.Context) {
 	var form struct {
 		ActiveAfter int32 `form:"active_after" json:"active_after" binding:"min=0"`
 	}
@@ -47,6 +47,20 @@ func GetItems(ctx *gin.Context) {
 
 	itemRepo := database.NewRepository[repository.ItemRepository]()
 	items, err := itemRepo.GetActive(form.ActiveAfter)
+	if err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	if items == nil {
+		items = make([]repository.Item, 0)
+	}
+	response.Success(ctx, items)
+}
+
+func GetErrorItems(ctx *gin.Context) {
+	itemRepo := database.NewRepository[repository.ItemRepository]()
+	items, err := itemRepo.GetError()
 	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return

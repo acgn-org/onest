@@ -73,7 +73,7 @@ func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {
 	}
 
 	var itemsRecentlyActive []Item
-	if err := repo.DB.Model(&Item{}).Where("ID NOT IN (?) AND date_end > ?", itemsToDownloadIds, dateEnd).Find(&itemsRecentlyActive).Error; err != nil {
+	if err := repo.DB.Model(&Item{}).Where("id NOT IN (?) AND date_end > ?", itemsToDownloadIds, dateEnd).Find(&itemsRecentlyActive).Error; err != nil {
 		return nil, err
 	}
 
@@ -81,6 +81,13 @@ func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {
 	result = append(result, itemsToDownload...)
 	result = append(result, itemsRecentlyActive...)
 	return result, nil
+}
+
+func (repo ItemRepository) GetError() ([]Item, error) {
+	var items []Item
+	return items, repo.DB.Model(&Item{}).Where(
+		"EXISTS (?)", repo.DB.Model(&Download{}).Where("downloads.item_id = items.id AND downloads.error_at != 0"),
+	).Find(&items).Error
 }
 
 func (repo ItemRepository) UpdateProcess(id uint, process int64, dateEnd int32) error {

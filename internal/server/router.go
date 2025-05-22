@@ -9,7 +9,8 @@ func Api(group *gin.RouterGroup) {
 	group.Any("realsearch/*path", api.RealSearchProxy())
 
 	item := group.Group("item")
-	item.GET("active", api.GetItems)
+	item.GET("active", api.GetActiveItems)
+	item.GET("error", api.GetErrorItems)
 	item.POST("/", api.NewItem)
 	itemWithId := item.Group(":id")
 	itemWithId.GET("downloads", api.GetItemDownloads)
