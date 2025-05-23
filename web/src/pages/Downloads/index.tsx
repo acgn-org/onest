@@ -1,13 +1,14 @@
 import { type FC } from "react";
 
-import { Flex } from "@mantine/core";
+import Empty from "@component/Empty";
+import Tasks from "@component/Tasks";
+import { Flex, Loader } from "@mantine/core";
 
 import useSWR from "swr";
 import api from "@network/api.ts";
-import Empty from "@component/Empty";
 
 export const Downloads: FC = () => {
-  const { data: tasks } = useSWR<Download.Task[]>(
+  const { data: tasks, mutate } = useSWR<Download.Task[]>(
     "download/tasks",
     (url: string) => api.get(url).then((res) => res.data.data),
     {
@@ -20,9 +21,31 @@ export const Downloads: FC = () => {
 
   return (
     <>
-      <Flex flex={1} align="center" justify="center">
-        <Empty />
-      </Flex>
+      {tasks && tasks.length !== 0 && (
+        <Tasks
+          tasks={tasks}
+          onTaskDeleted={(index) =>
+            mutate((data) => {
+              if (!data) return data;
+              return [...data.splice(index, 1)];
+            })
+          }
+          onSetPriority={(index, priority) =>
+            mutate((data) => {
+              if (!data) return data;
+              data[index].priority = priority;
+              return [...data];
+            })
+          }
+        />
+      )}
+
+      {(!tasks || tasks.length === 0) && (
+        <Flex flex={1} align="center" justify="center">
+          {!tasks && <Loader />}
+          {tasks?.length === 0 && <Empty />}
+        </Flex>
+      )}
     </>
   );
 };
