@@ -1,0 +1,52 @@
+name: release_docker
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: 'acgn0rg/onest'
+  REGISTRY_USERNAME: 'acgn0rg'
+  REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+  RELEASE_PLATFORMS: 'linux/amd64,linux/386,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/riscv64'
+
+jobs:
+  release_docker:
+    name: Release Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config: |
+            [worker.oci]
+              max-parallelism = 2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          logout: true
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ env.RELEASE_PLATFORMS }}
