@@ -106,3 +106,7 @@ func (repo ItemRepository) UpdatesItemByID(model *Item) (bool, error) {
 	result := repo.DB.Model(&model).Updates(&model)
 	return result.RowsAffected > 0, result.Error
 }
+
+func (repo ItemRepository) DeleteByID(id uint) error {
+	return repo.DB.Model(&Item{}).Where("id = ?", id).Delete(nil).Error
+}

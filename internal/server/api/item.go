@@ -140,14 +140,6 @@ func NewItem(ctx *gin.Context) {
 }
 
 func DeleteItem(ctx *gin.Context) {
-	var form struct {
-		DeleteTargetPath bool `json:"delete_target_path" form:"delete_target_path"`
-	}
-	if err := ctx.ShouldBind(&form); err != nil {
-		response.Error(ctx, response.ErrForm, err)
-		return
-	}
-
 	id, err := tools.UintIDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
@@ -171,6 +163,11 @@ func DeleteItem(ctx *gin.Context) {
 
 	downloadIDs, err := downloadRepo.GetIDByItemForUpdates(id)
 	if err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	if err := itemRepo.DeleteByID(id); err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
 	}
