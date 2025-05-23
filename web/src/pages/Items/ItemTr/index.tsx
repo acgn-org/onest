@@ -1,5 +1,4 @@
 import { memo, useState } from "react";
-import { ParseTextWithPattern } from "@util/pattern.ts";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
 
@@ -47,18 +46,9 @@ export const ItemTr = memo<ItemTrProps>(
       },
     );
 
-    const { data: tasks, mutate } = useSWR<Download.TaskMatched[]>(
+    const { data: tasks, mutate } = useSWR<Download.Task[]>(
       isItemCollapsed ? `item/${item.id}/downloads` : null,
-      (url: string) =>
-        api.get<{ data: Download.TaskMatched[] }>(url).then((res) => {
-          const data = res.data.data.sort((a, b) => a.msg_id - b.msg_id);
-          const reg = new RegExp(item.regexp);
-          for (const task of data)
-            task.matched_text = reg
-              ? ParseTextWithPattern(task.text, reg, item.pattern)
-              : "---";
-          return data;
-        }),
+      (url: string) => api.get(url).then((res) => res.data.data),
       {
         refreshInterval: 3000,
       },
@@ -133,7 +123,7 @@ export const ItemTr = memo<ItemTrProps>(
                   onClick={() =>
                     onConfirm({
                       message: "Confirm delete item?",
-                      content: `Deleting item '${item.name}'`,
+                      content: `Deleting item ${item.id} '${item.name}'`,
                       onConfirm: () => onDeleteItem(item.id),
                     })
                   }
@@ -171,6 +161,7 @@ export const ItemTr = memo<ItemTrProps>(
                 ) : (
                   tasks && (
                     <Tasks
+                      item={item}
                       tasks={tasks}
                       style={{ width: "100%" }}
                       onSetPriority={(index, priority) =>
