@@ -1,3 +1,12 @@
+export const CompileRegexp = (s: string): RegExp => {
+  return new RegExp(
+    s.replace(/\\p\{([A-Za-z]+)}/g, (_, script) => {
+      return `\\p{Script=${script}}`;
+    }),
+    "mu",
+  );
+};
+
 export const ParseTextWithPattern = (
   text: string,
   regexp: RegExp,

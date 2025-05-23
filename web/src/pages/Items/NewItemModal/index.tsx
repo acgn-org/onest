@@ -1,5 +1,5 @@
 import { type FC, useEffect, useState } from "react";
-import { ParseTextWithPattern } from "@util/pattern.ts";
+import { ParseTextWithPattern, CompileRegexp } from "@util/pattern.ts";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 
@@ -57,7 +57,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   useEffect(() => {
     if (regexpStr) {
       try {
-        const newRegexp = new RegExp(regexpStr, "mu");
+        const newRegexp = CompileRegexp(regexpStr);
         setRegexpError(undefined);
         setRegexp(newRegexp);
       } catch (err: unknown) {

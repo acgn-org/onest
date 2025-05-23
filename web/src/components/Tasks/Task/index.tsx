@@ -1,5 +1,5 @@
 import { type FC, type ReactNode, useMemo, useState } from "react";
-import { ParseTextWithPattern } from "@util/pattern.ts";
+import { ParseTextWithPattern, CompileRegexp } from "@util/pattern.ts";
 import dayjs from "dayjs";
 import toast from "react-hot-toast";
 
@@ -56,10 +56,14 @@ export const Task: FC<TaskProps> = ({
   );
   const matchedText = useMemo<string>(() => {
     const itemData: Item.Local = item || itemFetched;
-    if (!itemData) return "---";
-    const regexp = new RegExp(itemData.regexp);
-    if (!regexp) return "---";
-    return ParseTextWithPattern(task.text, regexp, itemData.pattern);
+    if (itemData)
+      try {
+        const regexp = CompileRegexp(itemData.regexp);
+        return ParseTextWithPattern(task.text, regexp, itemData.pattern);
+      } catch (err: unknown) {
+        console.log(err);
+      }
+    return "---";
   }, [item, itemFetched, task.text]);
 
   const [isPriorityUpdating, setIsPriorityUpdating] = useState(false);
