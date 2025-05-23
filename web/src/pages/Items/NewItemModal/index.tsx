@@ -3,6 +3,7 @@ import { ParseTextWithPattern } from "@util/pattern.ts";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 
+import PriorityInput from "@component/PriorityInput";
 import {
   Modal,
   Button,
@@ -19,12 +20,7 @@ import {
   Accordion,
   Alert,
 } from "@mantine/core";
-import {
-  IconClipboard,
-  IconInfoCircle,
-  IconPlus,
-  IconMinus,
-} from "@tabler/icons-react";
+import { IconClipboard, IconInfoCircle } from "@tabler/icons-react";
 
 import useNewItemStore from "@store/new-item.ts";
 
@@ -159,23 +155,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
     setLoading(false);
   };
 
-  const onSetItemPriority = (
-    index: number,
-    itemPriority: number | undefined,
-    decrease?: boolean,
-  ) => {
-    if (itemPriority === undefined) itemPriority = priority;
-    if (!decrease) {
-      if (itemPriority < 32) itemPriority++;
-    } else {
-      if (itemPriority > 1) itemPriority--;
-    }
-    setItemRawsMatched((raws) => {
-      raws![index].priority = itemPriority;
-      return [...raws!];
-    });
-  };
-
   const onCreate = async () => {
     setLoading(true);
     try {
@@ -243,6 +222,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       <form
         onSubmit={(ev) => {
           ev.preventDefault();
+          if (loading) return;
           return itemInfo ? onCreate() : onLoadItemData();
         }}
       >
@@ -347,40 +327,16 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                             {(raw.size / 1024 / 1024).toFixed(0)} MB
                           </Badge>
                           <div onClick={(ev) => ev.stopPropagation()}>
-                            <ActionIcon.Group>
-                              <ActionIcon
-                                component={"div"}
-                                variant="default"
-                                size={18}
-                                radius="md"
-                                onClick={() =>
-                                  onSetItemPriority(index, raw.priority, true)
-                                }
-                              >
-                                <IconMinus color="var(--mantine-color-red-text)" />
-                              </ActionIcon>
-                              <ActionIcon.GroupSection
-                                variant="default"
-                                size={13}
-                                bg="var(--mantine-color-body)"
-                                h={18}
-                                w={32}
-                                c={raw.priority ? undefined : "dimmed"}
-                              >
-                                {raw.priority || priority}
-                              </ActionIcon.GroupSection>
-                              <ActionIcon
-                                component={"div"}
-                                variant="default"
-                                size={18}
-                                radius="md"
-                                onClick={() =>
-                                  onSetItemPriority(index, raw.priority)
-                                }
-                              >
-                                <IconPlus color="var(--mantine-color-teal-text)" />
-                              </ActionIcon>
-                            </ActionIcon.Group>
+                            <PriorityInput
+                              value={raw.priority}
+                              defaultValue={priority}
+                              onChange={(val) =>
+                                setItemRawsMatched((raws) => {
+                                  raws![index].priority = val;
+                                  return [...raws!];
+                                })
+                              }
+                            />
                           </div>
                         </Group>
                         {renderConvertedFilename(raw)}

@@ -42,7 +42,7 @@ export const ItemTr = memo<ItemTrProps>(
       },
     );
 
-    const { data: tasks } = useSWR<Download.TaskMatched[]>(
+    const { data: tasks, mutate } = useSWR<Download.TaskMatched[]>(
       isItemCollapsed ? `item/${item.id}/downloads` : null,
       (url: string) =>
         api.get<{ data: Download.TaskMatched[] }>(url).then((res) => {
@@ -141,7 +141,19 @@ export const ItemTr = memo<ItemTrProps>(
                 {tasks && tasks.length === 0 ? (
                   <Empty />
                 ) : (
-                  tasks && <Tasks tasks={tasks} style={{ width: "100%" }} />
+                  tasks && (
+                    <Tasks
+                      tasks={tasks}
+                      style={{ width: "100%" }}
+                      onSetPriority={(index, priority) =>
+                        mutate((data) => {
+                          if (!data) return data;
+                          data[index].priority = priority;
+                          return [...data];
+                        })
+                      }
+                    />
+                  )
                 )}
               </Collapse>
             </Table.Td>

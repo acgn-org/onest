@@ -1,6 +1,8 @@
-import type { CSSProperties, FC, ReactNode } from "react";
+import { type CSSProperties, type FC, type ReactNode, useState } from "react";
 import dayjs from "dayjs";
+import toast from "react-hot-toast";
 
+import PriorityInput from "@component/PriorityInput";
 import {
   Accordion,
   ActionIcon,
@@ -13,7 +15,6 @@ import {
   RingProgress,
 } from "@mantine/core";
 import {
-  IconEdit,
   IconTrash,
   IconCircleCheck,
   IconCircleX,
@@ -22,12 +23,34 @@ import {
   IconArrowDownDashed,
 } from "@tabler/icons-react";
 
+import api from "@network/api";
+
 export interface TasksProps {
   tasks: Download.TaskMatched[];
   style?: CSSProperties;
+  onSetPriority: (index: number, priority: number) => void;
 }
 
-export const Tasks: FC<TasksProps> = ({ tasks, style }) => {
+export const Tasks: FC<TasksProps> = ({ tasks, style, onSetPriority }) => {
+  const [priorityUpdating, setPriorityUpdating] = useState(false);
+
+  const onUpdatePriority = async (
+    id: number,
+    index: number,
+    target: number,
+  ) => {
+    setPriorityUpdating(true);
+    try {
+      await api.patch(`download/${id}/priority`, {
+        priority: target,
+      });
+      onSetPriority(index, target);
+    } catch (err: unknown) {
+      toast.error(`update priority failed: ${err}`);
+    }
+    setPriorityUpdating(false);
+  };
+
   const renderStatus = (task: Download.TaskMatched) => {
     const size = 24;
     const stroke = 1.5;
@@ -87,7 +110,7 @@ export const Tasks: FC<TasksProps> = ({ tasks, style }) => {
 
   return (
     <Accordion variant="filled" style={style}>
-      {tasks.map((task) => (
+      {tasks.map((task, index) => (
         <Accordion.Item key={task.id} value={`${task.id}`}>
           <Accordion.Control>
             <Flex align="center" justify="space-between">
@@ -102,7 +125,19 @@ export const Tasks: FC<TasksProps> = ({ tasks, style }) => {
                   <Text size="sm">
                     {dayjs.unix(task.date).format("YYYY/MM/DD HH:mm")}
                   </Text>
+                  <Flex onClick={(ev) => ev.stopPropagation()}>
+                    {!task.downloaded && (
+                      <PriorityInput
+                        disabled={priorityUpdating}
+                        value={task.priority}
+                        onChange={(val) =>
+                          onUpdatePriority(task.id, index, val)
+                        }
+                      />
+                    )}
+                  </Flex>
                 </Group>
+
                 <Text>{task.matched_text}</Text>
               </Stack>
 
@@ -117,15 +152,7 @@ export const Tasks: FC<TasksProps> = ({ tasks, style }) => {
                   component="div"
                   size="md"
                   variant="default"
-                  ml={5}
-                  disabled
-                >
-                  <IconEdit size={16} stroke={1.5} />
-                </ActionIcon>
-                <ActionIcon
-                  component="div"
-                  size="md"
-                  variant="default"
+                  ml={6}
                   disabled
                 >
                   <IconTrash size={16} stroke={1.5} />
