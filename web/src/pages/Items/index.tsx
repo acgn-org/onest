@@ -6,6 +6,7 @@ import styles from "./styles.module.css";
 import ItemTr from "./ItemTr";
 import NewItemModal from "./NewItemModal";
 import Empty from "@component/Empty";
+import { Flipper } from "react-flip-toolkit";
 import {
   Group,
   Flex,
@@ -116,25 +117,29 @@ export const Items: FC = () => {
         </Flex>
       </Flex>
 
-      <Table.ScrollContainer minWidth={500}>
-        <Table className={styles.table} stickyHeader withRowBorders={false}>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Td>ID</Table.Td>
-              <Table.Td>Name</Table.Td>
-              <Table.Td>Channel</Table.Td>
-              <Table.Td>Updated At</Table.Td>
-              <Table.Td>Priority</Table.Td>
-              <Table.Td></Table.Td>
-            </Table.Tr>
-          </Table.Thead>
+      <Flipper flipKey={itemsDisplay?.map((items) => items.id).join(".")}>
+        <Table.ScrollContainer minWidth={500}>
+          <Table className={styles.table} withRowBorders={false}>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Td>ID</Table.Td>
+                <Table.Td>Name</Table.Td>
+                <Table.Td>Channel</Table.Td>
+                <Table.Td>Updated At</Table.Td>
+                <Table.Td>Priority</Table.Td>
+                <Table.Td></Table.Td>
+              </Table.Tr>
+            </Table.Thead>
 
-          <Table.Tbody>
-            {itemsDisplay &&
-              itemsDisplay.map((item) => <ItemTr key={item.id} item={item} />)}
-          </Table.Tbody>
-        </Table>
-      </Table.ScrollContainer>
+            <Table.Tbody>
+              {itemsDisplay &&
+                itemsDisplay.map((item) => (
+                  <ItemTr key={item.id} item={item} />
+                ))}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      </Flipper>
 
       {itemsDisplay && itemsDisplay.length === 0 && (
         <Flex flex={1} align="center" justify="center">
