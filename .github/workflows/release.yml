@@ -9,7 +9,7 @@ env:
   REGISTRY: 'acgn0rg/onest'
   REGISTRY_USERNAME: 'acgn0rg'
   REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-  RELEASE_PLATFORMS: 'linux/amd64,linux/386,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/riscv64'
+  RELEASE_PLATFORMS: 'linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/riscv64'
 
 jobs:
   release_docker:
