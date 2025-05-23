@@ -9,7 +9,8 @@ type LogState = {
 
 export const useLogStore = create<LogState>()(
   persist(
-    (set) => ({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_) => ({
       follow: true,
       wrap: false,
       lines: 500,
