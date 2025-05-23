@@ -1,17 +1,14 @@
 import type { CSSProperties, FC } from "react";
-import { ParseTextWithPattern } from "@util/pattern.ts";
 import dayjs from "dayjs";
 
 import { Accordion, Badge, Flex, Group, Stack, Text } from "@mantine/core";
 
 export interface TasksProps {
-  tasks: Download.Task[];
-  regexp: string;
-  pattern: string;
+  tasks: Download.TaskMatched[];
   style?: CSSProperties;
 }
 
-export const Tasks: FC<TasksProps> = ({ tasks, regexp, pattern, style }) => {
+export const Tasks: FC<TasksProps> = ({ tasks, style }) => {
   return (
     <Accordion variant="filled" style={style}>
       {tasks.map((task) => (
@@ -30,9 +27,7 @@ export const Tasks: FC<TasksProps> = ({ tasks, regexp, pattern, style }) => {
                     {dayjs.unix(task.date).format("YYYY/MM/DD HH:mm")}
                   </Text>
                 </Group>
-                <Text>
-                  {ParseTextWithPattern(task.text, new RegExp(regexp), pattern)}
-                </Text>
+                <Text>{task.matched_text}</Text>
               </Stack>
             </Flex>
           </Accordion.Control>

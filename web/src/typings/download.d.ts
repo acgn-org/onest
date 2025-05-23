@@ -14,4 +14,8 @@ namespace Download {
     error_at: number;
     file?: Telegram.File;
   };
+
+  type TaskMatched = Task & {
+    matched_text: string;
+  };
 }

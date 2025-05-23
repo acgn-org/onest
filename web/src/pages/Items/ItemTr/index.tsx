@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { ParseTextWithPattern } from "@util/pattern.ts";
 import dayjs from "dayjs";
 
 import Empty from "@component/Empty";
@@ -41,12 +42,19 @@ export const ItemTr = memo<ItemTrProps>(
       },
     );
 
-    const { data: tasks } = useSWR<Download.Task[]>(
+    const { data: tasks } = useSWR<Download.TaskMatched[]>(
       isItemCollapsed ? `item/${item.id}/downloads` : null,
       (url: string) =>
-        api
-          .get<{ data: Download.Task[] }>(url)
-          .then((res) => res.data.data.sort((a, b) => a.msg_id - b.msg_id)),
+        api.get<{ data: Download.TaskMatched[] }>(url).then((res) => {
+          const data = res.data.data.sort((a, b) => a.msg_id - b.msg_id);
+          const reg = new RegExp(item.regexp);
+          for (const task of data)
+            task.matched_text = reg
+              ? ParseTextWithPattern(task.text, reg, item.pattern)
+              : "---";
+          console.log(data)
+          return data;
+        }),
       {
         revalidateOnFocus: false,
         revalidateIfStale: false,
@@ -134,14 +142,7 @@ export const ItemTr = memo<ItemTrProps>(
                 {tasks && tasks.length === 0 ? (
                   <Empty />
                 ) : (
-                  tasks && (
-                    <Tasks
-                      tasks={tasks}
-                      regexp={item.regexp}
-                      pattern={item.pattern}
-                      style={{ width: "100%" }}
-                    />
-                  )
+                  tasks && <Tasks tasks={tasks} style={{ width: "100%" }} />
                 )}
               </Collapse>
             </Table.Td>
