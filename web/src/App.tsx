@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useMemo } from "react";
+import { type FC, type ReactNode, useMemo, useState } from "react";
 import { Outlet, useNavigate, useMatches } from "react-router";
 import { useDisclosure } from "@mantine/hooks";
 import { Toaster } from "react-hot-toast";
@@ -66,10 +66,18 @@ export const App: FC = () => {
   );
 
   const deleteConfirmProps = useConfirmDialog((state) => state.props);
-
-  const onCloseDeleteConfirm = () => {
+  const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+  const onConfirmDialogClose = () => {
     deleteConfirmProps?.onCancel?.();
     useConfirmDialog.setState({ props: undefined });
+  };
+  const onConfirmDialogConfirm = async () => {
+    if (isConfirmLoading) return;
+    setIsConfirmLoading(true);
+    const result = deleteConfirmProps?.onConfirm();
+    if (typeof result === "object") await (result as Promise<void>);
+    setIsConfirmLoading(false);
+    onConfirmDialogClose();
   };
 
   return (
@@ -154,16 +162,21 @@ export const App: FC = () => {
             <Outlet />
             <Modal
               opened={!!deleteConfirmProps}
-              onClose={onCloseDeleteConfirm}
+              onClose={onConfirmDialogClose}
               title={deleteConfirmProps?.message}
               centered
             >
               <Text>{deleteConfirmProps?.content}</Text>
               <Group mt="xl" justify="flex-end">
-                <Button variant="outline" onClick={onCloseDeleteConfirm}>
+                <Button variant="outline" onClick={onConfirmDialogClose}>
                   Cancel
                 </Button>
-                <Button onClick={deleteConfirmProps?.onConfirm}>Confirm</Button>
+                <Button
+                  loading={isConfirmLoading}
+                  onClick={onConfirmDialogConfirm}
+                >
+                  Confirm
+                </Button>
               </Group>
             </Modal>
           </Container>

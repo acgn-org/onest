@@ -220,7 +220,13 @@ export const Items: FC = () => {
             <Table.Tbody>
               {itemsDisplay &&
                 itemsDisplay.map((item) => (
-                  <ItemTr key={item.id} item={item} />
+                  <ItemTr
+                    key={item.id}
+                    item={item}
+                    onItemDeleted={() =>
+                      mutate((data) => data?.filter(({ id }) => id === item.id))
+                    }
+                  />
                 ))}
             </Table.Tbody>
           </Table>

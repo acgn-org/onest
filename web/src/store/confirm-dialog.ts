@@ -3,7 +3,7 @@ import { create } from "zustand/react";
 export type ConfirmDialogProps = {
   message: string;
   content: string;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
   onCancel?: () => void;
 };
 

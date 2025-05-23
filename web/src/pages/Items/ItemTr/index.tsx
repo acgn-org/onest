@@ -1,6 +1,7 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { ParseTextWithPattern } from "@util/pattern.ts";
 import dayjs from "dayjs";
+import toast from "react-hot-toast";
 
 import Empty from "@component/Empty";
 import Tasks from "@component/Tasks";
@@ -23,13 +24,17 @@ import api, { baseUrl } from "@network/api.ts";
 
 import { shallow } from "zustand/vanilla/shallow";
 import useItemStore from "@store/item.ts";
+import useConfirmDialog from "@store/confirm-dialog.ts";
 
 interface ItemTrProps {
   item: Item.Local;
+  onItemDeleted: () => void;
 }
 
 export const ItemTr = memo<ItemTrProps>(
-  ({ item }) => {
+  ({ item, onItemDeleted }) => {
+    const onConfirm = useConfirmDialog((state) => state.onConfirm);
+
     const collapsedItem = useItemStore((item) => item.collapsedItem);
     const isItemCollapsed = collapsedItem?.id === item.id;
 
@@ -55,10 +60,22 @@ export const ItemTr = memo<ItemTrProps>(
           return data;
         }),
       {
-        revalidateOnFocus: false,
-        revalidateIfStale: false,
+        refreshInterval: 3000,
       },
     );
+
+    const [isDeleteItemLoading, setIsDeleteItemLoading] = useState(false);
+    const onDeleteItem = async (id: number) => {
+      if (isDeleteItemLoading) return;
+      setIsDeleteItemLoading(true);
+      try {
+        await api.delete(`item/${id}/`);
+        onItemDeleted();
+      } catch (err: unknown) {
+        toast.error(`delete item failed: ${err}`);
+      }
+      setIsDeleteItemLoading(false);
+    };
 
     return (
       <>
@@ -109,7 +126,18 @@ export const ItemTr = memo<ItemTrProps>(
                 <ActionIcon size="md" variant="default" disabled>
                   <IconEdit size={16} stroke={1.5} />
                 </ActionIcon>
-                <ActionIcon size="md" variant="default" disabled>
+                <ActionIcon
+                  size="md"
+                  variant="default"
+                  disabled={isDeleteItemLoading}
+                  onClick={() =>
+                    onConfirm({
+                      message: "Confirm delete item?",
+                      content: `Deleting item '${item.name}'`,
+                      onConfirm: () => onDeleteItem(item.id),
+                    })
+                  }
+                >
                   <IconTrash size={16} stroke={1.5} />
                 </ActionIcon>
                 <ActionIcon
