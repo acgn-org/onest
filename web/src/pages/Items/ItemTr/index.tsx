@@ -52,7 +52,6 @@ export const ItemTr = memo<ItemTrProps>(
             task.matched_text = reg
               ? ParseTextWithPattern(task.text, reg, item.pattern)
               : "---";
-          console.log(data);
           return data;
         }),
       {

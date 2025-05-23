@@ -113,10 +113,21 @@ export const Tasks: FC<TasksProps> = ({ tasks, style }) => {
                 onClick={(ev) => ev.stopPropagation()}
               >
                 {renderStatus(task)}
-                <ActionIcon size="md" variant="default" ml={5} disabled>
+                <ActionIcon
+                  component="div"
+                  size="md"
+                  variant="default"
+                  ml={5}
+                  disabled
+                >
                   <IconEdit size={16} stroke={1.5} />
                 </ActionIcon>
-                <ActionIcon size="md" variant="default" disabled>
+                <ActionIcon
+                  component="div"
+                  size="md"
+                  variant="default"
+                  disabled
+                >
                   <IconTrash size={16} stroke={1.5} />
                 </ActionIcon>
               </Group>
