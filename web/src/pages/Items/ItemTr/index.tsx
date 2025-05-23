@@ -152,6 +152,12 @@ export const ItemTr = memo<ItemTrProps>(
                           return [...data];
                         })
                       }
+                      onTaskDeleted={(index) =>
+                        mutate((data) => {
+                          if (!data) return data;
+                          return [...data.splice(index, 1)];
+                        })
+                      }
                     />
                   )
                 )}

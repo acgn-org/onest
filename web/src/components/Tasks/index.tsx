@@ -29,17 +29,22 @@ export interface TasksProps {
   tasks: Download.TaskMatched[];
   style?: CSSProperties;
   onSetPriority: (index: number, priority: number) => void;
+  onTaskDeleted: (index: number) => void;
 }
 
-export const Tasks: FC<TasksProps> = ({ tasks, style, onSetPriority }) => {
-  const [priorityUpdating, setPriorityUpdating] = useState(false);
-
+export const Tasks: FC<TasksProps> = ({
+  tasks,
+  style,
+  onSetPriority,
+  onTaskDeleted,
+}) => {
+  const [isPriorityUpdating, setIsPriorityUpdating] = useState(false);
   const onUpdatePriority = async (
     id: number,
     index: number,
     target: number,
   ) => {
-    setPriorityUpdating(true);
+    setIsPriorityUpdating(true);
     try {
       await api.patch(`download/${id}/priority`, {
         priority: target,
@@ -48,7 +53,19 @@ export const Tasks: FC<TasksProps> = ({ tasks, style, onSetPriority }) => {
     } catch (err: unknown) {
       toast.error(`update priority failed: ${err}`);
     }
-    setPriorityUpdating(false);
+    setIsPriorityUpdating(false);
+  };
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const onDeleteTask = async (id: number, index: number) => {
+    setIsDeleting(true);
+    try {
+      await api.delete(`download/${id}/`);
+      onTaskDeleted(index);
+    } catch (err: unknown) {
+      toast.error(`delete task failed: ${err}`);
+    }
+    setIsDeleting(false);
   };
 
   const renderStatus = (task: Download.TaskMatched) => {
@@ -128,7 +145,7 @@ export const Tasks: FC<TasksProps> = ({ tasks, style, onSetPriority }) => {
                   <Flex onClick={(ev) => ev.stopPropagation()}>
                     {!task.downloaded && (
                       <PriorityInput
-                        disabled={priorityUpdating}
+                        disabled={isPriorityUpdating}
                         value={task.priority}
                         onChange={(val) =>
                           onUpdatePriority(task.id, index, val)
@@ -153,7 +170,8 @@ export const Tasks: FC<TasksProps> = ({ tasks, style, onSetPriority }) => {
                   size="md"
                   variant="default"
                   ml={6}
-                  disabled
+                  onClick={() => !isDeleting && onDeleteTask(task.id, index)}
+                  disabled={isDeleting}
                 >
                   <IconTrash size={16} stroke={1.5} />
                 </ActionIcon>
