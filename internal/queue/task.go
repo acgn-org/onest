@@ -173,9 +173,10 @@ func (task *DownloadTask) CompleteDownload() error {
 				task.log.Errorln("create target directory failed:", err)
 				return err
 			}
+		} else {
+			task.log.Errorln("stat target directory failed:", err)
+			return err
 		}
-		task.log.Errorln("stat target directory failed:", err)
-		return err
 	} else if !info.IsDir() {
 		msg := fmt.Sprintf("target path '%s' is not a directory", targetPath)
 		task.log.Errorln(msg)
