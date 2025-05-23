@@ -76,7 +76,7 @@ export const ItemTr = memo<ItemTrProps>(
             </Table.Td>
             <Table.Td>{item.name}</Table.Td>
             <Table.Td>
-              <Group gap="sm">
+              <Group gap="sm" style={{ flexWrap: "nowrap" }}>
                 {chatDetail ? (
                   <>
                     <Avatar
