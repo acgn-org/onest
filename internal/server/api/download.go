@@ -54,6 +54,8 @@ func UpdateDownloadPriority(ctx *gin.Context) {
 	}
 
 	queue.UpdatePriority(id, form.Priority)
+
+	response.Default(ctx)
 }
 
 func DeleteDownload(ctx *gin.Context) {
