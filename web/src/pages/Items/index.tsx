@@ -16,7 +16,6 @@ import {
   Transition,
   Loader,
   Table,
-  ScrollArea,
   Space,
 } from "@mantine/core";
 
@@ -74,7 +73,11 @@ export const Items: FC = () => {
           </Transition>
         </Group>
 
-        <Flex gap={"lg"} direction={{ base: "row-reverse", xs: "row" }}>
+        <Flex
+          gap={"lg"}
+          direction={{ base: "row-reverse", xs: "row" }}
+          mb={{ base: "lg", xs: 0 }}
+        >
           <Transition
             mounted={viewMode === "active"}
             duration={200}
@@ -113,13 +116,13 @@ export const Items: FC = () => {
         </Flex>
       </Flex>
 
-      <ScrollArea type="auto">
-        <Table withRowBorders={false} className={styles.table}>
+      <Table.ScrollContainer minWidth={500}>
+        <Table className={styles.table} stickyHeader withRowBorders={false}>
           <Table.Thead>
             <Table.Tr>
               <Table.Td>ID</Table.Td>
-              <Table.Td>Channel</Table.Td>
               <Table.Td>Name</Table.Td>
+              <Table.Td>Channel</Table.Td>
               <Table.Td>Updated At</Table.Td>
               <Table.Td>Priority</Table.Td>
               <Table.Td></Table.Td>
@@ -131,7 +134,7 @@ export const Items: FC = () => {
               itemsDisplay.map((item) => <ItemTr key={item.id} item={item} />)}
           </Table.Tbody>
         </Table>
-      </ScrollArea>
+      </Table.ScrollContainer>
 
       {itemsDisplay && itemsDisplay.length === 0 && (
         <Flex flex={1} align="center" justify="center">
