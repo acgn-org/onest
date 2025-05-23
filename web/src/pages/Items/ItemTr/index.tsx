@@ -10,12 +10,15 @@ import {
   Text,
   Badge,
   Collapse,
+  ActionIcon,
 } from "@mantine/core";
+import { IconEdit, IconSitemap, IconTrash } from "@tabler/icons-react";
 
 import useSWR from "swr";
 import api, { baseUrl } from "@network/api.ts";
 
 import { shallow } from "zustand/vanilla/shallow";
+import useItemStore from "@store/item.ts";
 
 interface ItemTrProps {
   item: Item.Local;
@@ -23,8 +26,20 @@ interface ItemTrProps {
 
 export const ItemTr = memo<ItemTrProps>(
   ({ item }) => {
+    const collapsedItem = useItemStore((item) => item.collapsedItem);
+    const isItemCollapsed = collapsedItem?.id === item.id;
+
     const { data: chatDetail } = useSWR<Telegram.Chat>(
       `telegram/chat/${item.channel_id}/`,
+      (url: string) => api.get(url).then((res) => res.data.data),
+      {
+        revalidateOnFocus: false,
+        revalidateIfStale: false,
+      },
+    );
+
+    const { data: tasks } = useSWR<Download.Task[]>(
+      isItemCollapsed ? `item/${item.id}/downloads` : null,
       (url: string) => api.get(url).then((res) => res.data.data),
       {
         revalidateOnFocus: false,
@@ -74,11 +89,31 @@ export const ItemTr = memo<ItemTrProps>(
                 {item.priority.toString().padStart(2, "0")}
               </Badge>
             </Table.Td>
-            <Table.Td></Table.Td>
+            <Table.Td>
+              <Group gap={8}>
+                <ActionIcon size="md" variant="default">
+                  <IconEdit size={16} stroke={1.5} />
+                </ActionIcon>
+                <ActionIcon size="md" variant="default">
+                  <IconTrash size={16} stroke={1.5} />
+                </ActionIcon>
+                <ActionIcon
+                  size="md"
+                  variant={isItemCollapsed ? "outline" : "default"}
+                  onClick={() =>
+                    useItemStore.setState({
+                      collapsedItem: isItemCollapsed ? undefined : item,
+                    })
+                  }
+                >
+                  <IconSitemap size={16} stroke={1.5} />
+                </ActionIcon>
+              </Group>
+            </Table.Td>
           </Table.Tr>
         </Flipped>
         <Flipped flipId={`${item.id}-detail`}>
-          <Collapse in={false} component={Table.Tr}>
+          <Collapse in={isItemCollapsed} component={Table.Tr}>
             <Table.Td colSpan={6}></Table.Td>
           </Collapse>
         </Flipped>

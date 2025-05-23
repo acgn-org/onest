@@ -196,12 +196,14 @@ export const Items: FC = () => {
       </Flex>
 
       <Flipper flipKey={itemsDisplay?.map((items) => items.id).join(".")}>
-        <Table.ScrollContainer minWidth={500}>
+        <Table.ScrollContainer minWidth={800}>
           <Table className={styles.table} withRowBorders={false}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Td>{renderTableHeaderColl("ID", "id")}</Table.Td>
-                <Table.Td>{renderTableHeaderColl("Name", "name")}</Table.Td>
+                <Table.Td style={{ maxWidth: 200 }}>
+                  {renderTableHeaderColl("Name", "name")}
+                </Table.Td>
                 <Table.Td>
                   {renderTableHeaderColl("Channel", "channel_id")}
                 </Table.Td>
