@@ -52,7 +52,7 @@ export const ItemTr = memo<ItemTrProps>(
             task.matched_text = reg
               ? ParseTextWithPattern(task.text, reg, item.pattern)
               : "---";
-          console.log(data)
+          console.log(data);
           return data;
         }),
       {
@@ -107,10 +107,10 @@ export const ItemTr = memo<ItemTrProps>(
             </Table.Td>
             <Table.Td>
               <Group gap={8} style={{ flexWrap: "nowrap" }}>
-                <ActionIcon size="md" variant="default">
+                <ActionIcon size="md" variant="default" disabled>
                   <IconEdit size={16} stroke={1.5} />
                 </ActionIcon>
-                <ActionIcon size="md" variant="default">
+                <ActionIcon size="md" variant="default" disabled>
                   <IconTrash size={16} stroke={1.5} />
                 </ActionIcon>
                 <ActionIcon
