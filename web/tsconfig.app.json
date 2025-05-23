@@ -30,6 +30,7 @@
       "@hook/*": ["./src/hooks/*"],
       "@network/*": ["./src/network/*"],
       "@store/*": ["./src/store/*"],
+      "@util/*": ["./src/util/*"]
     }
   },
   "include": ["src"]

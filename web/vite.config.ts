@@ -17,6 +17,7 @@ export default defineConfig({
       "@hook": resolve(__dirname, "src/hooks"),
       "@network": resolve(__dirname, "src/network"),
       "@store": resolve(__dirname, "src/store"),
+      "@util": resolve(__dirname, "src/util"),
     },
   },
 });

@@ -1,6 +1,8 @@
 import { memo } from "react";
 import dayjs from "dayjs";
 
+import Empty from "@component/Empty";
+import Tasks from "@component/Tasks";
 import { Flipped } from "react-flip-toolkit";
 import {
   Table,
@@ -11,6 +13,7 @@ import {
   Badge,
   Collapse,
   ActionIcon,
+  Flex,
 } from "@mantine/core";
 import { IconEdit, IconSitemap, IconTrash } from "@tabler/icons-react";
 
@@ -40,7 +43,10 @@ export const ItemTr = memo<ItemTrProps>(
 
     const { data: tasks } = useSWR<Download.Task[]>(
       isItemCollapsed ? `item/${item.id}/downloads` : null,
-      (url: string) => api.get(url).then((res) => res.data.data),
+      (url: string) =>
+        api
+          .get<{ data: Download.Task[] }>(url)
+          .then((res) => res.data.data.sort((a, b) => a.msg_id - b.msg_id)),
       {
         revalidateOnFocus: false,
         revalidateIfStale: false,
@@ -51,7 +57,9 @@ export const ItemTr = memo<ItemTrProps>(
       <>
         <Flipped flipId={item.id}>
           <Table.Tr>
-            <Table.Td>{item.id}</Table.Td>
+            <Table.Td>
+              <Badge variant="dot">{item.id}</Badge>
+            </Table.Td>
             <Table.Td>{item.name}</Table.Td>
             <Table.Td>
               <Group gap="sm">
@@ -90,7 +98,7 @@ export const ItemTr = memo<ItemTrProps>(
               </Badge>
             </Table.Td>
             <Table.Td>
-              <Group gap={8}>
+              <Group gap={8} style={{ flexWrap: "nowrap" }}>
                 <ActionIcon size="md" variant="default">
                   <IconEdit size={16} stroke={1.5} />
                 </ActionIcon>
@@ -100,6 +108,7 @@ export const ItemTr = memo<ItemTrProps>(
                 <ActionIcon
                   size="md"
                   variant={isItemCollapsed ? "outline" : "default"}
+                  loading={isItemCollapsed && !tasks}
                   onClick={() =>
                     useItemStore.setState({
                       collapsedItem: isItemCollapsed ? undefined : item,
@@ -113,9 +122,30 @@ export const ItemTr = memo<ItemTrProps>(
           </Table.Tr>
         </Flipped>
         <Flipped flipId={`${item.id}-detail`}>
-          <Collapse in={isItemCollapsed} component={Table.Tr}>
-            <Table.Td colSpan={6}></Table.Td>
-          </Collapse>
+          <Table.Tr>
+            <Table.Td colSpan={6} p={0}>
+              <Collapse
+                in={isItemCollapsed && !!tasks}
+                component={Flex}
+                style={{ justifyContent: "center" }}
+                px={20}
+                py={10}
+              >
+                {tasks && tasks.length === 0 ? (
+                  <Empty />
+                ) : (
+                  tasks && (
+                    <Tasks
+                      tasks={tasks}
+                      regexp={item.regexp}
+                      pattern={item.pattern}
+                      style={{ width: "100%" }}
+                    />
+                  )
+                )}
+              </Collapse>
+            </Table.Td>
+          </Table.Tr>
         </Flipped>
       </>
     );

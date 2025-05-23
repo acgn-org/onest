@@ -1,4 +1,5 @@
 import { type FC, useEffect, useState } from "react";
+import { ParseTextWithPattern } from "@util/pattern.ts";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 
@@ -85,17 +86,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           if (!raws) return raws;
           for (const raw of raws) {
             raw.matched = regexp.test(raw.text);
-            const matches = regexp.exec(raw.text);
-            const matchesObj = Object.fromEntries(
-              (matches ?? []).map((v, i) => [String(i), v]),
-            );
-            raw.matched_text = pattern.replace(
-              /\$(\w+)|\$\{([^}]+)\}/g,
-              (_, key1, key2) => {
-                const key = key1 || key2;
-                return matchesObj[key] ?? "";
-              },
-            );
+            raw.matched_text = ParseTextWithPattern(raw.text, regexp, pattern);
           }
           return [...raws];
         });
@@ -350,7 +341,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                             <Text size="sm">
                               {dayjs.unix(raw.date).format("YYYY/MM/DD HH:mm")}
                             </Text>
-                            <Badge color="blue" size="sm" variant="light">
+                            <Badge variant="light">
                               {(raw.size / 1024 / 1024).toFixed(0)} MB
                             </Badge>
                             <div onClick={(ev) => ev.stopPropagation()}>
