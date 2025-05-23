@@ -105,7 +105,7 @@ export const Task: FC<TaskProps> = ({
         <RingProgress
           label={
             <Flex align="center" justify="center">
-              <IconArrowDownDashed color="blue" size={12} stroke={3} />
+              <IconArrowDownDashed color="green" size={12} stroke={3} />
             </Flex>
           }
           size={36}
@@ -114,7 +114,7 @@ export const Task: FC<TaskProps> = ({
           sections={[
             {
               value: (task.file.local.downloaded_size / task.file.size) * 100,
-              color: "green",
+              color: "blue",
             },
           ]}
           roundCaps
