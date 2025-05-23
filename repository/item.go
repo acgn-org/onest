@@ -27,6 +27,8 @@ type NewItemForm struct {
 	Name       string `json:"name" form:"name" binding:"required"`
 	Regexp     string `json:"regexp" form:"regexp" binding:"required"`
 	Pattern    string `json:"pattern" form:"pattern" binding:"required"`
+	DateStart  int32  `json:"date_start" from:"date_start" binding:"required"`
+	DateEnd    int32  `json:"date_end" from:"date_end" binding:"required"`
 	Process    int64  `json:"process" form:"process" binding:"required"`
 	Priority   int32  `json:"priority" form:"priority" binding:"min=1,max=32"`
 	TargetPath string `json:"target_path" form:"target_path" binding:"required"`

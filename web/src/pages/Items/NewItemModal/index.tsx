@@ -169,6 +169,11 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         return;
       }
 
+      if (!itemInfo) {
+        toast.error("item info not loaded");
+        return;
+      }
+
       let process: number | undefined;
       for (const raw of itemRaws!) {
         if (!process || raw.msg_id > process) process = raw.msg_id;
@@ -183,6 +188,8 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         channel_id: channel_id,
         regexp: regexpStr,
         pattern,
+        date_start: itemInfo.date_start,
+        date_end: itemInfo.date_end,
         process,
         target_path: targetPath,
         priority,
