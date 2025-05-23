@@ -89,22 +89,25 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           }) as RealSearch.MatchedRaw,
       )
       .sort((a, b) => a.date - b.date);
-    if (!raws) setItemRawsMatched(null);
+    if (!raws) {
+      setItemRawsMatched(null);
+      return;
+    }
     if (regexp) {
       if (pattern)
         setItemRawsMatched(() => {
-          for (const raw of raws!) {
+          for (const raw of raws) {
             raw.matched = regexp.test(raw.text);
             raw.matched_text = ParseTextWithPattern(raw.text, regexp, pattern);
           }
-          return [...raws!];
+          return [...raws];
         });
       else
         setItemRawsMatched(() => {
-          for (const raw of raws!) {
+          for (const raw of raws) {
             raw.matched = regexp.test(raw.text);
           }
-          return [...raws!];
+          return [...raws];
         });
     }
   }, [itemRaws, regexp, pattern]);
