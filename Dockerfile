@@ -11,7 +11,6 @@ COPY web .
 RUN yarn build
 
 FROM acgn0rg/tdlib:golang AS backend
-ARG OnestVersion="unknown"
 
 WORKDIR /build
 
@@ -21,6 +20,8 @@ RUN go mod download
 
 COPY . .
 COPY --from=frontend /build/dist ./web/dist
+
+ARG OnestVersion="unknown"
 
 RUN go build -trimpath \
       -ldflags "\
