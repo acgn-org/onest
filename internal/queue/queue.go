@@ -20,7 +20,7 @@ func init() {
 
 	// resume downloads
 
-	downloadingSlice, err := downloadRepo.GetDownloading()
+	downloadingSlice, err := downloadRepo.GetDownloadingPreloadItem()
 	if err != nil {
 		logger.Fatalln("load downloading failed:", err)
 	}

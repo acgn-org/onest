@@ -22,7 +22,7 @@ func GetItemDownloads(ctx *gin.Context) {
 	}
 
 	downloadRepo := database.NewRepository[repository.DownloadRepository]()
-	tasks, err := downloadRepo.GetDownloadTaskByID(id)
+	tasks, err := downloadRepo.GetByItemID(id)
 	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
