@@ -78,7 +78,7 @@ func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {
 		}
 		tx = tx.Where("id NOT IN (?)", itemsToDownloadIds)
 	}
-	if err := repo.DB.Model(&Item{}).Where("date_end > ?", dateEnd).Find(&itemsRecentlyActive).Error; err != nil {
+	if err := tx.Where("date_end > ?", dateEnd).Find(&itemsRecentlyActive).Error; err != nil {
 		return nil, err
 	}
 
