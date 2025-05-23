@@ -71,32 +71,44 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   }, [regexpStr]);
 
   const [itemInfo, setItemInfo] = useState<Item.Remote | null>(null);
-  const [itemRaws, setItemRaws] = useState<RealSearch.MatchedRaw[] | null>(
-    null,
-  );
+  const [itemRaws, setItemRaws] = useState<RealSearch.Raw[] | null>(null);
+  const [itemRawsMatched, setItemRawsMatched] = useState<
+    RealSearch.MatchedRaw[] | null
+  >(null);
   useEffect(() => {
     setItemInfo(null);
     setItemRaws(null);
     resetExtendedForm();
   }, [id]);
   useEffect(() => {
+    const raws = itemRaws
+      ?.map(
+        (raw) =>
+          ({
+            ...raw,
+            matched: true,
+            matched_text: "",
+            selected: true,
+            priority: undefined,
+          }) as RealSearch.MatchedRaw,
+      )
+      .sort((a, b) => a.date - b.date);
+    if (!raws) setItemRawsMatched(null);
     if (regexp) {
       if (pattern)
-        setItemRaws((raws) => {
-          if (!raws) return raws;
-          for (const raw of raws) {
+        setItemRawsMatched(() => {
+          for (const raw of raws!) {
             raw.matched = regexp.test(raw.text);
             raw.matched_text = ParseTextWithPattern(raw.text, regexp, pattern);
           }
-          return [...raws];
+          return [...raws!];
         });
       else
-        setItemRaws((raws) => {
-          if (!raws) return raws;
-          for (const raw of raws) {
+        setItemRawsMatched(() => {
+          for (const raw of raws!) {
             raw.matched = regexp.test(raw.text);
           }
-          return [...raws];
+          return [...raws!];
         });
     }
   }, [itemRaws, regexp, pattern]);
@@ -134,15 +146,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         `realsearch/time_machine/item/${idParsed}/raws`,
       );
       setItemInfo(data.item);
-      setItemRaws(
-        data.data.map((raw) => ({
-          ...raw,
-          selected: true,
-          matched: true,
-          matched_text: "",
-          priority: undefined,
-        })),
-      );
+      setItemRaws(data.data);
       if (!name) useNewItemStore.setState({ name: data.item.name });
       if (!regexpStr)
         useNewItemStore.setState({
@@ -166,7 +170,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
     } else {
       if (itemPriority > 1) itemPriority--;
     }
-    setItemRaws((raws) => {
+    setItemRawsMatched((raws) => {
       raws![index].priority = itemPriority;
       return [...raws!];
     });
@@ -200,7 +204,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         process,
         target_path: targetPath,
         priority,
-        downloads: itemRaws!
+        downloads: itemRawsMatched!
           .filter((raw) => raw.matched && raw.selected)
           .map((raw) => ({
             msg_id: raw.msg_id,
@@ -317,80 +321,80 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               <Divider mt="sm" />
 
               <Accordion variant="filled">
-                {itemRaws!
-                  .sort((a, b) => a.date - b.date)
-                  .map((raw, index) => (
-                    <Accordion.Item key={raw.id} value={`${raw.id}`}>
-                      <Accordion.Control
-                        icon={
-                          <Checkbox
-                            checked={raw.matched && raw.selected}
-                            disabled={!raw.matched}
-                            onClick={(ev) => ev.stopPropagation()}
-                            onChange={(ev) =>
-                              setItemRaws((raws) => {
-                                raws![index].selected = ev.target.checked;
-                                return [...raws!];
-                              })
-                            }
-                          />
-                        }
-                      >
-                        <Stack gap={1}>
-                          <Group gap="sm">
-                            <Text size="sm">
-                              {dayjs.unix(raw.date).format("YYYY/MM/DD HH:mm")}
-                            </Text>
-                            <Badge variant="light">
-                              {(raw.size / 1024 / 1024).toFixed(0)} MB
-                            </Badge>
-                            <div onClick={(ev) => ev.stopPropagation()}>
-                              <ActionIcon.Group>
-                                <ActionIcon
-                                  variant="default"
-                                  size={18}
-                                  radius="md"
-                                  onClick={() =>
-                                    onSetItemPriority(index, raw.priority, true)
-                                  }
-                                >
-                                  <IconMinus color="var(--mantine-color-red-text)" />
-                                </ActionIcon>
-                                <ActionIcon.GroupSection
-                                  variant="default"
-                                  size={13}
-                                  bg="var(--mantine-color-body)"
-                                  h={18}
-                                  w={32}
-                                  c={raw.priority ? undefined : "dimmed"}
-                                >
-                                  {raw.priority || priority}
-                                </ActionIcon.GroupSection>
-                                <ActionIcon
-                                  variant="default"
-                                  size={18}
-                                  radius="md"
-                                  onClick={() =>
-                                    onSetItemPriority(index, raw.priority)
-                                  }
-                                >
-                                  <IconPlus color="var(--mantine-color-teal-text)" />
-                                </ActionIcon>
-                              </ActionIcon.Group>
-                            </div>
-                          </Group>
-                          {renderConvertedFilename(raw)}
-                        </Stack>
-                      </Accordion.Control>
-                      <Accordion.Panel
-                        style={{
-                          whiteSpace: "pre-wrap",
-                        }}
-                      >
-                        {raw.text}
-                      </Accordion.Panel>
-                    </Accordion.Item>
-                  ))}
+                {itemRawsMatched?.map((raw, index) => (
+                  <Accordion.Item key={raw.id} value={`${raw.id}`}>
+                    <Accordion.Control
+                      icon={
+                        <Checkbox
+                          checked={raw.matched && raw.selected}
+                          disabled={!raw.matched}
+                          onClick={(ev) => ev.stopPropagation()}
+                          onChange={(ev) =>
+                            setItemRawsMatched((raws) => {
+                              raws![index].selected = ev.target.checked;
+                              return [...raws!];
+                            })
+                          }
+                        />
+                      }
+                    >
+                      <Stack gap={1}>
+                        <Group gap="sm">
+                          <Text size="sm">
+                            {dayjs.unix(raw.date).format("YYYY/MM/DD HH:mm")}
+                          </Text>
+                          <Badge variant="light">
+                            {(raw.size / 1024 / 1024).toFixed(0)} MB
+                          </Badge>
+                          <div onClick={(ev) => ev.stopPropagation()}>
+                            <ActionIcon.Group>
+                              <ActionIcon
+                                component={"div"}
+                                variant="default"
+                                size={18}
+                                radius="md"
+                                onClick={() =>
+                                  onSetItemPriority(index, raw.priority, true)
+                                }
+                              >
+                                <IconMinus color="var(--mantine-color-red-text)" />
+                              </ActionIcon>
+                              <ActionIcon.GroupSection
+                                variant="default"
+                                size={13}
+                                bg="var(--mantine-color-body)"
+                                h={18}
+                                w={32}
+                                c={raw.priority ? undefined : "dimmed"}
+                              >
+                                {raw.priority || priority}
+                              </ActionIcon.GroupSection>
+                              <ActionIcon
+                                component={"div"}
+                                variant="default"
+                                size={18}
+                                radius="md"
+                                onClick={() =>
+                                  onSetItemPriority(index, raw.priority)
+                                }
+                              >
+                                <IconPlus color="var(--mantine-color-teal-text)" />
+                              </ActionIcon>
+                            </ActionIcon.Group>
+                          </div>
+                        </Group>
+                        {renderConvertedFilename(raw)}
+                      </Stack>
+                    </Accordion.Control>
+                    <Accordion.Panel
+                      style={{
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {raw.text}
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                ))}
               </Accordion>
             </>
           )}
