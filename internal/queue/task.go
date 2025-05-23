@@ -165,11 +165,23 @@ func (task *DownloadTask) CompleteDownload() error {
 		panic("complete download called without file state")
 	}
 
-	err = os.MkdirAll(targetPath, config.FilePerm)
+	info, err := os.Stat(targetPath)
 	if err != nil {
-		task.log.Errorln("create target directory failed:", err)
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(targetPath, config.FilePerm)
+			if err != nil {
+				task.log.Errorln("create target directory failed:", err)
+				return err
+			}
+		}
+		task.log.Errorln("stat target directory failed:", err)
 		return err
+	} else if !info.IsDir() {
+		msg := fmt.Sprintf("target path '%s' is not a directory", targetPath)
+		task.log.Errorln(msg)
+		return errors.New(msg)
 	}
+
 	fullPath := path.Join(targetPath, targetName) + path.Ext(state.File.Local.Path)
 	err = os.Rename(state.File.Local.Path, fullPath)
 	if err != nil {
