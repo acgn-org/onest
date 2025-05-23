@@ -5,16 +5,17 @@ import { Stack, type StackProps } from "@mantine/core";
 
 interface EmptyProps {
   p?: StackProps["p"];
+  size?: number | string;
 }
 
-export const Empty: FC<EmptyProps> = ({ p }) => {
+export const Empty: FC<EmptyProps> = ({ p, size = "15.5rem" }) => {
   return (
     <Stack p={p} align="center" justify="center">
       <Picture
         name={"empty"}
         alt={"empty"}
         imgStyle={{
-          height: "15.5rem",
+          height: size,
           opacity: 0.9,
         }}
         aspectRatio={1}

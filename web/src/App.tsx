@@ -17,8 +17,13 @@ import {
   NavLink,
   Container,
   Title,
+  Modal,
+  Button,
+  Text,
 } from "@mantine/core";
 import { IconCloudDown, IconLogs, IconTemplate } from "@tabler/icons-react";
+
+import useConfirmDialog from "@store/confirm-dialog.ts";
 
 type NavItem = {
   label: string;
@@ -59,6 +64,13 @@ export const App: FC = () => {
       ),
     [matches],
   );
+
+  const deleteConfirmProps = useConfirmDialog((state) => state.props);
+
+  const onCloseDeleteConfirm = () => {
+    deleteConfirmProps?.onCancel?.();
+    useConfirmDialog.setState({ props: undefined });
+  };
 
   return (
     <MantineProvider defaultColorScheme="dark" theme={theme}>
@@ -140,6 +152,20 @@ export const App: FC = () => {
           >
             <Title order={2}>{activeNavItem?.label ?? "404"}</Title>
             <Outlet />
+            <Modal
+              opened={!!deleteConfirmProps}
+              onClose={onCloseDeleteConfirm}
+              title={deleteConfirmProps?.message}
+              centered
+            >
+              <Text>{deleteConfirmProps?.content}</Text>
+              <Group mt="xl" justify="flex-end">
+                <Button variant="outline" onClick={onCloseDeleteConfirm}>
+                  Cancel
+                </Button>
+                <Button onClick={deleteConfirmProps?.onConfirm}>Confirm</Button>
+              </Group>
+            </Modal>
           </Container>
         </AppShell.Main>
       </AppShell>

@@ -23,6 +23,8 @@ import {
   IconArrowDownDashed,
 } from "@tabler/icons-react";
 
+import useConfirmDialog from "@store/confirm-dialog.ts";
+
 import api from "@network/api";
 
 export interface TasksProps {
@@ -38,6 +40,8 @@ export const Tasks: FC<TasksProps> = ({
   onSetPriority,
   onTaskDeleted,
 }) => {
+  const onConfirm = useConfirmDialog((state) => state.onConfirm);
+
   const [isPriorityUpdating, setIsPriorityUpdating] = useState(false);
   const onUpdatePriority = async (
     id: number,
@@ -170,7 +174,14 @@ export const Tasks: FC<TasksProps> = ({
                   size="md"
                   variant="default"
                   ml={6}
-                  onClick={() => !isDeleting && onDeleteTask(task.id, index)}
+                  onClick={() =>
+                    !isDeleting &&
+                    onConfirm({
+                      message: `Confirm Delete Task?`,
+                      content: `Deleting task '${task.matched_text}'`,
+                      onConfirm: () => onDeleteTask(task.id, index),
+                    })
+                  }
                   disabled={isDeleting}
                 >
                   <IconTrash size={16} stroke={1.5} />
