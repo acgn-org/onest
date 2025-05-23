@@ -31,6 +31,7 @@ import useSWR from "swr";
 import api from "@network/api.ts";
 
 import useItemStore from "@store/item.ts";
+import useNewItemStore from "@store/new-item.ts";
 
 export const Items: FC = () => {
   const viewMode = useItemStore((state) => state.view_mode);
@@ -86,8 +87,6 @@ export const Items: FC = () => {
     if (items) setItemsDisplay(onSort([...items], sortBy, sortReversed));
   }, [items, sortBy, sortReversed]);
 
-  const [onNewItem, setOnNewItem] = useState(false);
-
   const renderTableHeaderColl = (label: string, sortKey: keyof Item.Local) => {
     const isSelected = sortKey === sortBy;
 
@@ -141,7 +140,9 @@ export const Items: FC = () => {
         direction={{ base: "column", xs: "row" }}
       >
         <Group gap={"md"} my={20}>
-          <Button onClick={() => setOnNewItem(true)}>New</Button>
+          <Button onClick={() => useNewItemStore.setState({ open: true })}>
+            New
+          </Button>
           <Transition
             mounted={!items || isLoading || isValidating}
             duration={200}
@@ -232,11 +233,7 @@ export const Items: FC = () => {
 
       <Space h={10} />
 
-      <NewItemModal
-        open={onNewItem}
-        onClose={() => setOnNewItem(false)}
-        onItemMutate={() => mutate()}
-      />
+      <NewItemModal onItemMutate={() => mutate()} />
     </>
   );
 };

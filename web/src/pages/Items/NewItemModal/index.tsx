@@ -25,22 +25,19 @@ import {
   IconMinus,
 } from "@tabler/icons-react";
 
-import useNewItem from "@store/new-item.ts";
+import useNewItemStore from "@store/new-item.ts";
 
 import useRealSearchRules from "@hook/useRealSearchRules.ts";
 import api from "@network/api.ts";
 
 export interface NewItemModalProps {
-  open: boolean;
-  onClose: () => void;
   onItemMutate: () => void;
 }
 
-export const NewItemModal: FC<NewItemModalProps> = ({
-  open,
-  onClose,
-  onItemMutate,
-}) => {
+export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
+  const open = useNewItemStore((state) => state.open);
+  const onClose = useNewItemStore((state) => state.onClose);
+
   const { data: rules } = useRealSearchRules({
     onError: (err) => toast.error(`load rules failed: ${err}`),
   });
@@ -51,12 +48,12 @@ export const NewItemModal: FC<NewItemModalProps> = ({
     if (open) setId("");
   }, [open]);
 
-  const name = useNewItem((state) => state.name);
-  const targetPath = useNewItem((state) => state.target_path);
-  const regexpStr = useNewItem((state) => state.regexp);
-  const pattern = useNewItem((state) => state.pattern);
-  const priority = useNewItem((state) => state.priority);
-  const resetExtendedForm = useNewItem((state) => state.resetStates);
+  const name = useNewItemStore((state) => state.name);
+  const targetPath = useNewItemStore((state) => state.target_path);
+  const regexpStr = useNewItemStore((state) => state.regexp);
+  const pattern = useNewItemStore((state) => state.pattern);
+  const priority = useNewItemStore((state) => state.priority);
+  const resetExtendedForm = useNewItemStore((state) => state.resetStates);
 
   const [regexp, setRegexp] = useState<RegExp | null>(null);
   const [regexpError, setRegexpError] = useState<string | undefined>(undefined);
@@ -155,9 +152,9 @@ export const NewItemModal: FC<NewItemModalProps> = ({
           priority: undefined,
         })),
       );
-      if (!name) useNewItem.setState({ name: data.item.name });
+      if (!name) useNewItemStore.setState({ name: data.item.name });
       if (!regexpStr)
-        useNewItem.setState({
+        useNewItemStore.setState({
           regexp:
             rules?.find((rule) => (rule.id = data.item.rule_id))?.regexp ?? "",
         });
@@ -220,7 +217,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
           })),
       });
       onItemMutate();
-      onClose()
+      onClose();
     } catch (err: unknown) {
       toast.error(`create item failed: ${err}`);
     }
@@ -247,7 +244,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
   };
 
   return (
-    <Modal title={"New Item"} size={"lg"} opened={open} onClose={onClose}>
+    <Modal title={"New Item"} size={"lg"} opened={!!open} onClose={onClose}>
       <form
         onSubmit={(ev) => {
           ev.preventDefault();
@@ -281,7 +278,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
               onChange={(val) => {
                 if (typeof val === "string") val = parseInt(val);
                 if (!isNaN(val) && val >= 1 && val <= 32)
-                  useNewItem.setState({ priority: val });
+                  useNewItemStore.setState({ priority: val });
               }}
             />
           </Group>
@@ -290,7 +287,9 @@ export const NewItemModal: FC<NewItemModalProps> = ({
             placeholder="Custom name for item."
             required={!!itemInfo}
             value={name}
-            onChange={(ev) => useNewItem.setState({ name: ev.target.value })}
+            onChange={(ev) =>
+              useNewItemStore.setState({ name: ev.target.value })
+            }
           />
           <TextInput
             label="Target Path"
@@ -298,7 +297,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
             required={!!itemInfo}
             value={targetPath}
             onChange={(ev) =>
-              useNewItem.setState({ target_path: ev.target.value })
+              useNewItemStore.setState({ target_path: ev.target.value })
             }
           />
 
@@ -310,7 +309,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
                 required
                 value={regexpStr}
                 onChange={(ev) =>
-                  useNewItem.setState({ regexp: ev.target.value })
+                  useNewItemStore.setState({ regexp: ev.target.value })
                 }
                 error={regexpError}
               />
@@ -320,7 +319,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({
                 required
                 value={pattern}
                 onChange={(ev) =>
-                  useNewItem.setState({ pattern: ev.target.value })
+                  useNewItemStore.setState({ pattern: ev.target.value })
                 }
               />
 

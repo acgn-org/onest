@@ -1,6 +1,6 @@
 import { create } from "zustand/react";
 
-interface NewItemState {
+interface NewItemForm {
   name: string;
   target_path: string;
   regexp: string;
@@ -8,7 +8,7 @@ interface NewItemState {
   priority: number;
 }
 
-const NewItemInitial: NewItemState = {
+const NewItemInitial: NewItemForm = {
   name: "",
   target_path: "",
   regexp: "",
@@ -16,12 +16,16 @@ const NewItemInitial: NewItemState = {
   priority: 16,
 };
 
-interface NewItemActions {
+interface NewItemState {
+  open?: boolean;
+
   resetStates: () => void;
+  onClose: () => void;
 }
 
-export const useNewItem = create<NewItemState & NewItemActions>()((set) => ({
+export const useNewItemStore = create<NewItemForm & NewItemState>()((set) => ({
   ...NewItemInitial,
+  onClose: () => set({ open: false }),
   resetStates: () => set(NewItemInitial),
 }));
-export default useNewItem;
+export default useNewItemStore;
