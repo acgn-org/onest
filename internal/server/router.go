@@ -13,6 +13,7 @@ func Api(group *gin.RouterGroup) {
 	item.GET("error", api.GetErrorItems)
 	item.POST("/", api.NewItem)
 	itemWithId := item.Group(":id")
+	itemWithId.GET("/", api.GetItemByID)
 	itemWithId.GET("downloads", api.GetItemDownloads)
 	itemWithId.PATCH("/", api.PatchItem)
 	itemWithId.DELETE("/", api.DeleteItem)

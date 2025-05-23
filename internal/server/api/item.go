@@ -72,6 +72,27 @@ func GetErrorItems(ctx *gin.Context) {
 	response.Success(ctx, items)
 }
 
+func GetItemByID(ctx *gin.Context) {
+	id, err := tools.UintIDFromParam(ctx, "id")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	itemRepo := database.NewRepository[repository.ItemRepository]()
+	item, err := itemRepo.FirstItemByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.Error(ctx, response.ErrNotFound)
+			return
+		}
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	response.Success(ctx, item)
+}
+
 func NewItem(ctx *gin.Context) {
 	var form struct {
 		repository.NewItemForm
