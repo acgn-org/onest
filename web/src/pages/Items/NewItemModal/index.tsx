@@ -150,7 +150,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       if (!regexpStr)
         useNewItemStore.setState({
           regexp:
-            rules?.find((rule) => (rule.id = data.item.rule_id))?.regexp ?? "",
+            rules?.find((rule) => rule.id === data.item.rule_id)?.regexp ?? "",
         });
     } catch (err: unknown) {
       toast.error(`load item data failed: ${err}`);
