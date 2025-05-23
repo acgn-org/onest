@@ -114,7 +114,7 @@ export const Task: FC<TaskProps> = ({
           sections={[
             {
               value: (task.file.local.downloaded_size / task.file.size) * 100,
-              color: "blue",
+              color: "green",
             },
           ]}
           roundCaps
