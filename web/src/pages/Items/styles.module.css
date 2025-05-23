@@ -1,5 +1,18 @@
 .table {
   thead td {
     white-space: nowrap;
+
+    .sort {
+      transition: opacity 0.2s ease-in-out;
+      opacity: 0;
+
+      button span {
+        display: flex;
+        flex-direction: column;
+      }
+    }
+  }
+  thead td:hover .sort {
+    opacity: 1;
   }
 }

@@ -18,7 +18,14 @@ import {
   Loader,
   Table,
   Space,
+  ActionIcon,
 } from "@mantine/core";
+import {
+  IconCaretUp,
+  IconCaretDown,
+  IconCaretUpFilled,
+  IconCaretDownFilled,
+} from "@tabler/icons-react";
 
 import useSWR from "swr";
 import api from "@network/api.ts";
@@ -49,12 +56,82 @@ export const Items: FC = () => {
       refreshWhenOffline: true,
     },
   );
+
+  const sortBy = useItemStore((state) => state.sortBy);
+  const sortReversed = useItemStore((state) => state.sortReversed);
+  const onSort = (
+    items: Item.Local[],
+    sortBy: keyof Item.Local,
+    reversed: boolean,
+  ): Item.Local[] => {
+    const sorted = items.sort((a, b) => {
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+
+      const keyType = typeof a[sortBy];
+      switch (keyType) {
+        case "string":
+          return (aVal as string).localeCompare(bVal as string);
+        case "number":
+          return (aVal as number) - (bVal as number);
+        default:
+          throw new Error(`unsupported sort type ${keyType}`);
+      }
+    });
+    if (reversed) sorted.reverse();
+    return [...sorted];
+  };
   const [itemsDisplay, setItemsDisplay] = useState(items);
   useEffect(() => {
-    if (items) setItemsDisplay(items);
-  }, [items]);
+    if (items) setItemsDisplay(onSort([...items], sortBy, sortReversed));
+  }, [items, sortBy, sortReversed]);
 
   const [onNewItem, setOnNewItem] = useState(false);
+
+  const renderTableHeaderColl = (label: string, sortKey: keyof Item.Local) => {
+    const isSelected = sortKey === sortBy;
+
+    return (
+      <Flex align="center">
+        <Text>{label}</Text>
+
+        <ActionIcon.Group
+          className={styles.sort}
+          style={{
+            opacity: isSelected ? 1 : undefined,
+          }}
+        >
+          <ActionIcon
+            variant="transparent"
+            size="md"
+            color="white"
+            onClick={() => {
+              if (isSelected)
+                useItemStore.setState({
+                  sortReversed: !sortReversed,
+                });
+              else
+                useItemStore.setState({
+                  sortBy: sortKey,
+                  sortReversed: true,
+                });
+            }}
+          >
+            {isSelected && !sortReversed ? (
+              <IconCaretUpFilled />
+            ) : (
+              <IconCaretUp />
+            )}
+            {isSelected && sortReversed ? (
+              <IconCaretDownFilled />
+            ) : (
+              <IconCaretDown />
+            )}
+          </ActionIcon>
+        </ActionIcon.Group>
+      </Flex>
+    );
+  };
 
   return (
     <>
@@ -122,11 +199,17 @@ export const Items: FC = () => {
           <Table className={styles.table} withRowBorders={false}>
             <Table.Thead>
               <Table.Tr>
-                <Table.Td>ID</Table.Td>
-                <Table.Td>Name</Table.Td>
-                <Table.Td>Channel</Table.Td>
-                <Table.Td>Updated At</Table.Td>
-                <Table.Td>Priority</Table.Td>
+                <Table.Td>{renderTableHeaderColl("ID", "id")}</Table.Td>
+                <Table.Td>{renderTableHeaderColl("Name", "name")}</Table.Td>
+                <Table.Td>
+                  {renderTableHeaderColl("Channel", "channel_id")}
+                </Table.Td>
+                <Table.Td>
+                  {renderTableHeaderColl("Updated At", "date_end")}
+                </Table.Td>
+                <Table.Td>
+                  {renderTableHeaderColl("Priority", "priority")}
+                </Table.Td>
                 <Table.Td></Table.Td>
               </Table.Tr>
             </Table.Thead>
