@@ -19,6 +19,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Tag
+        id: tag
+        run: echo value=${GITHUB_REF/refs\/tags\//} >> $GITHUB_OUTPUT
+
       - name: Set up Nodejs
         uses: actions/setup-node@v4
         with:
@@ -61,6 +65,7 @@ jobs:
           context: .
           file: Dockerfile.ci
           push: true
+          build-args: OnestVersion=${{ steps.tag.outputs.value }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ env.RELEASE_PLATFORMS }}
