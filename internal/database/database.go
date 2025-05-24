@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"fmt"
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/logfield"
@@ -65,5 +66,11 @@ func NewRepository[T any]() T {
 func BeginRepository[T any]() T {
 	var repo T
 	any(&repo).(repository.TypeRepository).SetDB(Begin())
+	return repo
+}
+
+func BeginRepositoryWithContext[T any](ctx context.Context) T {
+	var repo T
+	any(&repo).(repository.TypeRepository).SetDB(Begin().WithContext(ctx))
 	return repo
 }

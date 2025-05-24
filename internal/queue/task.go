@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/acgn-org/onest/internal/config"
@@ -51,7 +52,10 @@ type TaskLogger struct {
 }
 
 func (tl TaskLogger) _SaveErrorState(state TaskErrorState) error {
-	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+
+	downloadRepo := database.BeginRepositoryWithContext[repository.DownloadRepository](ctx)
 	defer downloadRepo.Rollback()
 
 	if err := downloadRepo.UpdateDownloadError(tl.id, state.Err, state.At.Unix()); err != nil {
@@ -113,7 +117,10 @@ type DownloadTask struct {
 }
 
 func (task *DownloadTask) _WriteFatalStateToDatabase() error {
-	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancel()
+
+	downloadRepo := database.BeginRepositoryWithContext[repository.DownloadRepository](ctx)
 	defer downloadRepo.Rollback()
 
 	errorState := task.log.error.Load()
