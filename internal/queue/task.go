@@ -81,9 +81,11 @@ func (tl TaskLogger) Errorln(args ...interface{}) {
 		tl.FatalNow()
 	}
 
-	if err := tl._SaveErrorState(errorState); err != nil {
-		tl.logger.Warnln("save error message to database failed:", err)
-	}
+	go func() {
+		if err := tl._SaveErrorState(errorState); err != nil {
+			tl.logger.Warnln("save error message to database failed:", err)
+		}
+	}()
 
 	tl.logger.Errorln(args...)
 }
@@ -117,10 +119,7 @@ type DownloadTask struct {
 }
 
 func (task *DownloadTask) _WriteFatalStateToDatabase() error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-
-	downloadRepo := database.BeginRepositoryWithContext[repository.DownloadRepository](ctx)
+	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
 	errorState := task.log.error.Load()
