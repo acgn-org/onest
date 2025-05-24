@@ -49,6 +49,8 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   const targetPath = useNewItemStore((state) => state.target_path);
   const regexpStr = useNewItemStore((state) => state.regexp);
   const pattern = useNewItemStore((state) => state.pattern);
+  const matchPattern = useNewItemStore((state) => state.match_pattern);
+  const matchContent = useNewItemStore((state) => state.match_content);
   const priority = useNewItemStore((state) => state.priority);
   const resetExtendedForm = useNewItemStore((state) => state.resetStates);
 
@@ -97,7 +99,10 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       if (pattern)
         setItemRawsMatched(() => {
           for (const raw of raws) {
-            raw.matched = regexp.test(raw.text);
+            raw.matched =
+              regexp.test(raw.text) &&
+              ParseTextWithPattern(raw.text, regexp, matchPattern) ===
+                matchContent;
             raw.matched_text = ParseTextWithPattern(raw.text, regexp, pattern);
           }
           return [...raws];
@@ -110,7 +115,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           return [...raws];
         });
     }
-  }, [itemRaws, regexp, pattern]);
+  }, [itemRaws, regexp, pattern, matchPattern, matchContent]);
 
   const onPasteId = async () => {
     if (!navigator.clipboard?.readText) {
@@ -147,11 +152,17 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       setItemInfo(data.item);
       setItemRaws(data.data);
       if (!name) useNewItemStore.setState({ name: data.item.name });
-      if (!regexpStr)
+      const rule = rules?.find((rule) => rule.id === data.item.rule_id);
+      if (!regexpStr && rule)
         useNewItemStore.setState({
-          regexp:
-            rules?.find((rule) => rule.id === data.item.rule_id)?.regexp ?? "",
+          regexp: rule.regexp,
         });
+      if (rule) {
+        useNewItemStore.setState({
+          match_pattern: `$${rule.cn_index}/$${rule.en_index}`,
+          match_content: `${data.item.name}/${data.item.name_en}`,
+        });
+      }
     } catch (err: unknown) {
       toast.error(`load item data failed: ${err}`);
     }
@@ -192,6 +203,8 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         date_end: itemInfo.date_end,
         process,
         target_path: targetPath,
+        match_pattern: matchPattern,
+        match_content: matchContent,
         priority,
         downloads: itemRawsMatched!
           .filter((raw) => raw.matched && raw.selected)
@@ -276,15 +289,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               useNewItemStore.setState({ name: ev.target.value })
             }
           />
-          <TextInput
-            label="Target Path"
-            placeholder="A directory to place downloaded files."
-            required={!!itemInfo}
-            value={targetPath}
-            onChange={(ev) =>
-              useNewItemStore.setState({ target_path: ev.target.value })
-            }
-          />
 
           {itemInfo && (
             <>
@@ -298,6 +302,30 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                 }
                 error={regexpError}
               />
+              <Group>
+                <TextInput
+                  flex={1}
+                  label="Match Pattern"
+                  placeholder="Pattern for Match Test."
+                  required
+                  value={matchPattern}
+                  onChange={(ev) =>
+                    useNewItemStore.setState({ match_pattern: ev.target.value })
+                  }
+                  error={regexpError}
+                />
+                <TextInput
+                  flex={1}
+                  label="Match Content"
+                  placeholder="Content for matched text."
+                  required
+                  value={matchContent}
+                  onChange={(ev) =>
+                    useNewItemStore.setState({ match_content: ev.target.value })
+                  }
+                  error={regexpError}
+                />
+              </Group>
               <TextInput
                 label="Target Pattern"
                 placeholder="Pattern for rename file. e.g. S01E${1}"
@@ -305,6 +333,15 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                 value={pattern}
                 onChange={(ev) =>
                   useNewItemStore.setState({ pattern: ev.target.value })
+                }
+              />
+              <TextInput
+                label="Target Path"
+                placeholder="A directory to place downloaded files."
+                required={!!itemInfo}
+                value={targetPath}
+                onChange={(ev) =>
+                  useNewItemStore.setState({ target_path: ev.target.value })
                 }
               />
 

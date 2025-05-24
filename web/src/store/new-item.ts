@@ -5,6 +5,8 @@ interface NewItemForm {
   target_path: string;
   regexp: string;
   pattern: string;
+  match_pattern: string;
+  match_content: string;
   priority: number;
 }
 
@@ -13,6 +15,8 @@ const NewItemInitial: NewItemForm = {
   target_path: "",
   regexp: "",
   pattern: "",
+  match_pattern: "",
+  match_content: "",
   priority: 16,
 };
 
