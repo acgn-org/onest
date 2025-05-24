@@ -8,10 +8,10 @@ import (
 type Download struct {
 	ID uint `gorm:"primarykey"`
 
-	ItemID uint `gorm:"index:idx_item_active;index:idx_item_error;not null"`
+	ItemID uint `gorm:"index:idx_item_active;index:idx_item_error;uniqueIndex:idx_item_unique;not null"`
 	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE"`
 
-	MsgID int64 `gorm:"not null"`
+	MsgID int64 `gorm:"uniqueIndex:idx_item_unique;not null"`
 	Text  string
 	Size  int64 `gorm:"not null"`
 	Date  int32 `gorm:"index:idx_global_queue,priority:4,sort:asc;not null"`
