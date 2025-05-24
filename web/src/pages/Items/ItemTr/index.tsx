@@ -123,7 +123,7 @@ export const ItemTr = memo<ItemTrProps>(
                   onClick={() =>
                     onConfirm({
                       message: "Confirm delete item?",
-                      content: `Deleting item ${item.id} '${item.name}'`,
+                      content: `Deleting item ${item.id} '${item.name}' and its child downloads, files will be kept.`,
                       onConfirm: () => onDeleteItem(item.id),
                     })
                   }

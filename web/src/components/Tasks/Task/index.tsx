@@ -201,7 +201,7 @@ export const Task: FC<TaskProps> = ({
                 !isDeleting &&
                 onConfirm({
                   message: `Confirm Delete Task?`,
-                  content: `Deleting task ${task.id} '${matchedText}'`,
+                  content: `Deleting task ${task.id} '${matchedText}', files will be kept.`,
                   onConfirm: () => onDeleteTask(task.id, index),
                 })
               }
