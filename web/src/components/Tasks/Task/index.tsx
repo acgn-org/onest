@@ -172,7 +172,7 @@ export const Task: FC<TaskProps> = ({
                 {dayjs.unix(task.date).format("YYYY/MM/DD HH:mm")}
               </Text>
               <Flex onClick={(ev) => ev.stopPropagation()}>
-                {!task.downloaded && (
+                {!task.downloaded && !task.downloading && (
                   <PriorityInput
                     disabled={isPriorityUpdating}
                     value={task.priority}
