@@ -157,7 +157,7 @@ export const ItemTr = memo<ItemTrProps>(
                 py={10}
               >
                 {tasks && tasks.length === 0 ? (
-                  <Empty size={"9rem"} />
+                  <Empty order={2} p={12} />
                 ) : (
                   tasks && (
                     <Tasks

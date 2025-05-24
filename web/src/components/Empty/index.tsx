@@ -1,25 +1,18 @@
 import type { FC } from "react";
 
-import Picture from "@component/Picture";
-import { Stack, type StackProps } from "@mantine/core";
+import { Stack, type StackProps, Title, type TitleProps } from "@mantine/core";
 
 interface EmptyProps {
   p?: StackProps["p"];
-  size?: number | string;
+  order?: TitleProps["order"];
 }
 
-export const Empty: FC<EmptyProps> = ({ p, size = "15.5rem" }) => {
+export const Empty: FC<EmptyProps> = ({ p, order = 1 }) => {
   return (
     <Stack p={p} align="center" justify="center">
-      <Picture
-        name={"empty"}
-        alt={"empty"}
-        imgStyle={{
-          height: size,
-          opacity: 0.9,
-        }}
-        aspectRatio={1}
-      />
+      <Title order={order} style={{ letterSpacing: 2, opacity: 0.3 }}>
+        Nothing Here
+      </Title>
     </Stack>
   );
 };
