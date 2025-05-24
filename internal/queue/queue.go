@@ -38,21 +38,6 @@ func init() {
 	supervisor()
 }
 
-func UpdatePriority(id uint, priority int32) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	download, ok := downloading[id]
-	if !ok {
-		return
-	}
-	download.priority.Store(priority)
-	err := download.UpdateOrDownload()
-	if err != nil {
-		logfield.New(logfield.ComQueue).WithAction("update").Warnf("update priority of task %d to %d failed: %v", id, priority, err)
-	}
-}
-
 func RemoveTasks(ids ...uint) {
 	lock.Lock()
 	defer lock.Unlock()
