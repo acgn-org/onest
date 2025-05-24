@@ -8,7 +8,9 @@ import (
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
+	"github.com/acgn-org/onest/tools"
 	"github.com/zelenin/go-tdlib/client"
+	"regexp"
 	"time"
 )
 
@@ -132,12 +134,18 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 		var latest *client.Message
 		var fromMessageID int64 = 0
 
+		itemRegexp, err := regexp.Compile(item.Regexp)
+		if err != nil {
+			logger.Errorf("compile regexp '%s' failed: %v", item.Regexp, err)
+			continue
+		}
+
 		if err := itemRepo.DB.SavePoint(savepoint).Error; err != nil {
 			logger.Errorln("save transaction point failed:", err)
 			continue
 		}
 
-		// fetch all new messages, list => []]client.Message
+		// fetch all new messages, list => *client.Message
 		messageList := list.New()
 	fetchMessage:
 		messages, err := source.Telegram.GetHistory(item.ChannelID, fromMessageID)
@@ -146,16 +154,16 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 			continue
 		}
 		fromMessageID = messages.Messages[0].Id
-		for i, msg := range messages.Messages {
+		for i := len(messages.Messages) - 1; i >= 0; i-- {
+			msg := messages.Messages[i]
 			if msg.Id <= item.Process {
-				messages.Messages = messages.Messages[i+1:]
 				break
 			}
 			if latest == nil || latest.Id < msg.Id {
 				latest = msg
 			}
+			messageList.PushFront(msg)
 		}
-		messageList.PushFront(messages.Messages)
 		if fromMessageID > item.Process {
 			goto fetchMessage
 		}
@@ -165,7 +173,7 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 			continue
 		}
 
-		// update item
+		// update item process
 		item.Process, item.DateEnd = latest.Id, latest.Date
 		if err := itemRepo.UpdateProcess(item.ID, item.Process, item.DateEnd); err != nil {
 			logger.Errorln("update process failed:", err)
@@ -173,18 +181,30 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 			continue
 		}
 
-		// create download models
-		created += messageList.Len()
+		// match messages
 		el := messageList.Front()
-	createDownloadTask:
-		if _, err := downloadRepo.CreateWithMessages(item.ID, item.Priority, el.Value.([]*client.Message)); err != nil {
-			logger.Errorln("save download tasks to database failed:", err)
-			itemRepo.DB.RollbackTo(savepoint)
-			continue
+		for el != nil {
+			next := el.Next()
+			msg := el.Value.(*client.Message)
+			videoContent, ok := msg.Content.(*client.MessageVideo)
+			if !ok || tools.ConvertPatternRegexp(videoContent.Caption.Text, itemRegexp, item.MatchPattern) != item.MatchContent {
+				messageList.Remove(el)
+			}
+			el = next
 		}
-		if el.Next() != nil {
-			el = el.Next()
-			goto createDownloadTask
+
+		// create download models
+		if messageList.Len() > 0 {
+			created += messageList.Len()
+			messages := make([]*client.Message, 0, messageList.Len())
+			for el := messageList.Front(); el != nil; el = el.Next() {
+				messages = append(messages, el.Value.(*client.Message))
+			}
+			if _, err := downloadRepo.CreateWithMessages(item.ID, item.Priority, messages); err != nil {
+				logger.Errorln("save download tasks to database failed:", err)
+				itemRepo.DB.RollbackTo(savepoint)
+				continue
+			}
 		}
 	}
 

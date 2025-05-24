@@ -154,7 +154,7 @@ func (task *DownloadTask) CompleteDownload() error {
 	}
 
 	targetPath := item.TargetPath
-	targetName, err := tools.ConvertWithPattern(download.Text, item.Regexp, item.Pattern)
+	targetName, err := tools.ConvertPatternRegexpString(download.Text, item.Regexp, item.Pattern)
 	if err != nil {
 		task.log.Errorln("convert target path failed:", err)
 		return err

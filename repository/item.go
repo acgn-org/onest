@@ -13,6 +13,9 @@ type Item struct {
 	Regexp  string `gorm:"not null" json:"regexp"`
 	Pattern string `gorm:"not null" json:"pattern"`
 
+	MatchPattern string `gorm:"not null" json:"match_pattern"`
+	MatchContent string `gorm:"not null" json:"match_content"`
+
 	DateStart int32 `gorm:"not null" json:"date_start"`
 	DateEnd   int32 `gorm:"index:idx_date;not null" json:"date_end"`
 
@@ -23,15 +26,17 @@ type Item struct {
 }
 
 type NewItemForm struct {
-	ChannelID  int64  `json:"channel_id" form:"channel_id" binding:"required"`
-	Name       string `json:"name" form:"name" binding:"required"`
-	Regexp     string `json:"regexp" form:"regexp" binding:"required"`
-	Pattern    string `json:"pattern" form:"pattern" binding:"required"`
-	DateStart  int32  `json:"date_start" from:"date_start" binding:"required"`
-	DateEnd    int32  `json:"date_end" from:"date_end" binding:"required"`
-	Process    int64  `json:"process" form:"process" binding:"required"`
-	Priority   int32  `json:"priority" form:"priority" binding:"min=1,max=32"`
-	TargetPath string `json:"target_path" form:"target_path" binding:"required"`
+	ChannelID    int64  `json:"channel_id" form:"channel_id" binding:"required"`
+	Name         string `json:"name" form:"name" binding:"required"`
+	Regexp       string `json:"regexp" form:"regexp" binding:"required"`
+	Pattern      string `json:"pattern" form:"pattern" binding:"required"`
+	MatchPattern string `json:"match_pattern" form:"match_pattern" binding:"required"`
+	MatchContent string `json:"match_content" form:"match_content" binding:"required"`
+	DateStart    int32  `json:"date_start" from:"date_start" binding:"required"`
+	DateEnd      int32  `json:"date_end" from:"date_end" binding:"required"`
+	Process      int64  `json:"process" form:"process" binding:"required"`
+	Priority     int32  `json:"priority" form:"priority" binding:"min=1,max=32"`
+	TargetPath   string `json:"target_path" form:"target_path" binding:"required"`
 }
 
 type ItemRepository struct {

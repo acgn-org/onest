@@ -7,11 +7,15 @@ import (
 	"strconv"
 )
 
-func ConvertWithPattern(s, regStr, pattern string) (string, error) {
+func ConvertPatternRegexpString(s, regStr, pattern string) (string, error) {
 	reg, err := regexp.Compile(regStr)
 	if err != nil {
-		return "", fmt.Errorf("error compiling regular expression: %w", err)
+		return "", fmt.Errorf("compiling regular expression failed: %w", err)
 	}
+	return ConvertPatternRegexp(s, reg, pattern), nil
+}
+
+func ConvertPatternRegexp(s string, reg *regexp.Regexp, pattern string) string {
 	matches := reg.FindStringSubmatch(s)
 	return os.Expand(pattern, func(s string) string {
 		i, err := strconv.Atoi(s)
@@ -22,5 +26,5 @@ func ConvertWithPattern(s, regStr, pattern string) (string, error) {
 			return matches[i]
 		}
 		return ""
-	}), nil
+	})
 }
