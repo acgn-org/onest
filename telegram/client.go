@@ -108,6 +108,13 @@ func (t Telegram) GetMessageVideo(msg *client.Message) (*client.MessageVideo, bo
 	return msgVideo, true
 }
 
+func (t Telegram) GetFile(fileID int32) (*client.File, error) {
+	_ = t.rate.Wait(context.Background())
+	return t.client.GetFile(&client.GetFileRequest{
+		FileId: fileID,
+	})
+}
+
 func (t Telegram) DownloadFile(fileID, priority int32, synchronous bool) (*client.File, error) {
 	_ = t.rate.Wait(context.Background())
 	t.logger.Debugf("download file %d with priotiry %d", fileID, priority)
