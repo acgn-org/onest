@@ -136,22 +136,20 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 			logger.Errorf("get chat %d history failed: %v", item.ChannelID, err)
 			continue
 		}
-		fromMessageID = messages.Messages[0].Id
+		fromMessageID = messages.Messages[len(messages.Messages)-1].Id
+		if latest == nil {
+			latest = messages.Messages[0]
+		}
 		for _, msg := range messages.Messages {
 			if msg.Id <= item.Process {
 				break
-			}
-			if latest == nil || latest.Id < msg.Id {
-				latest = msg
 			}
 			messageList.PushFront(msg)
 		}
 		if fromMessageID > item.Process {
 			goto fetchMessage
 		}
-
-		if latest == nil {
-			// no new message found
+		if latest.Id <= item.Process {
 			continue
 		}
 
@@ -160,6 +158,9 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 		if err := itemRepo.UpdateProcess(item.ID, item.Process, item.DateEnd); err != nil {
 			logger.Errorln("update process failed:", err)
 			itemRepo.DB.RollbackTo(savepoint)
+			continue
+		}
+		if messageList.Len() == 0 {
 			continue
 		}
 
