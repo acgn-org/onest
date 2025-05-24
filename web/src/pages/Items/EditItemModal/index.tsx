@@ -45,6 +45,7 @@ export const EditItemModal: FC<EditItemModalProps> = ({ onItemMutate }) => {
       await api.patch(`item/${item!.id}/`, item);
       onItemMutate();
       useEditItemStore.setState({ open: false });
+      toast.success("item updated")
     } catch (err: unknown) {
       toast.error(`update item failed: ${err}`);
     }
