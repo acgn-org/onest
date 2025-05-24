@@ -170,6 +170,7 @@ export const ItemTr = memo<ItemTrProps>(
                       item={item}
                       tasks={tasks}
                       style={{ width: "100%" }}
+                      onTasksMutate={() => mutate()}
                       onSetPriority={(index, priority) =>
                         mutate((data) => {
                           if (!data) return data;
