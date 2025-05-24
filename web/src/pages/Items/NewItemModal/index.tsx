@@ -312,7 +312,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                   onChange={(ev) =>
                     useNewItemStore.setState({ match_pattern: ev.target.value })
                   }
-                  error={regexpError}
                 />
                 <TextInput
                   flex={1}
@@ -323,7 +322,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                   onChange={(ev) =>
                     useNewItemStore.setState({ match_content: ev.target.value })
                   }
-                  error={regexpError}
                 />
               </Group>
               <TextInput
