@@ -159,18 +159,10 @@ func (t Telegram) RemoveAllDownloads() error {
 }
 
 func (t Telegram) CleanDownloadDirectory() error {
-	if err := tools.CleanDirectory(path.Join(t.filesDirectory, "files"), func(filename string) bool {
-		if ext := path.Ext(filename); ext == ".mp4" || ext == ".mkv" {
-			return true
-		}
-		return false
-	}); err != nil {
+	if err := tools.CleanDirectory(path.Join(t.filesDirectory, "videos")); err != nil {
 		return err
 	}
-
-	if err := tools.CleanDirectory(path.Join(t.filesDirectory, "temp"), func(filename string) bool {
-		return true
-	}); err != nil {
+	if err := tools.CleanDirectory(path.Join(t.filesDirectory, "temp")); err != nil {
 		return err
 	}
 
