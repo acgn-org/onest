@@ -97,7 +97,7 @@ func NewTask(channelId int64, model repository.Download) (*DownloadTask, error) 
 		log:       NewTaskLogger(model.ID, logfield.New(logfield.ComTask).WithField("id", model.ID)),
 	}
 	task.priority.Store(model.Priority)
-	return task, task.UpdateOrDownload()
+	return task, task.UpdateOrDownload(false)
 }
 
 type DownloadTask struct {
@@ -240,7 +240,7 @@ func (task *DownloadTask) GetVideoFile() (bool, error) {
 	return true, nil
 }
 
-func (task *DownloadTask) UpdateOrDownload() error {
+func (task *DownloadTask) UpdateOrDownload(forceStart bool) error {
 	if task.log.isFatal.Load() {
 		return nil
 	}
@@ -258,7 +258,7 @@ func (task *DownloadTask) UpdateOrDownload() error {
 			return errors.New(msg)
 		}
 		state = task.state.Load()
-	} else {
+	} else if !forceStart {
 		file, err := source.Telegram.GetFile(state.File.Id)
 		if err != nil {
 			task.log.Errorln("get download file state failed:", err)

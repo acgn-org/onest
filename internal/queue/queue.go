@@ -47,7 +47,7 @@ func UpdatePriority(id uint, priority int32) {
 		return
 	}
 	download.priority.Store(priority)
-	err := download.UpdateOrDownload()
+	err := download.UpdateOrDownload(true)
 	if err != nil {
 		logfield.New(logfield.ComQueue).WithAction("update").Warnf("update priority of task %d to %d failed: %v", id, priority, err)
 	}

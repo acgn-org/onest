@@ -104,7 +104,7 @@ func AddDownloadQueue(channelId int64, model repository.Download) error {
 
 	task, ok := downloading[model.ID]
 	if ok {
-		return task.UpdateOrDownload()
+		return task.UpdateOrDownload(false)
 	}
 
 	if int(config.Telegram.Get().MaxParallelDownload) <= len(downloading) {
