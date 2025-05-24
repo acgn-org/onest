@@ -2,11 +2,10 @@ package telegram
 
 import (
 	"context"
-	"fmt"
+	"github.com/acgn-org/onest/tools"
 	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
 	"golang.org/x/time/rate"
-	"os"
 	"path"
 	"path/filepath"
 	"time"
@@ -152,23 +151,23 @@ func (t Telegram) RemoveAllDownloads() error {
 	return nil
 }
 
-func (t Telegram) CleanDownloadDirectoryVideos() error {
-	dirContents, err := os.ReadDir(t.filesDirectory)
-	if err != nil {
-		return fmt.Errorf("could not read directory contents: %w", err)
-	}
-	for _, entry := range dirContents {
-		filename := entry.Name()
+func (t Telegram) CleanDownloadDirectory() error {
+	if err := tools.CleanDirectory(path.Join(t.filesDirectory, "files"), func(filename string) bool {
 		if ext := path.Ext(filename); ext == ".mp4" || ext == ".mkv" {
-			pathname := filepath.Join(t.filesDirectory, filename)
-			err = os.RemoveAll(pathname)
-			if err != nil {
-				return fmt.Errorf("could not remove file '%s': %w", pathname, err)
-			}
+			return true
 		}
+		return false
+	}); err != nil {
+		return err
 	}
 
-	t.logger.Debugln("removed all video files in download directory")
+	if err := tools.CleanDirectory(path.Join(t.filesDirectory, "temp"), func(filename string) bool {
+		return true
+	}); err != nil {
+		return err
+	}
+
+	t.logger.Debugln("removed all video and temp files in download directory")
 
 	return nil
 }
