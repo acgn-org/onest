@@ -23,6 +23,9 @@ func Api(group *gin.RouterGroup) {
 	downloadWithId := download.Group(":id")
 	downloadWithId.PATCH("priority", api.UpdateDownloadPriority)
 	downloadWithId.DELETE("/", api.DeleteDownload)
+	downloadForce := downloadWithId.Group("force")
+	downloadForce.POST("start", api.ForceStartTask)
+	downloadForce.POST("cancel", api.ForceCancelTask)
 
 	log := group.Group("log")
 	log.GET("watch", api.WatchLogs)

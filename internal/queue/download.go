@@ -98,23 +98,6 @@ func startDownload(channelId int64, download repository.Download) error {
 	return nil
 }
 
-func AddDownloadQueue(channelId int64, model repository.Download) error {
-	lock.Lock()
-	defer lock.Unlock()
-
-	task, ok := downloading[model.ID]
-	if ok {
-		return task.UpdateOrDownload(false)
-	}
-
-	if int(config.Telegram.Get().MaxParallelDownload) <= len(downloading) {
-		// skip and wait for trigger from supervisor
-		return nil
-	}
-
-	return startDownload(channelId, model)
-}
-
 func ScanAndCreateNewDownloadTasks() (int, error) {
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
 	defer itemRepo.Rollback()

@@ -1,12 +1,14 @@
 package api
 
 import (
+	"errors"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/queue"
 	"github.com/acgn-org/onest/internal/server/response"
 	"github.com/acgn-org/onest/repository"
 	"github.com/acgn-org/onest/tools"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func GetDownloadTasks(ctx *gin.Context) {
@@ -19,6 +21,61 @@ func GetDownloadTasks(ctx *gin.Context) {
 		tasks = make([]repository.DownloadTask, 0)
 	}
 	response.Success(ctx, tasks)
+}
+
+func ForceStartTask(ctx *gin.Context) {
+	id, err := tools.UintIDFromParam(ctx, "id")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	downloadRepo := database.NewRepository[repository.DownloadRepository]()
+	downloadTask, err := downloadRepo.FirstByIDPreloadItem(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.Error(ctx, response.ErrNotFound)
+			return
+		}
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	if err := queue.ForceAddDownloadQueue(downloadTask.Item.ChannelID, *downloadTask); err != nil {
+		response.Error(ctx, response.ErrUnexpected, err)
+		return
+	}
+
+	response.Default(ctx)
+}
+
+func ForceCancelTask(ctx *gin.Context) {
+	id, err := tools.UintIDFromParam(ctx, "id")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	defer downloadRepo.Rollback()
+
+	ok, err := downloadRepo.UpdateResetDownloadState(id)
+	if err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	} else if !ok {
+		response.Error(ctx, response.ErrNotFound)
+		return
+	}
+
+	queue.RemoveTasks(id)
+
+	if err := downloadRepo.Commit().Error; err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	response.Default(ctx)
 }
 
 func UpdateDownloadPriority(ctx *gin.Context) {

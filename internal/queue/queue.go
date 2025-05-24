@@ -53,6 +53,18 @@ func UpdatePriority(id uint, priority int32) {
 	}
 }
 
+func ForceAddDownloadQueue(channelId int64, model repository.Download) error {
+	lock.Lock()
+	defer lock.Unlock()
+
+	task, ok := downloading[model.ID]
+	if ok {
+		return task.UpdateOrDownload(false)
+	}
+
+	return startDownload(channelId, model)
+}
+
 func RemoveTasks(ids ...uint) {
 	lock.Lock()
 	defer lock.Unlock()
