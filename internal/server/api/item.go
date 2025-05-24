@@ -213,12 +213,7 @@ func DeleteItem(ctx *gin.Context) {
 }
 
 func PatchItem(ctx *gin.Context) {
-	var form struct {
-		Name       string `json:"name" form:"name"`
-		Regexp     string `json:"regexp" form:"regexp"`
-		Pattern    string `json:"pattern" form:"pattern"`
-		TargetPath string `json:"target_path" form:"target_path"`
-	}
+	var form repository.UpdateItemForm
 	if err := ctx.ShouldBind(&form); err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return
@@ -233,13 +228,7 @@ func PatchItem(ctx *gin.Context) {
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
 	defer itemRepo.Rollback()
 
-	ok, err := itemRepo.UpdatesItemByID(&repository.Item{
-		ID:         id,
-		Name:       form.Name,
-		Regexp:     form.Regexp,
-		Pattern:    form.Pattern,
-		TargetPath: form.TargetPath,
-	})
+	ok, err := itemRepo.UpdatesItemWithForm(id, &form)
 	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return

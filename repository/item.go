@@ -39,6 +39,16 @@ type NewItemForm struct {
 	TargetPath   string `json:"target_path" form:"target_path" binding:"required"`
 }
 
+type UpdateItemForm struct {
+	Name         string `json:"name" form:"name"`
+	Regexp       string `json:"regexp" form:"regexp"`
+	Pattern      string `json:"pattern" form:"pattern"`
+	MatchPattern string `json:"match_pattern" form:"match_pattern" binding:"required"`
+	MatchContent string `json:"match_content" form:"match_content" binding:"required"`
+	Priority     int32  `json:"priority" form:"priority" binding:"min=1,max=32"`
+	TargetPath   string `json:"target_path" form:"target_path"`
+}
+
 type ItemRepository struct {
 	Repository
 }
@@ -109,8 +119,13 @@ func (repo ItemRepository) UpdateProcess(id uint, process int64, dateEnd int32) 
 	return repo.DB.Model(&model).Select("process", "date_end").Updates(&model).Error
 }
 
-func (repo ItemRepository) UpdatesItemByID(model *Item) (bool, error) {
-	result := repo.DB.Model(&model).Updates(&model)
+func (repo ItemRepository) UpdatesItemWithForm(id uint, form *UpdateItemForm) (bool, error) {
+	var item Item
+	if err := copier.Copy(&item, form); err != nil {
+		panic(err)
+	}
+	item.ID = id
+	result := repo.DB.Model(&item).Updates(&item)
 	return result.RowsAffected > 0, result.Error
 }
 
