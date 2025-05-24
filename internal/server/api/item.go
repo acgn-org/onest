@@ -103,7 +103,7 @@ func NewItem(ctx *gin.Context) {
 		return
 	}
 
-	_, err := regexp.Compile(form.Regexp)
+	itemRegexp, err := regexp.Compile(form.Regexp)
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
 		return
@@ -127,7 +127,11 @@ func NewItem(ctx *gin.Context) {
 		}
 		messageVideo, ok := source.Telegram.GetMessageVideo(msg)
 		if !ok {
-			response.ErrorWithTip(ctx, response.ErrTelegram, fmt.Sprintf("message %d is not video message", download.MsgID))
+			response.ErrorWithTip(ctx, response.ErrForm, fmt.Sprintf("message %d is not video message", download.MsgID))
+			return
+		}
+		if tools.ConvertPatternRegexp(messageVideo.Caption.Text, itemRegexp, form.MatchPattern) != form.MatchContent {
+			response.ErrorWithTip(ctx, response.ErrForm, fmt.Sprintf("message %d not matched with match pattern", download.MsgID))
 			return
 		}
 		downloadModels = append(downloadModels, repository.Download{
