@@ -44,7 +44,7 @@ jobs:
         with:
           buildkitd-config-inline: |
             [worker.oci]
-              max-parallelism = 2
+              max-parallelism = 1
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
