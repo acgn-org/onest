@@ -17,7 +17,6 @@ import {
 } from "@mantine/core";
 import {
   IconAlertCircle,
-  IconArrowDownDashed,
   IconCircleCheck,
   IconCircleX,
   IconDotsCircleHorizontal,
@@ -97,43 +96,43 @@ export const Task: FC<TaskProps> = ({
   };
 
   const renderStatus = (task: Download.Task) => {
-    const size = 24;
+    const sizeContainer = 36;
+    const sizeIcon = 24;
     const stroke = 1.5;
 
     if (task.downloading && task.file)
       return (
-        <RingProgress
-          label={
-            <Flex align="center" justify="center">
-              <IconArrowDownDashed color="green" size={12} stroke={3} />
-            </Flex>
-          }
-          size={36}
-          thickness={5}
-          transitionDuration={200}
-          sections={[
-            {
-              value: (task.file.local.downloaded_size / task.file.size) * 100,
-              color: "blue",
-            },
-          ]}
-          roundCaps
-        />
+        <Tooltip label={task.error} disabled={task.error === ""} withArrow>
+          <RingProgress
+            size={sizeContainer}
+            thickness={5}
+            transitionDuration={200}
+            sections={[
+              {
+                value: (task.file.local.downloaded_size / task.file.size) * 100,
+                color: task.error === "" ? "green" : "yellow",
+              },
+            ]}
+            roundCaps
+          />
+        </Tooltip>
       );
 
     let tip: string = "Wait";
     let icon: ReactNode = (
-      <IconDotsCircleHorizontal color="gray" size={size} stroke={stroke} />
+      <IconDotsCircleHorizontal color="gray" size={sizeIcon} stroke={stroke} />
     );
     (() => {
       if (task.fatal_error) {
         tip = `Fatal: ${task.error}`;
-        icon = <IconCircleX color="red" size={size} stroke={stroke} />;
+        icon = <IconCircleX color="red" size={sizeIcon} stroke={stroke} />;
         return;
       }
       if (task.downloaded) {
         tip = "Downloaded";
-        icon = <IconCircleCheck color="green" size={size} stroke={stroke} />;
+        icon = (
+          <IconCircleCheck color="green" size={sizeIcon} stroke={stroke} />
+        );
         return;
       }
       if (!task.downloading) {
@@ -142,14 +141,18 @@ export const Task: FC<TaskProps> = ({
       }
       if (task.error !== "") {
         tip = task.error;
-        icon = <IconAlertCircle color="orange" size={size} stroke={stroke} />;
+        icon = (
+          <IconAlertCircle color="orange" size={sizeIcon} stroke={stroke} />
+        );
         return;
       }
     })();
     return (
-      <Tooltip label={tip} withArrow>
-        {icon}
-      </Tooltip>
+      <Flex h={sizeContainer} w={sizeContainer} align="center" justify="center">
+        <Tooltip label={tip} withArrow>
+          {icon}
+        </Tooltip>
+      </Flex>
     );
   };
 
