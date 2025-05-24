@@ -53,6 +53,8 @@ func UpdateDownloadPriority(ctx *gin.Context) {
 		return
 	}
 
+	queue.UpdatePriority(id, form.Priority)
+
 	response.Default(ctx)
 }
 
