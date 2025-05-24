@@ -60,25 +60,21 @@ func (repo DownloadRepository) CreateAll(models []Download) error {
 }
 
 func (repo DownloadRepository) CreateWithMessages(item uint, priority int32, messages []*client.Message) ([]Download, error) {
-	var models = make([]Download, len(messages))
-	var i int
+	var models = make([]Download, 0, len(messages))
 	for _, message := range messages {
 		videoContent, ok := message.Content.(*client.MessageVideo)
 		if !ok {
 			continue
 		}
-
-		models[i] = Download{
+		models = append(models, Download{
 			ItemID:   item,
 			MsgID:    message.Id,
 			Text:     videoContent.Caption.Text,
 			Size:     videoContent.Video.Video.Size,
 			Date:     message.Date,
 			Priority: priority,
-		}
-		i++
+		})
 	}
-	models = models[:i]
 	if len(models) == 0 {
 		return models, nil
 	}

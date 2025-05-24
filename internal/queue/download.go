@@ -137,8 +137,7 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 			continue
 		}
 		fromMessageID = messages.Messages[0].Id
-		for i := len(messages.Messages) - 1; i >= 0; i-- {
-			msg := messages.Messages[i]
+		for _, msg := range messages.Messages {
 			if msg.Id <= item.Process {
 				break
 			}
