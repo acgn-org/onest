@@ -24,6 +24,7 @@ export const Downloads: FC = () => {
       {tasks && tasks.length !== 0 && (
         <Tasks
           tasks={tasks}
+          onTasksMutate={() => mutate()}
           onTaskDeleted={(index) =>
             mutate((data) => {
               if (!data) return data;

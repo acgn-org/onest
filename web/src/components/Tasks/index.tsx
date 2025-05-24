@@ -7,6 +7,7 @@ export interface TasksProps {
   item?: Item.Local;
   tasks: Download.Task[];
   style?: CSSProperties;
+  onTasksMutate: () => void;
   onSetPriority: (index: number, priority: number) => void;
   onTaskDeleted: (index: number) => void;
 }
@@ -15,6 +16,7 @@ export const Tasks: FC<TasksProps> = ({
   item,
   tasks,
   style,
+  onTasksMutate,
   onSetPriority,
   onTaskDeleted,
 }) => {
@@ -26,6 +28,7 @@ export const Tasks: FC<TasksProps> = ({
           index={index}
           item={item}
           task={task}
+          onTasksMutate={onTasksMutate}
           onTaskDeleted={onTaskDeleted}
           onSetPriority={onSetPriority}
         />

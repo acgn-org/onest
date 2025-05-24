@@ -21,6 +21,8 @@ import {
   IconCircleX,
   IconDotsCircleHorizontal,
   IconTrash,
+  IconSquareFilled,
+  IconArrowDownDashed,
 } from "@tabler/icons-react";
 
 import useConfirmDialog from "@store/confirm-dialog.ts";
@@ -32,6 +34,7 @@ export type TaskProps = {
   index: number;
   item?: Item.Local;
   task: Download.Task;
+  onTasksMutate: () => void;
   onSetPriority: (index: number, priority: number) => void;
   onTaskDeleted: (index: number) => void;
 };
@@ -40,12 +43,13 @@ export const Task: FC<TaskProps> = ({
   index,
   item,
   task,
+  onTasksMutate,
   onTaskDeleted,
   onSetPriority,
 }) => {
   const onConfirm = useConfirmDialog((state) => state.onConfirm);
 
-  const { data: itemFetched } = useSWR(
+  const { data: itemFetched } = useSWR<Item.Local>(
     item ? null : `item/${task.item_id}/`,
     (url: string) => api.get(url).then((res) => res.data.data),
     {
@@ -54,7 +58,7 @@ export const Task: FC<TaskProps> = ({
     },
   );
   const matchedText = useMemo<string>(() => {
-    const itemData: Item.Local = item || itemFetched;
+    const itemData = item || itemFetched;
     if (itemData)
       try {
         const regexp = CompileRegexp(itemData.regexp);
@@ -93,6 +97,32 @@ export const Task: FC<TaskProps> = ({
       toast.error(`delete task failed: ${err}`);
     }
     setIsDeleting(false);
+  };
+
+  const [isForceStarting, setIsForceStarting] = useState(false);
+  const onForceStart = async () => {
+    if (isForceStarting) return;
+    setIsForceStarting(true);
+    try {
+      await api.post(`download/${task.id}/start`);
+      onTasksMutate();
+    } catch (err: unknown) {
+      toast.error(`force start failed: ${err}`);
+    }
+    setIsForceStarting(false);
+  };
+
+  const [isForceCanceling, setIsForceCanceling] = useState(false);
+  const onForceCancel = async () => {
+    if (isForceCanceling) return;
+    setIsForceCanceling(true);
+    try {
+      await api.post(`download/${task.id}/cancel`);
+      onTasksMutate();
+    } catch (err: unknown) {
+      toast.error(`force cancel failed: ${err}`);
+    }
+    setIsForceCanceling(false);
   };
 
   const renderStatus = (task: Download.Task) => {
@@ -187,16 +217,33 @@ export const Task: FC<TaskProps> = ({
 
           <Group
             gap={8}
-            mr={22}
+            mr={10}
             style={{ flexWrap: "nowrap" }}
             onClick={(ev) => ev.stopPropagation()}
           >
-            {renderStatus(task)}
+            {!task.downloaded && (
+              <Tooltip
+                label={task.downloading ? "Force Cancel" : "Force Start"}
+              >
+                <ActionIcon
+                  component="div"
+                  variant="default"
+                  loading={isForceStarting || isForceCanceling}
+                  onClick={() =>
+                    task.downloaded ? onForceCancel() : onForceStart()
+                  }
+                >
+                  {task.downloading ? (
+                    <IconSquareFilled size={12} />
+                  ) : (
+                    <IconArrowDownDashed size={16} stroke={1.6} />
+                  )}
+                </ActionIcon>
+              </Tooltip>
+            )}
             <ActionIcon
               component="div"
-              size="md"
               variant="default"
-              ml={6}
               onClick={() =>
                 !isDeleting &&
                 onConfirm({
@@ -209,6 +256,7 @@ export const Task: FC<TaskProps> = ({
             >
               <IconTrash size={16} stroke={1.5} />
             </ActionIcon>
+            {renderStatus(task)}
           </Group>
         </Flex>
       </Accordion.Control>
