@@ -5,6 +5,7 @@ import styles from "./styles.module.css";
 
 import ItemTr from "./ItemTr";
 import NewItemModal from "./NewItemModal";
+import EditItemModal from "./EditItemModal";
 import Empty from "@component/Empty";
 import { Flipper } from "react-flip-toolkit";
 import {
@@ -242,6 +243,7 @@ export const Items: FC = () => {
       <Space h={10} />
 
       <NewItemModal onItemMutate={() => mutate()} />
+      <EditItemModal onItemMutate={() => mutate()} />
     </>
   );
 };

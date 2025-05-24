@@ -23,6 +23,7 @@ import api, { baseUrl } from "@network/api.ts";
 
 import { shallow } from "zustand/vanilla/shallow";
 import useItemStore from "@store/item.ts";
+import useEditItemStore from "@store/edit.ts";
 import useConfirmDialog from "@store/confirm-dialog.ts";
 
 interface ItemTrProps {
@@ -32,6 +33,7 @@ interface ItemTrProps {
 
 export const ItemTr = memo<ItemTrProps>(
   ({ item, onItemDeleted }) => {
+    const onEditItem = useEditItemStore((state) => state.onEdit);
     const onConfirm = useConfirmDialog((state) => state.onConfirm);
 
     const collapsedItem = useItemStore((item) => item.collapsedItem);
@@ -113,7 +115,11 @@ export const ItemTr = memo<ItemTrProps>(
             </Table.Td>
             <Table.Td>
               <Group gap={8} style={{ flexWrap: "nowrap" }}>
-                <ActionIcon size="md" variant="default" disabled>
+                <ActionIcon
+                  size="md"
+                  variant="default"
+                  onClick={() => onEditItem(item)}
+                >
                   <IconEdit size={16} stroke={1.5} />
                 </ActionIcon>
                 <ActionIcon

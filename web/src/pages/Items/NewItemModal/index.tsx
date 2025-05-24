@@ -241,7 +241,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   };
 
   return (
-    <Modal title={"New Item"} size={"lg"} opened={!!open} onClose={onClose}>
+    <Modal title="New Item" size="lg" opened={!!open} onClose={onClose}>
       <form
         onSubmit={(ev) => {
           ev.preventDefault();
