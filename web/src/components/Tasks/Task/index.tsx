@@ -148,7 +148,7 @@ export const Task: FC<TaskProps> = ({
         </Tooltip>
       );
 
-    let tip: string = "Wait";
+    let tip: string = "Queued";
     let icon: ReactNode = (
       <IconDotsCircleHorizontal color="gray" size={sizeIcon} stroke={stroke} />
     );
@@ -166,7 +166,7 @@ export const Task: FC<TaskProps> = ({
         return;
       }
       if (!task.downloading) {
-        tip = "Queued";
+        tip = "Wait";
         return;
       }
       if (task.error !== "") {
@@ -230,7 +230,7 @@ export const Task: FC<TaskProps> = ({
                   variant="default"
                   loading={isForceStarting || isForceCanceling}
                   onClick={() =>
-                    task.downloaded ? onForceCancel() : onForceStart()
+                    task.downloading ? onForceCancel() : onForceStart()
                   }
                 >
                   {task.downloading ? (
