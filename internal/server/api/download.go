@@ -49,7 +49,7 @@ func ForceStartTask(ctx *gin.Context) {
 	response.Default(ctx)
 }
 
-func ForceCancelTask(ctx *gin.Context) {
+func ForceResetTask(ctx *gin.Context) {
 	id, err := tools.UintIDFromParam(ctx, "id")
 	if err != nil {
 		response.Error(ctx, response.ErrForm, err)
@@ -73,6 +73,11 @@ func ForceCancelTask(ctx *gin.Context) {
 	if err := downloadRepo.Commit().Error; err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
+	}
+
+	select {
+	case <-queue.ActivateTaskControl:
+	default:
 	}
 
 	response.Default(ctx)
