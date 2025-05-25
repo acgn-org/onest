@@ -15,15 +15,7 @@ import (
 )
 
 func GetDownloading() ([]repository.DownloadTask, error) {
-	lock.RLock()
-
-	taskIds := make([]uint, 0, len(downloading))
-	for k := range downloading {
-		taskIds = append(taskIds, k)
-	}
-
-	lock.RUnlock()
-
+	taskIds := queue.AllKeys()
 	tasks, err := database.NewRepository[repository.DownloadRepository]().GetDownloadTaskByID(taskIds...)
 	if err != nil {
 		return nil, err
@@ -36,11 +28,8 @@ func GetDownloading() ([]repository.DownloadTask, error) {
 }
 
 func MigrateDownloadTaskInfo(tasks []repository.DownloadTask) {
-	lock.RLock()
-	defer lock.RUnlock()
-
 	for i, task := range tasks {
-		taskQueue, ok := downloading[task.ID]
+		taskQueue, ok := queue.Load(task.ID)
 		if !ok {
 			continue
 		}
@@ -55,24 +44,6 @@ func MigrateDownloadTaskInfo(tasks []repository.DownloadTask) {
 		tasks[i].Error = errorState.Err
 		tasks[i].ErrorAt = errorState.At.Unix()
 	}
-}
-
-func clean() error {
-	downloading = make(map[uint]*DownloadTask)
-
-	if err := source.Telegram.RemoveAllDownloads(); err != nil {
-		return err
-	}
-	if err := source.Telegram.CleanDownloadDirectory(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func CleanDownload() error {
-	lock.Lock()
-	defer lock.Unlock()
-	return clean()
 }
 
 // create task and start
@@ -90,7 +61,7 @@ func startDownload(channelId int64, download repository.Download) error {
 	}
 
 	task, err := NewTask(channelId, download)
-	downloading[download.ID] = task
+	queue.Store(download.ID, task)
 	if err != nil {
 		return err
 	}

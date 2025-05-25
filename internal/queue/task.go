@@ -20,6 +20,40 @@ import (
 	"time"
 )
 
+func UpdatePriority(id uint, priority int32) {
+	download, ok := queue.Load(id)
+	if !ok {
+		return
+	}
+	download.priority.Store(priority)
+	err := download.UpdateOrDownload(true)
+	if err != nil {
+		logfield.New(logfield.ComQueue).WithAction("update").Warnf("update priority of task %d to %d failed: %v", id, priority, err)
+	}
+}
+
+func ForceAddDownloadQueue(channelId int64, model repository.Download) error {
+	task, ok := queue.Load(model.ID)
+	if ok {
+		return task.UpdateOrDownload(false)
+	}
+
+	return startDownload(channelId, model)
+}
+
+func RemoveTasks(ids ...uint) {
+	for _, id := range ids {
+		task, ok := queue.LoadAndDelete(id)
+		if !ok {
+			continue
+		}
+
+		if err := task.Terminate(); err != nil {
+			logfield.New(logfield.ComQueue).WithAction("remove").Warnf("terminate task %d with error: %v", id, err)
+		}
+	}
+}
+
 type TaskErrorState struct {
 	Err string
 	At  time.Time

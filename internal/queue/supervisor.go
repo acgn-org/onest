@@ -47,10 +47,7 @@ func (s _Supervisor) WorkerTaskControl() {
 }
 
 func (s _Supervisor) TaskControl() (slowDown bool) {
-	lock.Lock()
-	defer lock.Unlock()
-
-	for key, task := range downloading {
+	queue.Range(func(key uint, task *DownloadTask) bool {
 		logger := s.logger.WithField("task", key)
 
 		// remove tasks with fatal state
@@ -59,9 +56,9 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 			if err != nil {
 				logger.Errorln("failed to write download task fatal state into database:", err)
 			} else {
-				delete(downloading, key)
+				queue.Delete(key)
 			}
-			continue
+			return true
 		}
 
 		if state := task.state.Load(); state == nil || time.Since(state.UpdatedAt) > time.Second*10 {
@@ -76,13 +73,15 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 			if err := task.CompleteDownload(); err != nil {
 				logger.Errorln("failed to complete download task:", err)
 			} else {
-				delete(downloading, key)
+				queue.Delete(key)
 			}
 		}
-	}
+
+		return true
+	})
 
 	// maintain number of parallel downloads
-	numToDownload := int(config.Telegram.Get().MaxParallelDownload) - len(downloading)
+	numToDownload := int(config.Telegram.Get().MaxParallelDownload) - int(queue.Len())
 	if numToDownload > 0 {
 		downloadRepo := database.NewRepository[repository.DownloadRepository]()
 		models, err := downloadRepo.GetForDownloadPreloadItem(numToDownload)
@@ -95,17 +94,21 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 					s.logger.Errorln("error occurred while start download task:", err)
 				}
 			}
-		} else if len(downloading) == 0 {
-			// clean up downloads
-			if !s.Cleaned.Load() {
-				err := clean()
-				if err != nil {
-					s.logger.Errorln("failed to clean up resources:", err)
-				} else {
-					s.Cleaned.Store(true)
+		} else if queue.Len() == 0 {
+			queue.addLock.Lock()
+			defer queue.addLock.Unlock()
+			if queue.Len() == 0 {
+				// clean up downloads
+				if !s.Cleaned.Load() {
+					err := queue.clean()
+					if err != nil {
+						s.logger.Errorln("failed to clean up resources:", err)
+					} else {
+						s.Cleaned.Store(true)
+					}
 				}
+				return true
 			}
-			return true
 		}
 	}
 	return false
@@ -123,8 +126,7 @@ func (s _Supervisor) WorkerListen() {
 		case client.TypeUpdateFile:
 			var isFileCompleted bool
 			file := update.(*client.UpdateFile).File
-			lock.Lock()
-			for id, task := range downloading {
+			queue.Range(func(id uint, task *DownloadTask) bool {
 				if state := task.state.Load(); state != nil && state.File.Id == file.Id {
 					task.state.Store(&TaskFileState{
 						File:      file,
@@ -136,12 +138,12 @@ func (s _Supervisor) WorkerListen() {
 						if err != nil {
 							s.logger.Errorln("failed to complete download task:", err)
 						} else {
-							delete(downloading, id)
+							queue.Delete(id)
 						}
 					}
 				}
-			}
-			lock.Unlock()
+				return true
+			})
 			if isFileCompleted {
 				select {
 				case ActivateTaskControl <- struct{}{}:
