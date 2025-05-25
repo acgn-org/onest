@@ -1,11 +1,13 @@
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
+import { ParseStringInputToNumber } from "@util/parse.ts";
 import dayjs from "dayjs";
 import styles from "./styles.module.css";
 
 import ItemTr from "./ItemTr";
 import NewItemModal from "./NewItemModal";
 import EditItemModal from "./EditItemModal";
+import AddDownloadModal from "./AddDownloadModal";
 import Empty from "@component/Empty";
 import { Flipper } from "react-flip-toolkit";
 import {
@@ -32,7 +34,7 @@ import useSWR from "swr";
 import api from "@network/api.ts";
 
 import useItemStore from "@store/item.ts";
-import useNewItemStore from "@store/new-item.ts";
+import useNewItemStore from "@store/new-item-dialog.ts";
 
 export const Items: FC = () => {
   const viewMode = useItemStore((state) => state.view_mode);
@@ -166,15 +168,14 @@ export const Items: FC = () => {
             {(styles) => (
               <Flex gap="sm" align="center" style={styles}>
                 <NumberInput
-                  min={0}
                   allowDecimal={false}
                   size="xs"
                   w="60"
+                  min={1}
                   value={activeDays}
-                  onChange={(val) => {
-                    if (typeof val === "string") val = parseInt(val);
-                    if (!isNaN(val))
-                      useItemStore.setState({ active_days: val });
+                  onChange={(s) => {
+                    const value = ParseStringInputToNumber(s);
+                    if (value) useItemStore.setState({ active_days: value });
                   }}
                 />
                 <Text size="sm">Days</Text>
@@ -244,6 +245,7 @@ export const Items: FC = () => {
 
       <NewItemModal onItemMutate={() => mutate()} />
       <EditItemModal onItemMutate={() => mutate()} />
+      <AddDownloadModal />
     </>
   );
 };

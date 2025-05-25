@@ -16,7 +16,12 @@ import {
   ActionIcon,
   Flex,
 } from "@mantine/core";
-import { IconEdit, IconSitemap, IconTrash } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconSitemap,
+  IconTrash,
+  IconPlus,
+} from "@tabler/icons-react";
 
 import useSWR from "swr";
 import api, { baseUrl } from "@network/api.ts";
@@ -25,6 +30,7 @@ import { shallow } from "zustand/vanilla/shallow";
 import useItemStore from "@store/item.ts";
 import useEditItemStore from "@store/edit.ts";
 import useConfirmDialog from "@store/confirm-dialog.ts";
+import useAddDownloadStore from "@store/add-download-dialog.ts";
 
 interface ItemTrProps {
   item: Item.Local;
@@ -113,15 +119,27 @@ export const ItemTr = memo<ItemTrProps>(
             </Table.Td>
             <Table.Td>
               <Group gap={8} style={{ flexWrap: "nowrap" }}>
-                <ActionIcon
-                  size="md"
-                  variant="default"
-                  onClick={() => onEditItem(item)}
-                >
+                <ActionIcon variant="default" onClick={() => onEditItem(item)}>
                   <IconEdit size={16} stroke={1.5} />
                 </ActionIcon>
                 <ActionIcon
-                  size="md"
+                  variant="default"
+                  onClick={() =>
+                    useAddDownloadStore.setState({
+                      open: true,
+                      data: {
+                        item_id: item.id,
+                        item_name: item.name,
+                        channel_id: item.channel_id,
+                        priority: item.priority,
+                        onSuccess: () => mutate(),
+                      },
+                    })
+                  }
+                >
+                  <IconPlus size={16} stroke={2} />
+                </ActionIcon>
+                <ActionIcon
                   variant="default"
                   disabled={isDeleteItemLoading}
                   onClick={() =>
@@ -135,7 +153,6 @@ export const ItemTr = memo<ItemTrProps>(
                   <IconTrash size={16} stroke={1.5} />
                 </ActionIcon>
                 <ActionIcon
-                  size="md"
                   variant={isItemCollapsed ? "outline" : "default"}
                   loading={isItemCollapsed && !tasks}
                   onClick={() =>

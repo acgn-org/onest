@@ -1,4 +1,5 @@
 import { type FC, useEffect, useState } from "react";
+import { ParseStringInputToNumber } from "@util/parse.ts";
 import toast from "react-hot-toast";
 
 import {
@@ -87,10 +88,10 @@ export const EditItemModal: FC<EditItemModalProps> = ({ onItemMutate }) => {
               max={32}
               required
               value={item?.priority}
-              onChange={(val) => {
-                if (typeof val === "string") val = parseInt(val);
-                if (!isNaN(val) && val >= 1 && val <= 32)
-                  onUpdateItem("priority", val);
+              onChange={(s) => {
+                const value = ParseStringInputToNumber(s);
+                if (value && value >= 1 && value <= 32)
+                  onUpdateItem("priority", value);
               }}
             />
           </Group>
@@ -133,7 +134,7 @@ export const EditItemModal: FC<EditItemModalProps> = ({ onItemMutate }) => {
           >
             Cancel
           </Button>
-          <Button type="submit" loading={false}>
+          <Button type="submit" loading={isLoading}>
             Submit
           </Button>
         </Flex>

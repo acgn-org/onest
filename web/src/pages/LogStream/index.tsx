@@ -1,5 +1,6 @@
 import { type FC, useState, memo, useRef, useEffect } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
+import { ParseStringInputToNumber } from "@util/parse.ts";
 import useWebsocket from "@hook/useWebsocket.ts";
 
 import {
@@ -108,9 +109,9 @@ export const LogStream: FC = () => {
             size="xs"
             w="75"
             defaultValue={500}
-            onChange={(value) => {
-              if (typeof value === "string") value = parseInt(value);
-              if (!isNaN(value)) useLogStore.setState({ lines: value });
+            onChange={(s) => {
+              const value = ParseStringInputToNumber(s);
+              if (value) useLogStore.setState({ lines: value });
             }}
           />
           <Text size="sm">Lines</Text>

@@ -1,5 +1,6 @@
 import { type FC, useEffect, useState } from "react";
 import { ParseTextWithPattern, CompileRegexp } from "@util/pattern.ts";
+import { ParseStringInputToNumber } from "@util/parse.ts";
 import { useDebouncedValue } from "@mantine/hooks";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
@@ -23,7 +24,7 @@ import {
 } from "@mantine/core";
 import { IconClipboard, IconInfoCircle, IconPlus } from "@tabler/icons-react";
 
-import useNewItemStore from "@store/new-item.ts";
+import useNewItemStore from "@store/new-item-dialog.ts";
 
 import useRealSearchRules from "@hook/useRealSearchRules.ts";
 import api from "@network/api.ts";
@@ -371,10 +372,10 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               max={32}
               required
               value={priority}
-              onChange={(val) => {
-                if (typeof val === "string") val = parseInt(val);
-                if (!isNaN(val) && val >= 1 && val <= 32)
-                  useNewItemStore.setState({ priority: val });
+              onChange={(s) => {
+                const value = ParseStringInputToNumber(s);
+                if (value && value >= 1 && value <= 32)
+                  useNewItemStore.setState({ priority: value });
               }}
             />
           </Group>
