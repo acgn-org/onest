@@ -9,6 +9,7 @@ import {
   TextInput,
   NumberInput,
   Group,
+  Text,
 } from "@mantine/core";
 
 import useEditItemStore from "@store/edit.ts";
@@ -45,7 +46,7 @@ export const EditItemModal: FC<EditItemModalProps> = ({ onItemMutate }) => {
       await api.patch(`item/${item!.id}/`, item);
       onItemMutate();
       useEditItemStore.setState({ open: false });
-      toast.success("item updated")
+      toast.success("item updated");
     } catch (err: unknown) {
       toast.error(`update item failed: ${err}`);
     }
@@ -54,7 +55,12 @@ export const EditItemModal: FC<EditItemModalProps> = ({ onItemMutate }) => {
 
   return (
     <Modal
-      title="Edit Item"
+      title={
+        <>
+          Edit Item
+          <Text c="dimmed">Changes only affect incomplete downloads.</Text>
+        </>
+      }
       size="lg"
       opened={!!open}
       onClose={() => useEditItemStore.setState({ open: false })}
