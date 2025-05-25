@@ -58,4 +58,32 @@ namespace Telegram {
     photo: ChatPhotoInfo;
     data: number;
   };
+
+  type FormattedText = Meta & {
+    text: string;
+  };
+
+  type Video = Meta & {
+    file_name: string;
+    duration: number;
+    height: number;
+    width: number;
+    supports_streaming: boolean;
+    mime_type: string;
+    minithumbnail: MiniThumbnail | null;
+    video: File;
+  };
+
+  type MessageVideo = Meta & {
+    caption: FormattedText;
+    video: Video;
+  };
+
+  type Message = Meta & {
+    id: number;
+    chat_id: number;
+    can_be_saved: boolean;
+    date: number;
+    content: MessageVideo | (Meta & unknown);
+  };
 }

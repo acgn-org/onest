@@ -21,7 +21,7 @@ import {
   Accordion,
   Alert,
 } from "@mantine/core";
-import { IconClipboard, IconInfoCircle } from "@tabler/icons-react";
+import { IconClipboard, IconInfoCircle, IconPlus } from "@tabler/icons-react";
 
 import useNewItemStore from "@store/new-item.ts";
 
@@ -44,7 +44,10 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   const [id, setId] = useState("");
   const [idDounced] = useDebouncedValue(id, 350);
   useEffect(() => {
-    if (open) setId("");
+    if (open) {
+      setId("");
+      resetForm();
+    }
   }, [open]);
   useEffect(() => {
     if (id && id === idDounced) onLoadItemData();
@@ -58,6 +61,13 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   const matchContent = useNewItemStore((state) => state.match_content);
   const priority = useNewItemStore((state) => state.priority);
   const resetExtendedForm = useNewItemStore((state) => state.resetStates);
+
+  const resetForm = () => {
+    setItemInfo(null);
+    setItemRaws(null);
+    setItemRawsManual([]);
+    resetExtendedForm();
+  };
 
   const [regexp, setRegexp] = useState<RegExp | null>(null);
   const [regexpError, setRegexpError] = useState<string | undefined>(undefined);
@@ -75,19 +85,24 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
 
   const [itemInfo, setItemInfo] = useState<Item.Remote | null>(null);
   const [isItemInfoLoading, setIsItemInfoLoading] = useState(false);
+  const [itemRule, setItemRule] = useState<RealSearch.Rule | null>(null);
   const [itemRaws, setItemRaws] = useState<RealSearch.Raw[] | null>(null);
+  const [itemRawsManual, setItemRawsManual] = useState<RealSearch.MatchedRaw[]>(
+    [],
+  );
   const [itemRawsMatched, setItemRawsMatched] = useState<
     RealSearch.MatchedRaw[] | null
   >(null);
   useEffect(() => {
-    if (id) {
-      setItemInfo(null);
-      setItemRaws(null);
-      resetExtendedForm();
-    }
+    if (id) resetForm();
   }, [id]);
   useEffect(() => {
-    const raws = itemRaws
+    if (!itemInfo) setItemRule(null);
+    else if (rules)
+      setItemRule(rules.find((rule) => rule.id === itemInfo.rule_id) ?? null);
+  }, [itemInfo, rules]);
+  useEffect(() => {
+    const rawsFetched = itemRaws
       ?.map(
         (raw) =>
           ({
@@ -99,10 +114,11 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           }) as RealSearch.MatchedRaw,
       )
       .sort((a, b) => a.date - b.date);
-    if (!raws) {
+    if (!rawsFetched && itemRawsManual.length === 0) {
       setItemRawsMatched(null);
       return;
     }
+    const raws = itemRawsManual.concat(rawsFetched ?? []);
     if (regexp) {
       if (pattern)
         setItemRawsMatched(() => {
@@ -123,7 +139,61 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           return [...raws];
         });
     }
-  }, [itemRaws, regexp, pattern, matchPattern, matchContent]);
+  }, [itemRaws, itemRawsManual, regexp, pattern, matchPattern, matchContent]);
+
+  const [isAddMessageLoading, setIsAddMessageLoading] = useState(false);
+  const [addMessageChatID, setAddMessageChatID] = useState<number | null>(null);
+  const [addMessageMsgID, setAddMessageMsgID] = useState<number | null>(null);
+  useEffect(() => {
+    if (!itemInfo) {
+      setAddMessageChatID(null);
+    } else if (itemRule) {
+      setAddMessageChatID(itemRule.channel_id);
+    }
+    setAddMessageMsgID(null);
+  }, [itemInfo, itemRule]);
+
+  const onAddMessage = async () => {
+    if (!addMessageChatID || !addMessageMsgID || isAddMessageLoading) return;
+    setIsAddMessageLoading(true);
+    try {
+      const {
+        data: { data },
+      } = await api.get<{ data: Telegram.Message }>(
+        `telegram/chat/${addMessageChatID}/message/${addMessageMsgID}`,
+      );
+      console.log(data);
+      if (data.content["@type"] !== "messageVideo") {
+        toast.error(`message ${addMessageMsgID} is not a video message`);
+      } else {
+        const content = data.content as Telegram.MessageVideo;
+        setItemRawsManual((items) => [
+          ...items,
+          {
+            id: 0,
+            item_id: 0,
+            channel_id: addMessageChatID,
+            channel_name: "",
+            size: content.video.video.size,
+            text: content.caption.text,
+            file_suffix: content.video.file_name.split(".").pop(),
+            msg_id: data.id,
+            supports_streaming: content.video.supports_streaming,
+            link: "",
+            date: data.date,
+            selected: true,
+            matched: true,
+            matched_text: "",
+            priority: undefined,
+          } as RealSearch.MatchedRaw,
+        ]);
+        setAddMessageMsgID(null);
+      }
+    } catch (err: unknown) {
+      toast.error(`fetch message failed: ${err}`);
+    }
+    setIsAddMessageLoading(false);
+  };
 
   const onPasteId = async () => {
     if (!navigator.clipboard?.readText) {
@@ -399,6 +469,45 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                 })
               }
             />
+
+            <Group gap="sm">
+              <TextInput
+                w={95}
+                placeholder="Channel ID"
+                type="number"
+                size="xs"
+                value={addMessageChatID?.toString() ?? ""}
+                onChange={(ev) =>
+                  setAddMessageChatID(
+                    !ev.target.value || isNaN(parseInt(ev.target.value))
+                      ? null
+                      : parseInt(ev.target.value),
+                  )
+                }
+              />
+              <TextInput
+                w={95}
+                placeholder="Message ID"
+                type="number"
+                size="xs"
+                value={addMessageMsgID?.toString() ?? ""}
+                onChange={(ev) =>
+                  setAddMessageMsgID(
+                    !ev.target.value || isNaN(parseInt(ev.target.value))
+                      ? null
+                      : parseInt(ev.target.value),
+                  )
+                }
+              />
+              <ActionIcon
+                variant="light"
+                disabled={!addMessageChatID || !addMessageMsgID}
+                loading={isAddMessageLoading}
+                onClick={() => onAddMessage()}
+              >
+                <IconPlus />
+              </ActionIcon>
+            </Group>
           </Group>
 
           <Accordion variant="filled">
