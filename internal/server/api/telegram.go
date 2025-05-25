@@ -47,3 +47,25 @@ func GetChatPhoto(ctx *gin.Context) {
 
 	ctx.File(info.Photo.Big.Local.Path)
 }
+
+func GetMessage(ctx *gin.Context) {
+	chatID, err := tools.Int64IDFromParam(ctx, "id")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	messageID, err := tools.Int64IDFromParam(ctx, "msgId")
+	if err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	info, err := source.Telegram.GetMessage(chatID, messageID)
+	if err != nil {
+		response.Error(ctx, response.ErrTelegram, err)
+		return
+	}
+
+	response.Success(ctx, info)
+}

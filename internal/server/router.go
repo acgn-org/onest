@@ -33,5 +33,6 @@ func Api(group *gin.RouterGroup) {
 	telegram := group.Group("telegram")
 	telegramChat := telegram.Group("chat/:id")
 	telegramChat.GET("/", api.GetChat)
+	telegramChat.GET("message/:msgId", api.GetMessage)
 	telegramChat.GET("photo", api.GetChatPhoto)
 }
