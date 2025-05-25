@@ -356,6 +356,36 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
 
           <Divider mt="sm" />
 
+          <Group>
+            <Checkbox
+              disabled={!itemRawsMatched}
+              checked={
+                !!itemRawsMatched &&
+                itemRawsMatched.length !== 0 &&
+                !!itemRawsMatched.find((item) => item.selected)
+              }
+              indeterminate={
+                !!itemRawsMatched &&
+                !!itemRawsMatched.find((item) => item.selected) &&
+                !!itemRawsMatched.find((item) => !item.selected)
+              }
+              onChange={(ev) =>
+                setItemRawsMatched((itemRawsMatched) => {
+                  if (!itemRawsMatched) return itemRawsMatched;
+                  return [
+                    ...itemRawsMatched.map(
+                      (item) =>
+                        ({
+                          ...item,
+                          selected: ev.target.checked,
+                        }) as unknown as RealSearch.MatchedRaw,
+                    ),
+                  ];
+                })
+              }
+            />
+          </Group>
+
           <Accordion variant="filled">
             {itemRawsMatched?.map((raw, index) => (
               <Accordion.Item key={raw.id} value={`${raw.id}`}>
@@ -408,6 +438,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               </Accordion.Item>
             ))}
           </Accordion>
+
           <Flex justify="end" mt="md">
             <Button
               type="submit"
