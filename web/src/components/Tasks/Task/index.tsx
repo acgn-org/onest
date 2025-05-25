@@ -104,7 +104,7 @@ export const Task: FC<TaskProps> = ({
     if (isForceStarting) return;
     setIsForceStarting(true);
     try {
-      await api.post(`download/${task.id}/start`);
+      await api.post(`download/${task.id}/force/start`);
       onTasksMutate();
     } catch (err: unknown) {
       toast.error(`force start failed: ${err}`);
@@ -117,7 +117,7 @@ export const Task: FC<TaskProps> = ({
     if (isForceCanceling) return;
     setIsForceCanceling(true);
     try {
-      await api.post(`download/${task.id}/cancel`);
+      await api.post(`download/${task.id}/force/cancel`);
       onTasksMutate();
     } catch (err: unknown) {
       toast.error(`force cancel failed: ${err}`);
