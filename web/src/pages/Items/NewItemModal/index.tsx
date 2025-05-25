@@ -1,5 +1,6 @@
 import { type FC, useEffect, useState } from "react";
 import { ParseTextWithPattern, CompileRegexp } from "@util/pattern.ts";
+import { useDebouncedValue } from "@mantine/hooks";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 
@@ -41,9 +42,13 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
 
   const [loading, setLoading] = useState(false);
   const [id, setId] = useState("");
+  const [idDounced] = useDebouncedValue(id, 350);
   useEffect(() => {
     if (open) setId("");
   }, [open]);
+  useEffect(() => {
+    if (id && id === idDounced) onLoadItemData();
+  }, [id, idDounced]);
 
   const name = useNewItemStore((state) => state.name);
   const targetPath = useNewItemStore((state) => state.target_path);
@@ -69,6 +74,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   }, [regexpStr]);
 
   const [itemInfo, setItemInfo] = useState<Item.Remote | null>(null);
+  const [isItemInfoLoading, setIsItemInfoLoading] = useState(false);
   const [itemRaws, setItemRaws] = useState<RealSearch.Raw[] | null>(null);
   const [itemRawsMatched, setItemRawsMatched] = useState<
     RealSearch.MatchedRaw[] | null
@@ -136,13 +142,15 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   };
 
   const onLoadItemData = async () => {
+    if (isItemInfoLoading) return;
+
     const idParsed = parseInt(id);
     if (isNaN(idParsed)) {
       toast.error(`invalid id '${id}'`);
       return;
     }
 
-    setLoading(true);
+    setIsItemInfoLoading(true);
     try {
       const {
         data: { data },
@@ -151,23 +159,24 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       );
       setItemInfo(data.item);
       setItemRaws(data.data);
-      if (!name) useNewItemStore.setState({ name: data.item.name });
-      const rule = rules?.find((rule) => rule.id === data.item.rule_id);
-      if (!regexpStr && rule)
-        useNewItemStore.setState({
-          regexp: rule.regexp,
-        });
-      if (rule) {
-        useNewItemStore.setState({
-          match_pattern: `$${rule.cn_index}/$${rule.en_index}`,
-          match_content: `${data.item.name}/${data.item.name_en}`,
-        });
-      }
     } catch (err: unknown) {
       toast.error(`load item data failed: ${err}`);
     }
-    setLoading(false);
+    setIsItemInfoLoading(false);
   };
+  useEffect(() => {
+    if (!!rules && itemInfo) {
+      useNewItemStore.setState({ name: itemInfo.name });
+      const rule = rules?.find((rule) => rule.id === itemInfo.rule_id);
+      if (rule) {
+        useNewItemStore.setState({
+          match_pattern: `$${rule.cn_index}/$${rule.en_index}`,
+          match_content: `${itemInfo.name}/${itemInfo.name_en}`,
+          regexp: rule.regexp,
+        });
+      }
+    }
+  }, [rules, itemInfo?.id]);
 
   const onCreate = async () => {
     setLoading(true);
@@ -245,8 +254,8 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       <form
         onSubmit={(ev) => {
           ev.preventDefault();
-          if (loading) return;
-          return itemInfo ? onCreate() : onLoadItemData();
+          if (loading || isItemInfoLoading) return;
+          onCreate();
         }}
       >
         <Stack align="stretch">
@@ -254,14 +263,18 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
             <TextInput
               flex={1}
               label="Schedule ID"
-              placeholder="ID from RealSearch Schedule."
-              required
+              placeholder="Fetch data from RealSearch."
               type="number"
               min={1}
               value={id}
               onChange={(ev) => setId(ev.target.value)}
               rightSection={
-                <ActionIcon size="sm" variant="default" onClick={onPasteId}>
+                <ActionIcon
+                  size="sm"
+                  variant="default"
+                  onClick={onPasteId}
+                  loading={!rules || isItemInfoLoading}
+                >
                   <IconClipboard />
                 </ActionIcon>
               }
@@ -271,7 +284,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               label="Default Priority"
               min={1}
               max={32}
-              required={!!itemInfo}
+              required
               value={priority}
               onChange={(val) => {
                 if (typeof val === "string") val = parseInt(val);
@@ -283,126 +296,125 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           <TextInput
             label="Name"
             placeholder="Custom name for item."
-            required={!!itemInfo}
+            required
             value={name}
             onChange={(ev) =>
               useNewItemStore.setState({ name: ev.target.value })
             }
           />
 
-          {itemInfo && (
-            <>
-              <TextInput
-                label="Text Regexp"
-                placeholder="Regular expression for parsing msg text."
-                required
-                value={regexpStr}
-                onChange={(ev) =>
-                  useNewItemStore.setState({ regexp: ev.target.value })
-                }
-                error={regexpError}
-              />
-              <Group>
-                <TextInput
-                  flex={1}
-                  label="Match Pattern"
-                  placeholder="Pattern for Match Test."
-                  required
-                  value={matchPattern}
-                  onChange={(ev) =>
-                    useNewItemStore.setState({ match_pattern: ev.target.value })
-                  }
-                />
-                <TextInput
-                  flex={1}
-                  label="Match Content"
-                  placeholder="Content for matched text."
-                  required
-                  value={matchContent}
-                  onChange={(ev) =>
-                    useNewItemStore.setState({ match_content: ev.target.value })
-                  }
-                />
-              </Group>
-              <TextInput
-                label="Target Pattern"
-                placeholder="Pattern for rename file. e.g. S01E${1}"
-                required
-                value={pattern}
-                onChange={(ev) =>
-                  useNewItemStore.setState({ pattern: ev.target.value })
-                }
-              />
-              <TextInput
-                label="Target Path"
-                placeholder="A directory to place downloaded files."
-                required={!!itemInfo}
-                value={targetPath}
-                onChange={(ev) =>
-                  useNewItemStore.setState({ target_path: ev.target.value })
-                }
-              />
+          <TextInput
+            label="Text Regexp"
+            placeholder="Regular expression for parsing msg text."
+            required
+            value={regexpStr}
+            onChange={(ev) =>
+              useNewItemStore.setState({ regexp: ev.target.value })
+            }
+            error={regexpError}
+          />
+          <Group>
+            <TextInput
+              flex={1}
+              label="Match Pattern"
+              placeholder="Pattern for Match Test."
+              required
+              value={matchPattern}
+              onChange={(ev) =>
+                useNewItemStore.setState({ match_pattern: ev.target.value })
+              }
+            />
+            <TextInput
+              flex={1}
+              label="Match Content"
+              placeholder="Content for matched text."
+              required
+              value={matchContent}
+              onChange={(ev) =>
+                useNewItemStore.setState({ match_content: ev.target.value })
+              }
+            />
+          </Group>
+          <TextInput
+            label="Target Pattern"
+            placeholder="Pattern for rename file. e.g. S01E${1}"
+            required
+            value={pattern}
+            onChange={(ev) =>
+              useNewItemStore.setState({ pattern: ev.target.value })
+            }
+          />
+          <TextInput
+            label="Target Path"
+            placeholder="A directory to place downloaded files."
+            required
+            value={targetPath}
+            onChange={(ev) =>
+              useNewItemStore.setState({ target_path: ev.target.value })
+            }
+          />
 
-              <Divider mt="sm" />
+          <Divider mt="sm" />
 
-              <Accordion variant="filled">
-                {itemRawsMatched?.map((raw, index) => (
-                  <Accordion.Item key={raw.id} value={`${raw.id}`}>
-                    <Accordion.Control
-                      icon={
-                        <Checkbox
-                          checked={raw.matched && raw.selected}
-                          disabled={!raw.matched}
-                          onClick={(ev) => ev.stopPropagation()}
-                          onChange={(ev) =>
+          <Accordion variant="filled">
+            {itemRawsMatched?.map((raw, index) => (
+              <Accordion.Item key={raw.id} value={`${raw.id}`}>
+                <Accordion.Control
+                  icon={
+                    <Checkbox
+                      checked={raw.matched && raw.selected}
+                      disabled={!raw.matched}
+                      onClick={(ev) => ev.stopPropagation()}
+                      onChange={(ev) =>
+                        setItemRawsMatched((raws) => {
+                          raws![index].selected = ev.target.checked;
+                          return [...raws!];
+                        })
+                      }
+                    />
+                  }
+                >
+                  <Stack gap={1}>
+                    <Group gap="sm">
+                      <Text size="sm">
+                        {dayjs.unix(raw.date).format("YYYY/MM/DD HH:mm")}
+                      </Text>
+                      <Badge variant="light">
+                        {(raw.size / 1024 / 1024).toFixed(0)} MB
+                      </Badge>
+                      <div onClick={(ev) => ev.stopPropagation()}>
+                        <PriorityInput
+                          value={raw.priority}
+                          defaultValue={priority}
+                          onChange={(val) =>
                             setItemRawsMatched((raws) => {
-                              raws![index].selected = ev.target.checked;
+                              raws![index].priority = val;
                               return [...raws!];
                             })
                           }
                         />
-                      }
-                    >
-                      <Stack gap={1}>
-                        <Group gap="sm">
-                          <Text size="sm">
-                            {dayjs.unix(raw.date).format("YYYY/MM/DD HH:mm")}
-                          </Text>
-                          <Badge variant="light">
-                            {(raw.size / 1024 / 1024).toFixed(0)} MB
-                          </Badge>
-                          <div onClick={(ev) => ev.stopPropagation()}>
-                            <PriorityInput
-                              value={raw.priority}
-                              defaultValue={priority}
-                              onChange={(val) =>
-                                setItemRawsMatched((raws) => {
-                                  raws![index].priority = val;
-                                  return [...raws!];
-                                })
-                              }
-                            />
-                          </div>
-                        </Group>
-                        {renderConvertedFilename(raw)}
-                      </Stack>
-                    </Accordion.Control>
-                    <Accordion.Panel
-                      style={{
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {raw.text}
-                    </Accordion.Panel>
-                  </Accordion.Item>
-                ))}
-              </Accordion>
-            </>
-          )}
-
+                      </div>
+                    </Group>
+                    {renderConvertedFilename(raw)}
+                  </Stack>
+                </Accordion.Control>
+                <Accordion.Panel
+                  style={{
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {raw.text}
+                </Accordion.Panel>
+              </Accordion.Item>
+            ))}
+          </Accordion>
           <Flex justify="end" mt="md">
-            <Button type="submit" loading={!rules || loading}>
-              {itemInfo ? "Create" : "Fetch Data"}
+            <Button
+              type="submit"
+              loading={loading}
+              disabled={isItemInfoLoading}
+            >
+              Create
             </Button>
           </Flex>
         </Stack>
