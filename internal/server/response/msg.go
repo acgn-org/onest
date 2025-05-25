@@ -8,6 +8,7 @@ const (
 	_
 	cErrNotFound
 	cErrTelegram
+	cErrResourceConflict
 )
 
 type Msg struct {
@@ -40,5 +41,9 @@ var (
 	ErrTelegram = &Msg{
 		Code: cErrTelegram,
 		Msg:  "telegram error",
+	}
+	ErrResourceConflict = &Msg{
+		Code: cErrResourceConflict,
+		Msg:  "resource conflict",
 	}
 )

@@ -84,7 +84,7 @@ func (repo DownloadRepository) CreateWithMessages(item uint, priority int32, mes
 
 func (repo DownloadRepository) FirstByID(id uint) (*Download, error) {
 	var download Download
-	return &download, repo.DB.Model(&Download{}).Where("id = ?", id).First(&download).Error
+	return &download, repo.DB.Model(&Download{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id).First(&download).Error
 }
 
 func (repo DownloadRepository) FirstByIDPreloadItem(id uint) (*Download, error) {

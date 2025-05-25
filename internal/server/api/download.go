@@ -5,11 +5,67 @@ import (
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/queue"
 	"github.com/acgn-org/onest/internal/server/response"
+	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
 	"github.com/acgn-org/onest/tools"
 	"github.com/gin-gonic/gin"
+	"github.com/zelenin/go-tdlib/client"
 	"gorm.io/gorm"
 )
+
+func AddDownloadForItem(ctx *gin.Context) {
+	var form struct {
+		ItemID    uint  `json:"item_id" form:"item_id" binding:"required"`
+		MessageID int64 `json:"message_id" form:"message_id" binding:"required"`
+		Priority  int32 `json:"priority" form:"priority" binding:"min=1,max=32"`
+	}
+	if err := ctx.ShouldBind(&form); err != nil {
+		response.Error(ctx, response.ErrForm, err)
+		return
+	}
+
+	itemRepo := database.BeginRepository[repository.ItemRepository]()
+	defer itemRepo.Rollback()
+
+	item, err := itemRepo.FirstItemByIDForUpdates(form.ItemID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			response.ErrorWithTip(ctx, response.ErrNotFound, "item does not exist")
+			return
+		}
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	msg, err := source.Telegram.GetMessage(item.ChannelID, form.MessageID)
+	if err != nil {
+		response.Error(ctx, response.ErrTelegram, err)
+		return
+	}
+
+	downloadRepo := repository.DownloadRepository{Repository: itemRepo.Repository}
+	result, err := downloadRepo.CreateWithMessages(item.ID, item.Priority, []*client.Message{msg})
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			response.Error(ctx, response.ErrResourceConflict, "message already exists")
+			return
+		}
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	} else if len(result) == 0 {
+		response.ErrorWithTip(ctx, response.ErrTelegram, "message dose not contain video")
+		return
+	}
+
+	if err := itemRepo.Commit().Error; err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	queue.TryActivateTaskControl()
+
+	response.Default(ctx)
+}
 
 func GetDownloadTasks(ctx *gin.Context) {
 	tasks, err := queue.GetDownloading()

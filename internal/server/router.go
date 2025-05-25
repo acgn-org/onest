@@ -19,6 +19,7 @@ func Api(group *gin.RouterGroup) {
 	itemWithId.DELETE("/", api.DeleteItem)
 
 	download := group.Group("download")
+	download.POST("/", api.AddDownloadForItem)
 	download.GET("tasks", api.GetDownloadTasks)
 	downloadWithId := download.Group(":id")
 	downloadWithId.PATCH("priority", api.UpdateDownloadPriority)
