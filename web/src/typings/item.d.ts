@@ -25,4 +25,9 @@ namespace Item {
   };
 
   type ViewMode = "active" | "error" | "all";
+
+  type MatchPatternPair = {
+    pattern: string;
+    content: string;
+  };
 }

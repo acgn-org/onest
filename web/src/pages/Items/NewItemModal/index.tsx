@@ -80,9 +80,11 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
     RealSearch.MatchedRaw[] | null
   >(null);
   useEffect(() => {
-    setItemInfo(null);
-    setItemRaws(null);
-    resetExtendedForm();
+    if (id) {
+      setItemInfo(null);
+      setItemRaws(null);
+      resetExtendedForm();
+    }
   }, [id]);
   useEffect(() => {
     const raws = itemRaws
@@ -169,9 +171,22 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       useNewItemStore.setState({ name: itemInfo.name });
       const rule = rules?.find((rule) => rule.id === itemInfo.rule_id);
       if (rule) {
+        const pairs: Item.MatchPatternPair[] = [];
+        if (rule.cn_index !== 0) {
+          pairs.push({
+            pattern: `$${rule.cn_index}`,
+            content: `${itemInfo.name}`,
+          });
+        }
+        if (rule.en_index !== 0) {
+          pairs.push({
+            pattern: `$${rule.en_index}`,
+            content: `${itemInfo.name_en}`,
+          });
+        }
         useNewItemStore.setState({
-          match_pattern: `$${rule.cn_index}/$${rule.en_index}`,
-          match_content: `${itemInfo.name}/${itemInfo.name_en}`,
+          match_pattern: pairs.map((pair) => pair.pattern).join("/"),
+          match_content: pairs.map((pair) => pair.content).join("/"),
           regexp: rule.regexp,
         });
       }
