@@ -12,7 +12,14 @@ import (
 	"time"
 )
 
-var ActivateTaskControl = make(chan struct{})
+var _ActivateTaskControl = make(chan struct{})
+
+func TryActivateTaskControl() {
+	select {
+	case _ActivateTaskControl <- struct{}{}:
+	default:
+	}
+}
 
 func supervisor() {
 	instance := _Supervisor{
@@ -38,7 +45,7 @@ func (s _Supervisor) WorkerTaskControl() {
 
 		select {
 		case <-time.After(sleep):
-		case <-ActivateTaskControl:
+		case <-_ActivateTaskControl:
 			s.logger.Debugln("activate task control by signal")
 		}
 
@@ -145,10 +152,7 @@ func (s _Supervisor) WorkerListen() {
 				return true
 			})
 			if isFileCompleted {
-				select {
-				case ActivateTaskControl <- struct{}{}:
-				default:
-				}
+				TryActivateTaskControl()
 			}
 
 		case client.TypeUpdateNewMessage:
@@ -158,10 +162,7 @@ func (s _Supervisor) WorkerListen() {
 				s.logger.Errorln("failed to create downloads with message:", err)
 				continue
 			} else if created > 0 {
-				select {
-				case ActivateTaskControl <- struct{}{}:
-				default:
-				}
+				TryActivateTaskControl()
 			}
 
 		}

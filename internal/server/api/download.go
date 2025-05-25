@@ -75,10 +75,7 @@ func ForceResetTask(ctx *gin.Context) {
 		return
 	}
 
-	select {
-	case <-queue.ActivateTaskControl:
-	default:
-	}
+	queue.TryActivateTaskControl()
 
 	response.Default(ctx)
 }

@@ -156,10 +156,7 @@ func NewItem(ctx *gin.Context) {
 		return
 	}
 
-	select {
-	case queue.ActivateTaskControl <- struct{}{}:
-	default:
-	}
+	queue.TryActivateTaskControl()
 
 	response.Default(ctx)
 }
@@ -204,10 +201,7 @@ func DeleteItem(ctx *gin.Context) {
 		return
 	}
 
-	select {
-	case queue.ActivateTaskControl <- struct{}{}:
-	default:
-	}
+	queue.TryActivateTaskControl()
 
 	response.Default(ctx)
 }

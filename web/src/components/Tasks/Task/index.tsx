@@ -24,6 +24,7 @@ import {
   IconSquareFilled,
   IconArrowDownDashed,
   IconCircleArrowRight,
+  IconRefresh,
 } from "@tabler/icons-react";
 
 import useConfirmDialog from "@store/confirm-dialog.ts";
@@ -232,22 +233,31 @@ export const Task: FC<TaskProps> = ({
             style={{ flexWrap: "nowrap" }}
             onClick={(ev) => ev.stopPropagation()}
           >
-            {!task.downloaded && (
+            {!task.downloaded && !task.downloading ? (
+              <Tooltip label="Force Start">
+                <ActionIcon
+                  component="div"
+                  variant="default"
+                  loading={isForceStarting}
+                  onClick={() => onForceStart()}
+                >
+                  <IconArrowDownDashed size={16} stroke={1.6} />
+                </ActionIcon>
+              </Tooltip>
+            ) : (
               <Tooltip
-                label={task.downloading ? "Force Cancel" : "Force Start"}
+                label={task.downloading ? "Force Cancel" : "Force Restart"}
               >
                 <ActionIcon
                   component="div"
                   variant="default"
-                  loading={isForceStarting || isForceResetting}
-                  onClick={() =>
-                    task.downloading ? onForceReset() : onForceStart()
-                  }
+                  loading={isForceResetting}
+                  onClick={() => onForceReset()}
                 >
                   {task.downloading ? (
                     <IconSquareFilled size={12} />
                   ) : (
-                    <IconArrowDownDashed size={16} stroke={1.6} />
+                    <IconRefresh size={16} stroke={1.6} />
                   )}
                 </ActionIcon>
               </Tooltip>
