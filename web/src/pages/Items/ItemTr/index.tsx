@@ -4,10 +4,10 @@ import toast from "react-hot-toast";
 
 import Empty from "@component/Empty";
 import Tasks from "@component/Tasks";
+import LoadingAvatar from "@component/LoadingAvatar";
 import { Flipped } from "react-flip-toolkit";
 import {
   Table,
-  Avatar,
   Skeleton,
   Group,
   Text,
@@ -79,29 +79,27 @@ export const ItemTr = memo<ItemTrProps>(
             <Table.Td>{item.name}</Table.Td>
             <Table.Td>
               <Group gap="sm" style={{ flexWrap: "nowrap" }}>
+                <LoadingAvatar
+                  src={
+                    chatDetail &&
+                    `${baseUrl}telegram/chat/${item.channel_id}/photo`
+                  }
+                  alt="channel picture"
+                />
                 {chatDetail ? (
-                  <>
-                    <Avatar
-                      src={`${baseUrl}telegram/chat/${item.channel_id}/photo`}
-                      alt="channel picture"
-                    />
-                    <Text
-                      w={80}
-                      size="sm"
-                      style={{
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {chatDetail.title}
-                    </Text>
-                  </>
+                  <Text
+                    w={80}
+                    size="sm"
+                    style={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {chatDetail.title}
+                  </Text>
                 ) : (
-                  <>
-                    <Skeleton height={38} circle />
-                    <Skeleton height={8} w={80} width="70%" radius="xl" />
-                  </>
+                  <Skeleton height={8} w={80} width="70%" radius="xl" />
                 )}
               </Group>
             </Table.Td>
