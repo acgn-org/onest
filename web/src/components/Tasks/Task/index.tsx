@@ -23,6 +23,7 @@ import {
   IconTrash,
   IconSquareFilled,
   IconArrowDownDashed,
+  IconCircleArrowRight,
 } from "@tabler/icons-react";
 
 import useConfirmDialog from "@store/confirm-dialog.ts";
@@ -175,6 +176,16 @@ export const Task: FC<TaskProps> = ({
           <IconAlertCircle color="orange" size={sizeIcon} stroke={stroke} />
         );
         return;
+      }
+      if (task.file && task.file.local.is_downloading_completed) {
+        tip = "Copy File";
+        icon = (
+          <IconCircleArrowRight
+            color="aquamarine"
+            size={sizeIcon}
+            stroke={stroke}
+          />
+        );
       }
     })();
     return (
