@@ -113,17 +113,17 @@ export const Task: FC<TaskProps> = ({
     setIsForceStarting(false);
   };
 
-  const [isForceCanceling, setIsForceCanceling] = useState(false);
-  const onForceCancel = async () => {
-    if (isForceCanceling) return;
-    setIsForceCanceling(true);
+  const [isForceResetting, setIsForceResetting] = useState(false);
+  const onForceReset = async () => {
+    if (isForceResetting) return;
+    setIsForceResetting(true);
     try {
-      await api.post(`download/${task.id}/force/cancel`);
+      await api.post(`download/${task.id}/force/reset`);
       onTasksMutate();
     } catch (err: unknown) {
       toast.error(`force cancel failed: ${err}`);
     }
-    setIsForceCanceling(false);
+    setIsForceResetting(false);
   };
 
   const renderStatus = (task: Download.Task) => {
@@ -239,9 +239,9 @@ export const Task: FC<TaskProps> = ({
                 <ActionIcon
                   component="div"
                   variant="default"
-                  loading={isForceStarting || isForceCanceling}
+                  loading={isForceStarting || isForceResetting}
                   onClick={() =>
-                    task.downloading ? onForceCancel() : onForceStart()
+                    task.downloading ? onForceReset() : onForceStart()
                   }
                 >
                   {task.downloading ? (
