@@ -106,7 +106,11 @@ func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {
 func (repo ItemRepository) GetError() ([]Item, error) {
 	var items []Item
 	return items, repo.DB.Model(&Item{}).Where(
-		"EXISTS (?)", repo.DB.Model(&Download{}).Where("downloads.item_id = items.id AND downloads.error_at != 0"),
+		"EXISTS (?)", repo.DB.Model(&Download{}).Where(
+			"downloads.item_id = items.id",
+		).Where(
+			"(downloaded = FALSE AND fatal_error = FALSE AND error_at > 0) OR (downloaded = TRUE AND fatal_error = TRUE)",
+		),
 	).Find(&items).Error
 }
 

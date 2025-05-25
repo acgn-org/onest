@@ -8,7 +8,7 @@ import (
 type Download struct {
 	ID uint `gorm:"primarykey"`
 
-	ItemID uint `gorm:"index:idx_item_active;index:idx_item_error;uniqueIndex:idx_item_unique;not null"`
+	ItemID uint `gorm:"index:idx_item_status;uniqueIndex:idx_item_unique;not null"`
 	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE"`
 
 	MsgID int64 `gorm:"uniqueIndex:idx_item_unique;not null"`
@@ -18,11 +18,11 @@ type Download struct {
 
 	Priority    int32 `gorm:"index:idx_global_queue,priority:3,sort:desc;not null"`
 	Downloading bool  `gorm:"index:idx_global_queue,priority:2;default:false"`
-	Downloaded  bool  `gorm:"index:idx_global_queue,priority:1;index:idx_item_active;default:false;not null"`
+	Downloaded  bool  `gorm:"index:idx_global_queue,priority:1;index:idx_item_status;default:false;not null"`
 
-	FatalError bool
+	FatalError bool `gorm:"index:idx_item_status;default:0;not null"`
 	Error      string
-	ErrorAt    int64 `gorm:"index:idx_item_error;default:0;not null"`
+	ErrorAt    int64 `gorm:"index:idx_item_status;default:0;not null"`
 }
 
 type DownloadTask struct {
