@@ -49,7 +49,7 @@ func RemoveTasks(ids ...uint) {
 		}
 
 		if err := task.Terminate(); err != nil {
-			logfield.New(logfield.ComQueue).WithAction("remove").Warnf("terminate task %d with error: %v", id, err)
+			logfield.New(logfield.ComQueue).WithAction("remove").Errorf("terminate task %d with error: %v", id, err)
 		}
 	}
 }

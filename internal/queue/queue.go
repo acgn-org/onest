@@ -90,8 +90,9 @@ func (q *_Queue) LoadAndDelete(key uint) (*DownloadTask, bool) {
 	val, ok := q.queue.LoadAndDelete(key)
 	if ok {
 		q.queueLength.Add(int32(-1))
+		return val.(*DownloadTask), true
 	}
-	return val.(*DownloadTask), ok
+	return nil, false
 }
 
 func (q *_Queue) Range(f func(key uint, value *DownloadTask) bool) {
