@@ -156,8 +156,8 @@ func (s _Supervisor) WorkerListen() {
 			}
 
 		case client.TypeUpdateNewMessage:
-			// match new downloads
-			created, err := ScanAndCreateNewDownloadTasks()
+			message := update.(*client.UpdateNewMessage).Message
+			created, err := ScanAndCreateNewDownloadTasks(message.ChatId)
 			if err != nil {
 				s.logger.Errorln("failed to create downloads with message:", err)
 				continue

@@ -69,7 +69,7 @@ func startDownload(channelId int64, download repository.Download) error {
 	return nil
 }
 
-func ScanAndCreateNewDownloadTasks() (int, error) {
+func ScanAndCreateNewDownloadTasks(channelId ...int64) (int, error) {
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
 	defer itemRepo.Rollback()
 
@@ -77,7 +77,7 @@ func ScanAndCreateNewDownloadTasks() (int, error) {
 
 	logger := logfield.New(logfield.ComQueue).WithAction("add downloads with message")
 
-	items, err := itemRepo.GetForUpdates(int32(time.Now().Add(-time.Duration(config.Telegram.Get().ScanThresholdDays) * time.Hour * 24).Unix()))
+	items, err := itemRepo.GetForUpdates(int32(time.Now().Add(-time.Duration(config.Telegram.Get().ScanThresholdDays)*time.Hour*24).Unix()), channelId...)
 	if err != nil {
 		return 0, err
 	}
