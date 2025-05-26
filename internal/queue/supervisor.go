@@ -6,7 +6,6 @@ import (
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
-	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
 	"sync/atomic"
 	"time"
@@ -31,11 +30,22 @@ func supervisor() {
 }
 
 type _Supervisor struct {
-	logger  log.FieldLogger
+	logger  logfield.LoggerWithFields
 	Cleaned *atomic.Bool
 }
 
 func (s _Supervisor) WorkerTaskControl() {
+	// scan on start up
+	s.logger.Debugln("scanning all histories")
+	scanned, err := ScanAndCreateNewDownloadTasks()
+	scanLogger := s.logger.WithAction("scan")
+	if err != nil {
+		scanLogger.Warnln("scan history of all channels failed:", err)
+	} else {
+		scanLogger.Debugf("%d tasks created", scanned)
+	}
+
+	s.logger.Debugln("task control worker started")
 	var slowDown bool
 	for {
 		sleep := time.Second * 10
@@ -157,11 +167,13 @@ func (s _Supervisor) WorkerListen() {
 
 		case client.TypeUpdateNewMessage:
 			message := update.(*client.UpdateNewMessage).Message
+			logger := s.logger.WithAction("scan").WithField("channel", message.ChatId)
 			created, err := ScanAndCreateNewDownloadTasks(message.ChatId)
 			if err != nil {
-				s.logger.Errorln("failed to create downloads with message:", err)
+				logger.Errorln("failed to scan tasks:", err)
 				continue
 			} else if created > 0 {
+				logger.Debugf("%d tasks created", created)
 				TryActivateTaskControl()
 			}
 
