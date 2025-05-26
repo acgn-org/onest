@@ -74,13 +74,13 @@ func (t Telegram) GetListener() *client.Listener {
 	return t.client.GetListener()
 }
 
-func (t Telegram) GetHistory(chatID, fromMessageID int64) (*client.Messages, error) {
+func (t Telegram) GetHistory(chatID, fromMessageID int64, limit int32) (*client.Messages, error) {
 	_ = t.rate.Wait(context.Background())
 	return t.client.GetChatHistory(&client.GetChatHistoryRequest{
 		ChatId:        chatID,
 		FromMessageId: fromMessageID,
 		Offset:        0,
-		Limit:         99,
+		Limit:         limit,
 		OnlyLocal:     false,
 	})
 }

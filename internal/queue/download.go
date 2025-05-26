@@ -102,9 +102,11 @@ func ScanAndCreateNewDownloadTasks(channelId ...int64) (int, error) {
 		// fetch all new messages, list => *client.Message
 		messageList := list.New()
 	fetchMessage:
-		messages, err := source.Telegram.GetHistory(item.ChannelID, fromMessageID)
+		messages, err := source.Telegram.GetHistory(item.ChannelID, fromMessageID, 99)
 		if err != nil {
 			logger.Errorf("get chat %d history failed: %v", item.ChannelID, err)
+			continue
+		} else if len(messages.Messages) == 0 {
 			continue
 		}
 		fromMessageID = messages.Messages[len(messages.Messages)-1].Id

@@ -109,6 +109,18 @@ func NewItem(ctx *gin.Context) {
 		return
 	}
 
+	if form.Process == 0 {
+		messages, err := source.Telegram.GetHistory(form.ChannelID, 0, 1)
+		if err != nil {
+			response.Error(ctx, response.ErrTelegram, err)
+			return
+		} else if len(messages.Messages) == 0 {
+			response.ErrorWithTip(ctx, response.ErrNotFound, "no message found in channel")
+			return
+		}
+		form.Process = messages.Messages[0].Id
+	}
+
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
 	defer itemRepo.Rollback()
 

@@ -31,7 +31,7 @@ type NewItemForm struct {
 	MatchPattern string `json:"match_pattern" form:"match_pattern" binding:"required"`
 	MatchContent string `json:"match_content" form:"match_content" binding:"required"`
 	DateEnd      int32  `json:"date_end" from:"date_end" binding:"required"`
-	Process      int64  `json:"process" form:"process" binding:"required"`
+	Process      int64  `json:"process" form:"process"`
 	Priority     int32  `json:"priority" form:"priority" binding:"min=1,max=32"`
 	TargetPath   string `json:"target_path" form:"target_path" binding:"required"`
 }
