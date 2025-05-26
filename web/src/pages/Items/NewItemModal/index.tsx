@@ -294,7 +294,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         channel_id: channel_id,
         regexp: regexpStr,
         pattern,
-        date_start: itemInfo.date_start,
         date_end: itemInfo.date_end,
         process,
         target_path: targetPath,

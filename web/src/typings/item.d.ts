@@ -7,7 +7,6 @@ namespace Item {
     pattern: string;
     match_pattern: string;
     match_content: string;
-    date_start: number;
     date_end: number;
     process: number;
     priority: number;

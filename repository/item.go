@@ -16,9 +16,7 @@ type Item struct {
 	MatchPattern string `gorm:"not null" json:"match_pattern"`
 	MatchContent string `gorm:"not null" json:"match_content"`
 
-	DateStart int32 `gorm:"not null" json:"date_start"`
-	DateEnd   int32 `gorm:"index:idx_date;index:idx_scan;not null" json:"date_end"`
-
+	DateEnd int32 `gorm:"index:idx_date;index:idx_scan;not null" json:"date_end"`
 	Process int64 `gorm:"not null" json:"process"`
 
 	Priority   int32  `gorm:"not null" json:"priority"`
@@ -32,7 +30,6 @@ type NewItemForm struct {
 	Pattern      string `json:"pattern" form:"pattern" binding:"required"`
 	MatchPattern string `json:"match_pattern" form:"match_pattern" binding:"required"`
 	MatchContent string `json:"match_content" form:"match_content" binding:"required"`
-	DateStart    int32  `json:"date_start" from:"date_start" binding:"required"`
 	DateEnd      int32  `json:"date_end" from:"date_end" binding:"required"`
 	Process      int64  `json:"process" form:"process" binding:"required"`
 	Priority     int32  `json:"priority" form:"priority" binding:"min=1,max=32"`
