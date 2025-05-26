@@ -55,6 +55,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   }, [id, idDounced]);
 
   const name = useNewItemStore((state) => state.name);
+  const channel_id = useNewItemStore((state) => state.channel_id);
   const targetPath = useNewItemStore((state) => state.target_path);
   const regexpStr = useNewItemStore((state) => state.regexp);
   const pattern = useNewItemStore((state) => state.pattern);
@@ -86,7 +87,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
 
   const [itemInfo, setItemInfo] = useState<Item.Remote | null>(null);
   const [isItemInfoLoading, setIsItemInfoLoading] = useState(false);
-  const [itemRule, setItemRule] = useState<RealSearch.Rule | null>(null);
   const [itemRaws, setItemRaws] = useState<RealSearch.Raw[] | null>(null);
   const [itemRawsManual, setItemRawsManual] = useState<RealSearch.MatchedRaw[]>(
     [],
@@ -97,11 +97,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   useEffect(() => {
     if (id) resetForm();
   }, [id]);
-  useEffect(() => {
-    if (!itemInfo) setItemRule(null);
-    else if (rules)
-      setItemRule(rules.find((rule) => rule.id === itemInfo.rule_id) ?? null);
-  }, [itemInfo, rules]);
   useEffect(() => {
     const rawsFetched = itemRaws
       ?.map(
@@ -143,25 +138,16 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   }, [itemRaws, itemRawsManual, regexp, pattern, matchPattern, matchContent]);
 
   const [isAddMessageLoading, setIsAddMessageLoading] = useState(false);
-  const [addMessageChatID, setAddMessageChatID] = useState<number | null>(null);
   const [addMessageMsgID, setAddMessageMsgID] = useState<number | null>(null);
-  useEffect(() => {
-    if (!itemInfo) {
-      setAddMessageChatID(null);
-    } else if (itemRule) {
-      setAddMessageChatID(itemRule.channel_id);
-    }
-    setAddMessageMsgID(null);
-  }, [itemInfo, itemRule]);
 
   const onAddMessage = async () => {
-    if (!addMessageChatID || !addMessageMsgID || isAddMessageLoading) return;
+    if (!channel_id || !addMessageMsgID || isAddMessageLoading) return;
     setIsAddMessageLoading(true);
     try {
       const {
         data: { data },
       } = await api.get<{ data: Telegram.Message }>(
-        `telegram/chat/${addMessageChatID}/message/${addMessageMsgID}`,
+        `telegram/chat/${channel_id}/message/${addMessageMsgID}`,
       );
       console.log(data);
       if (data.content["@type"] !== "messageVideo") {
@@ -173,7 +159,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           {
             id: 0,
             item_id: 0,
-            channel_id: addMessageChatID,
+            channel_id: channel_id,
             channel_name: "",
             size: content.video.video.size,
             text: content.caption.text,
@@ -256,6 +242,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           });
         }
         useNewItemStore.setState({
+          channel_id: rule.channel_id,
           match_pattern: pairs.map((pair) => pair.pattern).join("/"),
           match_content: pairs.map((pair) => pair.content).join("/"),
           regexp: rule.regexp,
@@ -265,42 +252,31 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   }, [rules, itemInfo?.id]);
 
   const onCreate = async () => {
-    setLoading(true);
-    try {
-      const channel_id = rules?.find(
-        (rule) => rule.id === itemInfo!.rule_id,
-      )?.channel_id;
-      if (!channel_id) {
-        toast.error(`specific rule ${itemInfo!.rule_id} not found`);
-        return;
-      }
-
-      if (!itemInfo) {
-        toast.error("item info not loaded");
-        return;
-      }
-
-      let process: number | undefined;
-      for (const raw of itemRaws!) {
+    let process: number | undefined;
+    if (itemRaws) {
+      for (const raw of itemRaws) {
         if (!process || raw.msg_id > process) process = raw.msg_id;
       }
-      if (!process) {
-        toast.error("at least one raw info should be loaded");
-        return;
-      }
+    }
+    for (const raw of itemRawsManual) {
+      if (!process || raw.msg_id > process) process = raw.msg_id;
+    }
 
+    setLoading(true);
+    try {
       await api.post(`item/`, {
         name,
         channel_id: channel_id,
         regexp: regexpStr,
         pattern,
-        date_end: itemInfo.date_end,
+        date_end: itemInfo?.date_end ?? dayjs().unix(),
         process,
         target_path: targetPath,
         match_pattern: matchPattern,
         match_content: matchContent,
         priority,
-        downloads: itemRawsMatched!
+        downloads: itemRawsManual
+          .concat(itemRawsMatched ?? [])
           .filter((raw) => raw.matched && raw.selected)
           .map((raw) => ({
             msg_id: raw.msg_id,
@@ -378,15 +354,31 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               }}
             />
           </Group>
-          <TextInput
-            label="Name"
-            placeholder="Custom name for item."
-            required
-            value={name}
-            onChange={(ev) =>
-              useNewItemStore.setState({ name: ev.target.value })
-            }
-          />
+
+          <Group>
+            <TextInput
+              flex={1}
+              label="Name"
+              placeholder="Custom name for item."
+              required
+              value={name}
+              onChange={(ev) =>
+                useNewItemStore.setState({ name: ev.target.value })
+              }
+            />
+            <TextInput
+              flex={1}
+              label="Channel ID"
+              type="number"
+              required
+              value={channel_id ? channel_id.toString() : ""}
+              onChange={(ev) =>
+                useNewItemStore.setState({
+                  channel_id: ParseStringInputToNumber(ev.target.value) ?? 0,
+                })
+              }
+            />
+          </Group>
 
           <TextInput
             label="Text Regexp"
@@ -470,21 +462,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               }
             />
 
-            <Group gap="sm">
-              <TextInput
-                w={95}
-                placeholder="Channel ID"
-                type="number"
-                size="xs"
-                value={addMessageChatID?.toString() ?? ""}
-                onChange={(ev) =>
-                  setAddMessageChatID(
-                    !ev.target.value || isNaN(parseInt(ev.target.value))
-                      ? null
-                      : parseInt(ev.target.value),
-                  )
-                }
-              />
+            <Group gap="sm" ml="sm">
               <TextInput
                 w={95}
                 placeholder="Message ID"
@@ -501,7 +479,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               />
               <ActionIcon
                 variant="light"
-                disabled={!addMessageChatID || !addMessageMsgID}
+                disabled={!channel_id || !addMessageMsgID}
                 loading={isAddMessageLoading}
                 onClick={() => onAddMessage()}
               >

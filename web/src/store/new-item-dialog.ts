@@ -2,6 +2,7 @@ import { create } from "zustand/react";
 
 interface NewItemForm {
   name: string;
+  channel_id: number;
   target_path: string;
   regexp: string;
   pattern: string;
@@ -12,6 +13,7 @@ interface NewItemForm {
 
 const NewItemInitial: NewItemForm = {
   name: "",
+  channel_id: 0,
   target_path: "",
   regexp: "",
   pattern: "",
