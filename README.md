@@ -42,6 +42,8 @@ You can find all tagged images on [Docker Hub](https://hub.docker.com/r/acgn0rg/
 + A pair of [Telegram apps API credencial](https://core.telegram.org/api/obtaining_api_id).
 + The user account must have already joined the relevant channels.
 
+At present, an authentication mechanism is not provided. It is recommended to use the service within an internal network or implement authentication through a gateway.
+
 #### 2. Minimum Configuration
 
 The full configuration can be found [here](#full-configuration).
