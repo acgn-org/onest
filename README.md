@@ -91,7 +91,7 @@ For example, given the input string `ABCDEFGFGGG`, if you apply the regular expr
 
 ### Full Configuration
 
-Environemtn Variables > Yaml File > Defaults
+Environment Variables > Yaml File > Defaults
 
 Environment variable key names consist of the `ONEST` prefix followed by subsequent fields, with all parts separated by underscores (`_`). For example: `ONEST_SERVER_PORT`.
 
