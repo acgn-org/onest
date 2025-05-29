@@ -79,53 +79,6 @@ When this content appears, enter your Telegram account information to proceed wi
 
 ONEST currently does not scan historical records, as it is unwise to scan hundreds of thousands or even millions of messages each time a new item is added. Therefore, you can choose to either fetch past data from Real Search, or create an empty item and then manually add previous download tasks.
 
-#### 1. Machently, we only release in the form of a Docker image, as Docker is required during the CI/CD process, which ultimately produces a Docker image. However, since the binary in the Docker image is statically linked, you can simply extract it from the image and run it anywhere.
-
-You can find all tagged images on [Docker Hub](https://hub.docker.com/r/acgn0rg/onest).
-
-#### 1. Minimum Prerequisites
-
-+ You must be familiar with [regular expressions](https://golang.org/s/re2syntax).
-+ Docker or other container engines.
-+ A Telegram user account.
-+ A pair of [Telegram apps API credencial](https://core.telegram.org/api/obtaining_api_id).
-+ The user account must have already joined the relevant channels.
-
-#### 2. Minimum Configuration
-
-The full configuration can be found [here](#full-configuration).
-
-> config.yaml
-
-```yaml
-telegram:
-    api_hash:
-    api_id:
-```
-
-#### 3. Run Application
-
-When no data is present or the login credentials are no longer valid, the container must be run using tty mode. For example, in Docker, you need to add the `-it` flags.
-
-```bash
-docker run -it --restart=always --user 1000:1000 -p 80:80 -v my_config.yaml:/data/config.yaml -v data_folder:/data acgn0rg/onest:latest
-```
-
-You can also use a command such as `docker attach` to connect to an existing, running container.
-
-After the container starts, you will see output similar to the following:
-
-```
-[INFO] [com:source:telegram] authorizing...
-Enter phone number:
-```
-
-When this content appears, enter your Telegram account information to proceed with login.
-
-### About Adding Item
-
-ONEST currently does not scan historical records, as it is unwise to scan hundreds of thousands or even millions of messages each time a new item is added. Therefore, you can choose to either fetch past data from Real Search, or create an empty item and then manually add previous download tasks.
-
 #### 1. Mechanism
 
 An item is included in the scan only if its last update occurred within the number of days specified by the `telegram.scan_threshold_days` setting in the configuration. The `match pattern` and `match content` determine whether new information belongs to the current item. Then, the `target pattern` determines the file name.
