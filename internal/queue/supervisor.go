@@ -87,9 +87,9 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 
 		// proceed downloads completed
 		if state := task.state.Load(); state != nil && state.File.Local.IsDownloadingCompleted {
-			if err := task.CompleteDownload(); err != nil {
+			if ok, err := task.CompleteDownload(); err != nil {
 				logger.Errorln("failed to complete download task:", err)
-			} else {
+			} else if ok {
 				queue.Delete(key)
 			}
 		}
@@ -151,10 +151,10 @@ func (s _Supervisor) WorkerListen() {
 					})
 					if file.Local.IsDownloadingCompleted {
 						isFileCompleted = true
-						err := task.CompleteDownload()
+						ok, err := task.CompleteDownload()
 						if err != nil {
 							s.logger.Errorln("failed to complete download task:", err)
-						} else {
+						} else if ok {
 							queue.Delete(id)
 						}
 					}

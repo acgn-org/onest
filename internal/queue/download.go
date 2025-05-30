@@ -127,8 +127,7 @@ func ScanAndCreateNewDownloadTasks(channelId ...int64) (int, error) {
 		}
 
 		// update item process
-		item.Process, item.DateEnd = latest.Id, latest.Date
-		if err := itemRepo.UpdateProcess(item.ID, item.Process); err != nil {
+		if err := itemRepo.UpdateProcess(item.ID, latest.Id); err != nil {
 			logger.Errorln("update process failed:", err)
 			itemRepo.DB.RollbackTo(savepoint)
 			continue

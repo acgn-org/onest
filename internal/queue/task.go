@@ -16,6 +16,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -146,7 +147,8 @@ type DownloadTask struct {
 	ChannelID int64
 	MsgID     int64
 
-	log TaskLogger
+	log          TaskLogger
+	lockComplete sync.Mutex
 
 	priority atomic.Int32
 	state    atomic.Pointer[TaskFileState] // maybe nil
@@ -164,7 +166,13 @@ func (task *DownloadTask) _WriteFatalStateToDatabase() error {
 	return downloadRepo.Commit().Error
 }
 
-func (task *DownloadTask) CompleteDownload() error {
+func (task *DownloadTask) CompleteDownload() (ok bool, err error) {
+	if !task.lockComplete.TryLock() {
+		return false, nil
+	}
+	ok = true
+	defer task.lockComplete.Unlock()
+
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
@@ -174,13 +182,13 @@ func (task *DownloadTask) CompleteDownload() error {
 			task.log.FatalNow()
 		}
 		task.log.Errorln("lookup task from database failed:", err)
-		return err
+		return
 	}
 
 	err = downloadRepo.UpdateDownloadComplete(task.ID)
 	if err != nil {
 		task.log.Errorln("mark download complete failed:", err)
-		return err
+		return
 	}
 
 	itemRepo := repository.ItemRepository{Repository: downloadRepo.Repository}
@@ -190,14 +198,14 @@ func (task *DownloadTask) CompleteDownload() error {
 			task.log.FatalNow()
 		}
 		task.log.Errorln("lookup item from database failed:", err)
-		return err
+		return
 	}
 
 	targetPath := item.TargetPath
 	targetName, err := tools.ConvertPatternRegexpString(download.Text, item.Regexp, item.Pattern)
 	if err != nil {
 		task.log.Errorln("convert target path failed:", err)
-		return err
+		return
 	}
 
 	state := task.state.Load()
@@ -211,16 +219,16 @@ func (task *DownloadTask) CompleteDownload() error {
 			err = os.MkdirAll(targetPath, config.FilePerm)
 			if err != nil {
 				task.log.Errorln("create target directory failed:", err)
-				return err
+				return
 			}
 		} else {
 			task.log.Errorln("stat target directory failed:", err)
-			return err
+			return
 		}
 	} else if !info.IsDir() {
 		msg := fmt.Sprintf("target path '%s' is not a directory", targetPath)
 		task.log.Errorln(msg)
-		return errors.New(msg)
+		return ok, errors.New(msg)
 	}
 
 	fullPath := path.Join(targetPath, targetName) + path.Ext(state.File.Local.Path)
@@ -228,17 +236,19 @@ func (task *DownloadTask) CompleteDownload() error {
 	if err != nil {
 		task.log.logger.Debugln("rename file failed:", err)
 
-		fileSource, err := os.OpenFile(state.File.Local.Path, os.O_RDONLY, 0600)
+		var fileSource *os.File
+		fileSource, err = os.OpenFile(state.File.Local.Path, os.O_RDONLY, 0600)
 		if err != nil {
 			task.log.Errorln("open source file failed:", err)
-			return err
+			return
 		}
 		defer fileSource.Close()
 
-		fileTarget, err := os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, config.FilePerm)
+		var fileTarget *os.File
+		fileTarget, err = os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, config.FilePerm)
 		if err != nil {
 			task.log.Errorln("create file failed:", err)
-			return err
+			return
 		}
 		defer fileTarget.Close()
 
@@ -247,7 +257,7 @@ func (task *DownloadTask) CompleteDownload() error {
 		_, err = io.CopyBuffer(fileTarget, fileSource, buffer)
 		if err != nil {
 			task.log.Errorln("copy file failed:", err)
-			return err
+			return
 		}
 
 		err = os.Remove(state.File.Local.Path)
@@ -256,11 +266,11 @@ func (task *DownloadTask) CompleteDownload() error {
 		}
 	}
 
-	if err := downloadRepo.Commit().Error; err != nil {
+	if err = downloadRepo.Commit().Error; err != nil {
 		task.log.Errorln("save changes into database failed:", err)
-		return err
+		return
 	}
-	return nil
+	return
 }
 
 func (task *DownloadTask) GetVideoFile() (bool, error) {
