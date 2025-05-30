@@ -74,7 +74,7 @@ func (repo ItemRepository) GetForUpdates(dateEndAfter int32, channelIds ...int64
 	if len(channelIds) != 0 {
 		tx = tx.Where("channel_id IN ?", channelIds)
 	}
-	return items, tx.Where("date_end >= ?", channelIds, dateEndAfter).Clauses(clause.Locking{Strength: "UPDATE"}).Find(&items).Error
+	return items, tx.Where("date_end >= ?", dateEndAfter).Clauses(clause.Locking{Strength: "UPDATE"}).Find(&items).Error
 }
 
 func (repo ItemRepository) GetActive(dateEnd int32) ([]Item, error) {
