@@ -115,13 +115,12 @@ func (repo ItemRepository) GetError() ([]Item, error) {
 	).Find(&items).Error
 }
 
-func (repo ItemRepository) UpdateProcess(id uint, process int64, dateEnd int32) error {
-	model := &Item{
-		ID:      id,
-		Process: process,
-		DateEnd: dateEnd,
-	}
-	return repo.DB.Model(&model).Select("process", "date_end").Updates(&model).Error
+func (repo ItemRepository) UpdateProcess(id uint, process int64) error {
+	return repo.DB.Model(&Item{ID: id}).Update("process", process).Error
+}
+
+func (repo ItemRepository) UpdateDateEnd(id uint, dateEnd int32) error {
+	return repo.DB.Model(&Item{ID: id}).Update("date_end", dateEnd).Error
 }
 
 func (repo ItemRepository) UpdatesItemWithForm(id uint, form *UpdateItemForm) (bool, error) {

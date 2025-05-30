@@ -128,7 +128,7 @@ func ScanAndCreateNewDownloadTasks(channelId ...int64) (int, error) {
 
 		// update item process
 		item.Process, item.DateEnd = latest.Id, latest.Date
-		if err := itemRepo.UpdateProcess(item.ID, item.Process, item.DateEnd); err != nil {
+		if err := itemRepo.UpdateProcess(item.ID, item.Process); err != nil {
 			logger.Errorln("update process failed:", err)
 			itemRepo.DB.RollbackTo(savepoint)
 			continue
@@ -139,18 +139,29 @@ func ScanAndCreateNewDownloadTasks(channelId ...int64) (int, error) {
 
 		// match messages
 		el := messageList.Front()
+		newDateEnd := item.DateEnd
 		for el != nil {
 			next := el.Next()
 			msg := el.Value.(*client.Message)
 			videoContent, ok := msg.Content.(*client.MessageVideo)
 			if !ok || tools.ConvertPatternRegexp(videoContent.Caption.Text, itemRegexp, item.MatchPattern) != item.MatchContent {
 				messageList.Remove(el)
+			} else if msg.Date > newDateEnd {
+				newDateEnd = msg.Date
 			}
 			el = next
 		}
 
 		// create download models
 		if messageList.Len() > 0 {
+			if newDateEnd != item.DateEnd {
+				if err := itemRepo.UpdateDateEnd(item.ID, item.DateEnd); err != nil {
+					logger.Errorln("update item date_end failed:", err)
+					itemRepo.DB.RollbackTo(savepoint)
+					continue
+				}
+			}
+
 			created += messageList.Len()
 			messages := make([]*client.Message, 0, messageList.Len())
 			for el := messageList.Front(); el != nil; el = el.Next() {
