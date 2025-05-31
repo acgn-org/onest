@@ -174,8 +174,6 @@ export const ItemTr = memo<ItemTrProps>(
                 in={isItemCollapsed && !!tasks}
                 component={Flex}
                 style={{ justifyContent: "center" }}
-                px={20}
-                py={10}
               >
                 {tasks && tasks.length === 0 ? (
                   <Empty order={2} p={12} />
@@ -184,7 +182,7 @@ export const ItemTr = memo<ItemTrProps>(
                     <Tasks
                       item={item}
                       tasks={tasks}
-                      style={{ width: "100%" }}
+                      style={{ width: "100%", padding: "10px 20px" }}
                       onTasksMutate={() => mutate()}
                       onSetPriority={(index, priority) =>
                         mutate((data) => {
