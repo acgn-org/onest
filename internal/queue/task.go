@@ -147,7 +147,9 @@ type DownloadTask struct {
 	ChannelID int64
 	MsgID     int64
 
-	log          TaskLogger
+	log TaskLogger
+
+	completed    atomic.Bool
 	lockComplete sync.Mutex
 
 	priority atomic.Int32
@@ -167,6 +169,9 @@ func (task *DownloadTask) _WriteFatalStateToDatabase() error {
 }
 
 func (task *DownloadTask) CompleteDownload() (ok bool, err error) {
+	if task.completed.Load() {
+		return true, nil
+	}
 	if !task.lockComplete.TryLock() {
 		return false, nil
 	}
@@ -270,6 +275,8 @@ func (task *DownloadTask) CompleteDownload() (ok bool, err error) {
 		task.log.Errorln("save changes into database failed:", err)
 		return
 	}
+
+	task.completed.Store(true)
 	return
 }
 
