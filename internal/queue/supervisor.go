@@ -37,7 +37,7 @@ type _Supervisor struct {
 func (s _Supervisor) WorkerTaskControl() {
 	// scan on start up
 	s.logger.Debugln("scanning all histories")
-	scanned, err := ScanAndCreateNewDownloadTasks()
+	scanned, err := ScanAndCreateNewDownloadTasks(nil)
 	scanLogger := s.logger.WithAction("scan")
 	if err != nil {
 		scanLogger.Warnln("scan history of all channels failed:", err)
@@ -168,7 +168,7 @@ func (s _Supervisor) WorkerListen() {
 		case client.TypeUpdateNewMessage:
 			message := update.(*client.UpdateNewMessage).Message
 			logger := s.logger.WithAction("scan").WithField("channel", message.ChatId)
-			created, err := ScanAndCreateNewDownloadTasks(message.ChatId)
+			created, err := ScanAndCreateNewDownloadTasks(&message.Id, message.ChatId)
 			if err != nil {
 				logger.Errorln("failed to scan tasks:", err)
 				continue

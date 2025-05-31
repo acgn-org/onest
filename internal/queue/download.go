@@ -69,7 +69,7 @@ func startDownload(channelId int64, download repository.Download) error {
 	return nil
 }
 
-func ScanAndCreateNewDownloadTasks(channelId ...int64) (int, error) {
+func ScanAndCreateNewDownloadTasks(processBefore *int64, channelId ...int64) (int, error) {
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
 	defer itemRepo.Rollback()
 
@@ -81,8 +81,13 @@ func ScanAndCreateNewDownloadTasks(channelId ...int64) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	var created int
 	for _, item := range items {
+		if processBefore != nil && item.Process >= *processBefore {
+			continue
+		}
+
 		logger := logger.WithField("item", item.Name)
 		savepoint := fmt.Sprintf("sp%d", item.ID)
 		var latest *client.Message
