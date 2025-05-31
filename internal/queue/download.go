@@ -159,7 +159,7 @@ func ScanAndCreateNewDownloadTasks(processBefore *int64, channelId ...int64) (in
 		// create download models
 		if messageList.Len() > 0 {
 			if newDateEnd != item.DateEnd {
-				if err := itemRepo.UpdateDateEnd(item.ID, item.DateEnd); err != nil {
+				if err := itemRepo.UpdateDateEnd(item.ID, newDateEnd); err != nil {
 					logger.Errorln("update item date_end failed:", err)
 					itemRepo.DB.RollbackTo(savepoint)
 					continue
