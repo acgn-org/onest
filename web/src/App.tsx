@@ -65,16 +65,16 @@ export const App: FC = () => {
     [matches],
   );
 
-  const deleteConfirmProps = useConfirmDialog((state) => state.props);
+  const confirmProps = useConfirmDialog((state) => state.props);
   const [isConfirmLoading, setIsConfirmLoading] = useState(false);
   const onConfirmDialogClose = () => {
-    deleteConfirmProps?.onCancel?.();
+    confirmProps?.onCancel?.();
     useConfirmDialog.setState({ props: undefined });
   };
   const onConfirmDialogConfirm = async () => {
     if (isConfirmLoading) return;
     setIsConfirmLoading(true);
-    const result = deleteConfirmProps?.onConfirm();
+    const result = confirmProps?.onConfirm();
     if (typeof result === "object") await (result as Promise<void>);
     setIsConfirmLoading(false);
     onConfirmDialogClose();
@@ -161,12 +161,12 @@ export const App: FC = () => {
             <Title order={2}>{activeNavItem?.label ?? "404"}</Title>
             <Outlet />
             <Modal
-              opened={!!deleteConfirmProps}
+              opened={!!confirmProps}
               onClose={onConfirmDialogClose}
-              title={deleteConfirmProps?.message}
+              title={confirmProps?.message}
               centered
             >
-              <Text>{deleteConfirmProps?.content}</Text>
+              <Text>{confirmProps?.content}</Text>
               <Group mt="xl" justify="flex-end">
                 <Button variant="outline" onClick={onConfirmDialogClose}>
                   Cancel

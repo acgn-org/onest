@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { ParseTextWithPattern, CompileRegexp } from "@util/pattern.ts";
 import { ParseStringInputToNumber } from "@util/parse.ts";
 import { useDebouncedValue } from "@mantine/hooks";
@@ -25,6 +25,7 @@ import {
 import { IconClipboard, IconInfoCircle, IconPlus } from "@tabler/icons-react";
 
 import useNewItemStore from "@store/new-item-dialog.ts";
+import useConfirmDialog from "@store/confirm-dialog.ts";
 
 import useRealSearchRules from "@hook/useRealSearchRules.ts";
 import api from "@network/api.ts";
@@ -36,6 +37,8 @@ export interface NewItemModalProps {
 export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   const open = useNewItemStore((state) => state.open);
   const onClose = useNewItemStore((state) => state.onClose);
+
+  const onConfirm = useConfirmDialog((state) => state.onConfirm);
 
   const { data: rules } = useRealSearchRules({
     onError: (err) => toast.error(`load rules failed: ${err}`),
@@ -94,6 +97,10 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
   const [itemRawsMatched, setItemRawsMatched] = useState<
     RealSearch.MatchedRaw[] | null
   >(null);
+  const isItemRawsRepeated = useMemo(
+    () => itemRawsMatched?.find((item) => item.matched_text_repeated) ?? false,
+    [itemRawsMatched],
+  );
   useEffect(() => {
     if (id) resetForm();
   }, [id]);
@@ -124,6 +131,12 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               ParseTextWithPattern(raw.text, regexp, matchPattern) ===
                 matchContent;
             raw.matched_text = ParseTextWithPattern(raw.text, regexp, pattern);
+          }
+          for (const raw of raws) {
+            raw.matched_text_repeated = !!raws.find(
+              (item) =>
+                item.id !== raw.id && item.matched_text === raw.matched_text,
+            );
           }
           return [...raws];
         });
@@ -316,7 +329,14 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         onSubmit={(ev) => {
           ev.preventDefault();
           if (loading || isItemInfoLoading) return;
-          onCreate();
+          if (isItemRawsRepeated)
+            onConfirm({
+              message: "Confirm Create Item?",
+              content:
+                "Duplicate matched names detected; this may cause file replacement or errors.",
+              onConfirm: onCreate,
+            });
+          else onCreate();
         }}
       >
         <Stack align="stretch">
@@ -436,6 +456,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           <Group>
             <Checkbox
               disabled={!itemRawsMatched}
+              color={isItemRawsRepeated ? "yellow" : "blue"}
               checked={
                 !!itemRawsMatched &&
                 itemRawsMatched.length !== 0 &&
@@ -495,6 +516,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                   icon={
                     <Checkbox
                       checked={raw.matched && raw.selected}
+                      color={raw.matched_text_repeated ? "yellow" : "blue"}
                       disabled={!raw.matched}
                       onClick={(ev) => ev.stopPropagation()}
                       onChange={(ev) =>
@@ -546,6 +568,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               type="submit"
               loading={loading}
               disabled={isItemInfoLoading}
+              color={isItemRawsRepeated ? "yellow" : "blue"}
             >
               Create
             </Button>
