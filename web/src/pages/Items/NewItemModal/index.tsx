@@ -149,7 +149,6 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       } = await api.get<{ data: Telegram.Message }>(
         `telegram/chat/${channel_id}/message/${addMessageMsgID}`,
       );
-      console.log(data);
       if (data.content["@type"] !== "messageVideo") {
         toast.error(`message ${addMessageMsgID} is not a video message`);
       } else {
@@ -246,6 +245,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           match_pattern: pairs.map((pair) => pair.pattern).join("/"),
           match_content: pairs.map((pair) => pair.content).join("/"),
           regexp: rule.regexp,
+          pattern: rule.sample_pattern,
         });
       }
     }

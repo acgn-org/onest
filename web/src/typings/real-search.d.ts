@@ -31,6 +31,7 @@ namespace RealSearch {
     regexp: string;
     cn_index: number;
     en_index: number;
+    sample_pattern: string;
     channel_id: number;
     channel_name: string;
   };
