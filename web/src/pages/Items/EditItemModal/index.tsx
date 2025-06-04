@@ -102,13 +102,6 @@ export const EditItemModal: FC<EditItemModalProps> = ({ onItemMutate }) => {
             onChange={(ev) => onUpdateItem("regexp", ev.target.value)}
             error={regexpError}
           />
-          <TextInput
-            label="Target Path"
-            placeholder="A directory to place downloaded files."
-            required
-            value={item?.target_path}
-            onChange={(ev) => onUpdateItem("target_path", ev.target.value)}
-          />
           <Group>
             <TextInput
               flex={1}
@@ -125,6 +118,20 @@ export const EditItemModal: FC<EditItemModalProps> = ({ onItemMutate }) => {
               onChange={(ev) => onUpdateItem("match_content", ev.target.value)}
             />
           </Group>
+          <TextInput
+            label="Target Path"
+            placeholder="A directory to place downloaded files."
+            required
+            value={item?.target_path}
+            onChange={(ev) => onUpdateItem("target_path", ev.target.value)}
+          />
+          <TextInput
+            label="Target Pattern"
+            placeholder="Pattern for rename file. e.g. S01E${1}"
+            required
+            value={item?.pattern}
+            onChange={(ev) => onUpdateItem("pattern", ev.target.value)}
+          />
         </Stack>
 
         <Flex justify="end" gap="md" mt={30}>
