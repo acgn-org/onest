@@ -13,7 +13,7 @@ interface ItemState {
 export const useItemStore = create<ItemState>()((_) => ({
   active_days: 32,
   view_mode: "active",
-  sortBy: "id",
+  sortBy: "date_end",
   sortReversed: true,
 }));
 export default useItemStore;
