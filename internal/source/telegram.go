@@ -29,6 +29,10 @@ func init() {
 	proxyRequest, ok := telegram.ProxyFromEnvironment(logger)
 	if ok {
 		opts = append(opts, client.WithProxy(proxyRequest))
+	} else {
+		opts = append(opts, client.WithProxy(&client.AddProxyRequest{
+			Enable: false,
+		}))
 	}
 
 	// connect client
