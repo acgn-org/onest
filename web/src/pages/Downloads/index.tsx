@@ -38,6 +38,9 @@ export const Downloads: FC = () => {
               return [...data];
             })
           }
+          style={{
+            marginTop: "1.2rem",
+          }}
         />
       )}
 
