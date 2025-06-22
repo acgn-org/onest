@@ -9,6 +9,7 @@ import (
 	"github.com/acgn-org/onest/repository"
 	"github.com/acgn-org/onest/tools"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 	"github.com/zelenin/go-tdlib/client"
 	"gorm.io/gorm"
 )
@@ -68,13 +69,26 @@ func AddDownloadForItem(ctx *gin.Context) {
 }
 
 func GetDownloadTasks(ctx *gin.Context) {
-	tasks, err := queue.GetDownloading()
+	tasksActive, err := queue.GetDownloading()
 	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
 	}
-	if tasks == nil {
-		tasks = make([]repository.DownloadTask, 0)
+	downloadWaiting, err := database.NewRepository[repository.DownloadRepository]().GetForDownload()
+	if err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
+	tasks := make([]repository.DownloadTask, 0, len(tasksActive)+len(downloadWaiting))
+	tasks = append(tasks, tasksActive...)
+	for _, download := range downloadWaiting {
+		var task repository.DownloadTask
+		if err := copier.Copy(&task, download); err != nil {
+			response.Error(ctx, response.ErrUnexpected, err)
+			return
+		}
+		tasks = append(tasks, task)
 	}
 	response.Success(ctx, tasks)
 }

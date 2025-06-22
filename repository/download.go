@@ -92,9 +92,14 @@ func (repo DownloadRepository) FirstByIDPreloadItem(id uint) (*Download, error) 
 	return &download, repo.DB.Model(&Download{}).Preload("Item").Where("id = ?", id).First(&download).Error
 }
 
+func (repo DownloadRepository) GetForDownload() ([]Download, error) {
+	var models []Download
+	return models, repo.DB.Model(&Download{}).Where("downloading=? AND downloaded=?", false, false).Order("priority DESC,date ASC,id ASC").Find(&models).Error
+}
+
 func (repo DownloadRepository) GetForDownloadPreloadItem(limit int) ([]Download, error) {
 	var models []Download
-	return models, repo.DB.Model(&Download{}).Preload("Item").Where("downloading=? AND downloaded=?", false, false).Order("priority DESC,date ASC").Limit(limit).Find(&models).Error
+	return models, repo.DB.Model(&Download{}).Preload("Item").Where("downloading=? AND downloaded=?", false, false).Order("priority DESC,date ASC,id ASC").Limit(limit).Find(&models).Error
 }
 
 func (repo DownloadRepository) GetIDByItemForUpdates(itemID uint) ([]uint, error) {
