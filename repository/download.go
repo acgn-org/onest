@@ -2,19 +2,18 @@ package repository
 
 import (
 	"github.com/zelenin/go-tdlib/client"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type Download struct {
 	ID uint `gorm:"primarykey"`
 
-	ItemID uint `gorm:"index:idx_item_status;uniqueIndex:idx_item_unique;not null"`
-	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE"`
-
-	MsgID int64 `gorm:"uniqueIndex:idx_item_unique;not null"`
-	Text  string
-	Size  int64 `gorm:"not null"`
-	Date  int32 `gorm:"index:idx_global_queue,priority:4,sort:asc;not null"`
+	ItemID uint  `gorm:"index:idx_item_status;uniqueIndex:idx_item_unique;not null"`
+	MsgID  int64 `gorm:"uniqueIndex:idx_item_unique;not null"`
+	Text   string
+	Size   int64 `gorm:"not null"`
+	Date   int32 `gorm:"index:idx_global_queue,priority:4,sort:asc;not null"`
 
 	Priority    int32 `gorm:"index:idx_global_queue,priority:3,sort:desc;not null"`
 	Downloading bool  `gorm:"index:idx_global_queue,priority:2;default:false"`
@@ -23,6 +22,11 @@ type Download struct {
 	FatalError bool `gorm:"index:idx_item_status;default:0;not null"`
 	Error      string
 	ErrorAt    int64 `gorm:"index:idx_item_status;default:0;not null"`
+}
+
+type DownloadWithChannelID struct {
+	Download
+	ChannelID int64
 }
 
 type DownloadTask struct {
@@ -50,9 +54,13 @@ type DownloadRepository struct {
 	Repository
 }
 
-func (repo DownloadRepository) CountQueued() (int64, error) {
-	var count int64
-	return count, repo.DB.Model(&Download{}).Where("downloaded=? AND downloading=?", false, false).Count(&count).Error
+func (repo DownloadRepository) joinInnerItems(tx *gorm.DB) *gorm.DB {
+	return tx.Joins("INNER JOIN items ON items.id = downloads.item_id")
+}
+
+func (repo DownloadRepository) modelWithChannelID(tx *gorm.DB) *gorm.DB {
+	tx = tx.Model(&Download{}).Select("downloads.*", "items.channel_id")
+	return repo.joinInnerItems(tx)
 }
 
 func (repo DownloadRepository) CreateAll(models []Download) error {
@@ -84,22 +92,28 @@ func (repo DownloadRepository) CreateWithMessages(item uint, priority int32, mes
 
 func (repo DownloadRepository) FirstByID(id uint) (*Download, error) {
 	var download Download
+	return &download, repo.DB.Model(&Download{}).Where("id = ?", id).First(&download).Error
+}
+
+func (repo DownloadRepository) FirstByIDWithChannelID(id uint) (*DownloadWithChannelID, error) {
+	var download DownloadWithChannelID
+	tx := repo.modelWithChannelID(repo.DB)
+	return &download, tx.Where("downloads.id = ?", id).First(&download).Error
+}
+
+func (repo DownloadRepository) FirstByIDForUpdate(id uint) (*Download, error) {
+	var download Download
 	return &download, repo.DB.Model(&Download{}).Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id).First(&download).Error
 }
 
-func (repo DownloadRepository) FirstByIDPreloadItem(id uint) (*Download, error) {
-	var download Download
-	return &download, repo.DB.Model(&Download{}).Preload("Item").Where("id = ?", id).First(&download).Error
-}
-
-func (repo DownloadRepository) GetForDownload() ([]Download, error) {
-	var models []Download
-	return models, repo.DB.Model(&Download{}).Where("downloading=? AND downloaded=?", false, false).Order("priority DESC,date ASC,id ASC").Find(&models).Error
-}
-
-func (repo DownloadRepository) GetForDownloadPreloadItem(limit int) ([]Download, error) {
-	var models []Download
-	return models, repo.DB.Model(&Download{}).Preload("Item").Where("downloading=? AND downloaded=?", false, false).Order("priority DESC,date ASC,id ASC").Limit(limit).Find(&models).Error
+func (repo DownloadRepository) GetForDownload(limit *int) ([]DownloadWithChannelID, error) {
+	var models []DownloadWithChannelID
+	tx := repo.modelWithChannelID(repo.DB)
+	tx = tx.Where("downloading=? AND downloaded=?", false, false).Order("downloads.priority DESC,date ASC,downloads.id ASC")
+	if limit != nil {
+		tx = tx.Limit(*limit)
+	}
+	return models, tx.Find(&models).Error
 }
 
 func (repo DownloadRepository) GetIDByItemForUpdates(itemID uint) ([]uint, error) {
@@ -107,12 +121,13 @@ func (repo DownloadRepository) GetIDByItemForUpdates(itemID uint) ([]uint, error
 	return ids, repo.DB.Model(&Download{}).Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").Where("item_id = ?", itemID).Find(&ids).Error
 }
 
-func (repo DownloadRepository) GetDownloadingPreloadItem() ([]Download, error) {
-	var downloads []Download
-	return downloads, repo.DB.Model(&Download{}).Preload("Item").Where("downloaded=? AND downloading=?", false, true).Find(&downloads).Error
+func (repo DownloadRepository) GetDownloading() ([]DownloadWithChannelID, error) {
+	var downloads []DownloadWithChannelID
+	tx := repo.modelWithChannelID(repo.DB)
+	return downloads, tx.Where("downloads.downloaded=? AND downloads.downloading=?", false, true).Find(&downloads).Error
 }
 
-func (repo DownloadRepository) GetDownloadTaskByID(ids ...uint) ([]DownloadTask, error) {
+func (repo DownloadRepository) GetByID(ids ...uint) ([]DownloadTask, error) {
 	var tasks []DownloadTask
 	return tasks, repo.DB.Model(&Download{}).Where("id IN ?", ids).Find(&tasks).Error
 }
@@ -181,4 +196,8 @@ func (repo DownloadRepository) UpdateDownloadComplete(id uint) error {
 func (repo DownloadRepository) DeleteByID(id uint) (bool, error) {
 	result := repo.DB.Model(&Download{}).Where("id=?", id).Delete(nil)
 	return result.RowsAffected > 0, result.Error
+}
+
+func (repo DownloadRepository) DeleteByItemID(id uint) error {
+	return repo.DB.Model(&Download{}).Where("item_id=?", id).Delete(nil).Error
 }

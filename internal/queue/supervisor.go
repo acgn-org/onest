@@ -101,13 +101,13 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 	numToDownload := int(config.Telegram.Get().MaxParallelDownload) - int(queue.Len())
 	if numToDownload > 0 {
 		downloadRepo := database.NewRepository[repository.DownloadRepository]()
-		models, err := downloadRepo.GetForDownloadPreloadItem(numToDownload)
+		repos, err := downloadRepo.GetForDownload(&numToDownload)
 		if err != nil {
 			s.logger.Errorln("load download task from database failed:", err)
-		} else if len(models) != 0 {
+		} else if len(repos) != 0 {
 			s.Cleaned.Store(false)
-			for _, model := range models {
-				if err := startDownload(model.Item.ChannelID, model); err != nil {
+			for _, repo := range repos {
+				if err := startDownload(repo.ChannelID, repo.Download); err != nil {
 					s.logger.Errorln("error occurred while start download task:", err)
 				}
 			}

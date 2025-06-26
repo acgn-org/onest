@@ -181,7 +181,7 @@ func (task *DownloadTask) CompleteDownload() (ok bool, err error) {
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
-	download, err := downloadRepo.FirstByID(task.ID)
+	download, err := downloadRepo.FirstByIDForUpdate(task.ID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			task.log.FatalNow()

@@ -74,7 +74,7 @@ func GetDownloadTasks(ctx *gin.Context) {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
 	}
-	downloadWaiting, err := database.NewRepository[repository.DownloadRepository]().GetForDownload()
+	downloadWaiting, err := database.NewRepository[repository.DownloadRepository]().GetForDownload(nil)
 	if err != nil {
 		response.Error(ctx, response.ErrDBOperation, err)
 		return
@@ -84,7 +84,7 @@ func GetDownloadTasks(ctx *gin.Context) {
 	tasks = append(tasks, tasksActive...)
 	for _, download := range downloadWaiting {
 		var task repository.DownloadTask
-		if err := copier.Copy(&task, download); err != nil {
+		if err := copier.Copy(&task, download.Download); err != nil {
 			response.Error(ctx, response.ErrUnexpected, err)
 			return
 		}
@@ -101,7 +101,7 @@ func ForceStartTask(ctx *gin.Context) {
 	}
 
 	downloadRepo := database.NewRepository[repository.DownloadRepository]()
-	downloadTask, err := downloadRepo.FirstByIDPreloadItem(id)
+	downloadTask, err := downloadRepo.FirstByIDWithChannelID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			response.Error(ctx, response.ErrNotFound)
@@ -111,7 +111,7 @@ func ForceStartTask(ctx *gin.Context) {
 		return
 	}
 
-	if err := queue.ForceAddDownloadQueue(downloadTask.Item.ChannelID, *downloadTask); err != nil {
+	if err := queue.ForceAddDownloadQueue(downloadTask.ChannelID, downloadTask.Download); err != nil {
 		response.Error(ctx, response.ErrUnexpected, err)
 		return
 	}

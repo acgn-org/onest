@@ -16,7 +16,7 @@ import (
 
 func GetDownloading() ([]repository.DownloadTask, error) {
 	taskIds := queue.AllKeys()
-	tasks, err := database.NewRepository[repository.DownloadRepository]().GetDownloadTaskByID(taskIds...)
+	tasks, err := database.NewRepository[repository.DownloadRepository]().GetByID(taskIds...)
 	if err != nil {
 		return nil, err
 	}

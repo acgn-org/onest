@@ -17,13 +17,13 @@ func init() {
 
 	// resume downloads
 
-	downloadingSlice, err := downloadRepo.GetDownloadingPreloadItem()
+	downloadingSlice, err := downloadRepo.GetDownloading()
 	if err != nil {
 		logger.Fatalln("load downloading failed:", err)
 	}
 
 	for _, repo := range downloadingSlice {
-		err := startDownload(repo.Item.ChannelID, repo)
+		err := startDownload(repo.ChannelID, repo.Download)
 		if err != nil {
 			logger.Errorln("resume download failed:", err)
 		}

@@ -206,6 +206,11 @@ func DeleteItem(ctx *gin.Context) {
 		return
 	}
 
+	if err := downloadRepo.DeleteByItemID(id); err != nil {
+		response.Error(ctx, response.ErrDBOperation, err)
+		return
+	}
+
 	queue.RemoveTasks(downloadIDs...)
 
 	if err := itemRepo.Commit().Error; err != nil {
