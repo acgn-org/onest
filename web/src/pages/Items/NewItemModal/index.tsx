@@ -300,9 +300,8 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         match_pattern: matchPattern,
         match_content: matchContent,
         priority,
-        downloads: itemRawsManual
-          .concat(itemRawsMatched ?? [])
-          .filter((raw) => raw.matched && raw.selected)
+        downloads: itemRawsMatched
+          ?.filter((raw) => raw.matched && raw.selected)
           .map((raw) => ({
             msg_id: raw.msg_id,
             priority: raw.priority ?? priority,
