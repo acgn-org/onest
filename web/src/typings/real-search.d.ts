@@ -20,9 +20,10 @@ namespace RealSearch {
 
   type MatchedRaw = Raw & {
     selected: boolean;
+    match_content: string | null;
     matched: boolean;
-    matched_text: string;
-    matched_text_repeated: boolean;
+    matched_target: string;
+    matched_target_repeated: boolean;
     priority: number | undefined;
   };
 

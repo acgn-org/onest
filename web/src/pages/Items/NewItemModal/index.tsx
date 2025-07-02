@@ -99,7 +99,8 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
     RealSearch.MatchedRaw[] | null
   >(null);
   const isItemRawsRepeated = useMemo(
-    () => itemRawsMatched?.find((item) => item.matched_text_repeated) ?? false,
+    () =>
+      itemRawsMatched?.find((item) => item.matched_target_repeated) ?? false,
     [itemRawsMatched],
   );
   useEffect(() => {
@@ -111,8 +112,10 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         (raw) =>
           ({
             ...raw,
+            match_content: "",
             matched: true,
-            matched_text: "",
+            matched_target: "",
+            matched_target_repeated: false,
             selected: true,
             priority: undefined,
           }) as RealSearch.MatchedRaw,
@@ -127,16 +130,19 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
       if (pattern)
         setItemRawsMatched(() => {
           for (const raw of raws) {
-            raw.matched =
-              regexp.test(raw.text) &&
-              ParseTextWithPattern(raw.text, regexp, matchPattern) ===
-                matchContent;
-            raw.matched_text = ParseTextWithPattern(raw.text, regexp, pattern);
+            raw.match_content = regexp.test(raw.text)
+              ? ParseTextWithPattern(raw.text, regexp, matchPattern)
+              : null;
+            raw.matched = raw.match_content === matchContent;
+            raw.matched_target = ParseTextWithPattern(
+              raw.text,
+              regexp,
+              pattern,
+            );
           }
-          for (const raw of raws) {
-            raw.matched_text_repeated = !!raws.find(
-              (item) =>
-                item.id !== raw.id && item.matched_text === raw.matched_text,
+          for (const i of raws) {
+            i.matched_target_repeated = !!raws.find(
+              (j) => j !== i && j.matched_target === i.matched_target,
             );
           }
           return [...raws];
@@ -188,7 +194,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
             date: data.date,
             selected: true,
             matched: true,
-            matched_text: "",
+            matched_target: "",
             priority: undefined,
           } as RealSearch.MatchedRaw,
         ]);
@@ -316,9 +322,14 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
         <Alert
           variant="transparent"
           color="red"
-          title="The regular expression does not match the text."
+          title={`The ${raw.match_content ? "match pattern" : "text regexp"} doesn't match the content`}
           icon={<IconInfoCircle />}
-        />
+          style={{
+            padding: "var(--mantine-spacing-xs) var(--mantine-spacing-sm)",
+          }}
+        >
+          {raw.match_content}
+        </Alert>
       );
     if (!regexp || !pattern)
       return (
@@ -326,7 +337,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           Regexp or pattern is empty, input something first
         </Text>
       );
-    return <Text>{`${raw.matched_text}.${raw.file_suffix}`}</Text>;
+    return <Text>{`${raw.matched_target}.${raw.file_suffix}`}</Text>;
   };
 
   return (
@@ -507,7 +518,7 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
                     icon={
                       <Checkbox
                         checked={raw.matched && raw.selected}
-                        color={raw.matched_text_repeated ? "yellow" : "blue"}
+                        color={raw.matched_target_repeated ? "yellow" : "blue"}
                         disabled={!raw.matched}
                         onClick={(ev) => ev.stopPropagation()}
                         onChange={(ev) =>
