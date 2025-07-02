@@ -148,6 +148,8 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
           }
           return [...raws];
         });
+    } else {
+      setItemRawsMatched(raws);
     }
   }, [itemRaws, itemRawsManual, regexp, pattern, matchPattern, matchContent]);
 
