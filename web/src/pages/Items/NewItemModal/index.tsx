@@ -5,6 +5,7 @@ import { useDebouncedValue } from "@mantine/hooks";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 
+import InputAddMessage from "./InputAddMessage";
 import PriorityInput from "@component/PriorityInput";
 import {
   Modal,
@@ -22,7 +23,7 @@ import {
   Accordion,
   Alert,
 } from "@mantine/core";
-import { IconClipboard, IconInfoCircle, IconPlus } from "@tabler/icons-react";
+import { IconClipboard, IconInfoCircle } from "@tabler/icons-react";
 
 import useNewItemStore from "@store/new-item-dialog.ts";
 import useConfirmDialog from "@store/confirm-dialog.ts";
@@ -152,18 +153,21 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
 
   const [isAddMessageLoading, setIsAddMessageLoading] = useState(false);
   const [addMessageMsgID, setAddMessageMsgID] = useState<number | null>(null);
-
-  const onAddMessage = async () => {
-    if (!channel_id || !addMessageMsgID || isAddMessageLoading) return;
+  const onAddMessage = async (channel_id: number, msg_id: number) => {
+    if (isAddMessageLoading) return;
+    if (itemRawsManual.find((raw) => raw.msg_id === msg_id)) {
+      toast.error("message already manually added");
+      return;
+    }
     setIsAddMessageLoading(true);
     try {
       const {
         data: { data },
       } = await api.get<{ data: Telegram.Message }>(
-        `telegram/chat/${channel_id}/message/${addMessageMsgID}`,
+        `telegram/chat/${channel_id}/message/${msg_id}`,
       );
       if (data.content["@type"] !== "messageVideo") {
-        toast.error(`message ${addMessageMsgID} is not a video message`);
+        toast.error(`message ${msg_id} is not a video message`);
       } else {
         const content = data.content as Telegram.MessageVideo;
         setItemRawsManual((items) => [
@@ -483,84 +487,70 @@ export const NewItemModal: FC<NewItemModalProps> = ({ onItemMutate }) => {
               }
             />
 
-            <Group gap="sm" ml="sm">
-              <TextInput
-                w={95}
-                placeholder="Message ID"
-                type="number"
-                size="xs"
-                value={addMessageMsgID?.toString() ?? ""}
-                onChange={(ev) =>
-                  setAddMessageMsgID(
-                    !ev.target.value || isNaN(parseInt(ev.target.value))
-                      ? null
-                      : parseInt(ev.target.value),
-                  )
-                }
-              />
-              <ActionIcon
-                variant="light"
-                disabled={!channel_id || !addMessageMsgID}
-                loading={isAddMessageLoading}
-                onClick={() => onAddMessage()}
-              >
-                <IconPlus />
-              </ActionIcon>
-            </Group>
+            <InputAddMessage
+              channel_id={channel_id}
+              value={addMessageMsgID}
+              onChange={(val) => setAddMessageMsgID(val)}
+              loading={isAddMessageLoading}
+              onAddMessage={onAddMessage}
+            />
           </Group>
 
           <Accordion variant="filled">
-            {itemRawsMatched?.map((raw, index) => (
-              <Accordion.Item key={raw.id} value={`${raw.id}`}>
-                <Accordion.Control
-                  icon={
-                    <Checkbox
-                      checked={raw.matched && raw.selected}
-                      color={raw.matched_text_repeated ? "yellow" : "blue"}
-                      disabled={!raw.matched}
-                      onClick={(ev) => ev.stopPropagation()}
-                      onChange={(ev) =>
-                        setItemRawsMatched((raws) => {
-                          raws![index].selected = ev.target.checked;
-                          return [...raws!];
-                        })
-                      }
-                    />
-                  }
-                >
-                  <Stack gap={1}>
-                    <Group gap="sm">
-                      <Text size="sm">
-                        {dayjs.unix(raw.date).format("YYYY/MM/DD HH:mm")}
-                      </Text>
-                      <Badge variant="light">
-                        {(raw.size / 1024 / 1024).toFixed(0)} MB
-                      </Badge>
-                      <div onClick={(ev) => ev.stopPropagation()}>
-                        <PriorityInput
-                          value={raw.priority}
-                          defaultValue={priority}
-                          onChange={(val) =>
-                            setItemRawsMatched((raws) => {
-                              raws![index].priority = val;
-                              return [...raws!];
-                            })
-                          }
-                        />
-                      </div>
-                    </Group>
-                    {renderConvertedFilename(raw)}
-                  </Stack>
-                </Accordion.Control>
-                <Accordion.Panel
-                  style={{
-                    whiteSpace: "pre-wrap",
-                  }}
-                >
-                  {raw.text}
-                </Accordion.Panel>
-              </Accordion.Item>
-            ))}
+            {itemRawsMatched?.map((raw, index) => {
+              const id = `${raw.id}:${raw.msg_id}`;
+              return (
+                <Accordion.Item key={id} value={id}>
+                  <Accordion.Control
+                    icon={
+                      <Checkbox
+                        checked={raw.matched && raw.selected}
+                        color={raw.matched_text_repeated ? "yellow" : "blue"}
+                        disabled={!raw.matched}
+                        onClick={(ev) => ev.stopPropagation()}
+                        onChange={(ev) =>
+                          setItemRawsMatched((raws) => {
+                            raws![index].selected = ev.target.checked;
+                            return [...raws!];
+                          })
+                        }
+                      />
+                    }
+                  >
+                    <Stack gap={1}>
+                      <Group gap="sm">
+                        <Text size="sm">
+                          {dayjs.unix(raw.date).format("YYYY/MM/DD HH:mm")}
+                        </Text>
+                        <Badge variant="light">
+                          {(raw.size / 1024 / 1024).toFixed(0)} MB
+                        </Badge>
+                        <div onClick={(ev) => ev.stopPropagation()}>
+                          <PriorityInput
+                            value={raw.priority}
+                            defaultValue={priority}
+                            onChange={(val) =>
+                              setItemRawsMatched((raws) => {
+                                raws![index].priority = val;
+                                return [...raws!];
+                              })
+                            }
+                          />
+                        </div>
+                      </Group>
+                      {renderConvertedFilename(raw)}
+                    </Stack>
+                  </Accordion.Control>
+                  <Accordion.Panel
+                    style={{
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {raw.text}
+                  </Accordion.Panel>
+                </Accordion.Item>
+              );
+            })}
           </Accordion>
 
           <Flex justify="end" mt="md">
