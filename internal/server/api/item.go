@@ -1,8 +1,10 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/queue"
 	"github.com/acgn-org/onest/internal/server/response"
@@ -12,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"regexp"
+	"time"
 )
 
 func GetItemDownloads(ctx *gin.Context) {
@@ -109,8 +112,11 @@ func NewItem(ctx *gin.Context) {
 		return
 	}
 
+	_ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(config.Server.Get().Timeout))
+	defer cancel()
+
 	if form.Process == 0 {
-		messages, err := source.Telegram.GetHistory(form.ChannelID, 0, 1)
+		messages, err := source.Telegram.GetHistory(_ctx, form.ChannelID, 0, 1)
 		if err != nil {
 			response.Error(ctx, response.ErrTelegram, err)
 			return
@@ -122,6 +128,7 @@ func NewItem(ctx *gin.Context) {
 	}
 
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
+	itemRepo.DB = itemRepo.DB.WithContext(_ctx)
 	defer itemRepo.Rollback()
 
 	item, err := itemRepo.CreateWithForm(&form.NewItemForm)
@@ -132,7 +139,7 @@ func NewItem(ctx *gin.Context) {
 
 	var downloadModels = make([]repository.Download, 0, len(form.Downloads))
 	for _, download := range form.Downloads {
-		msg, err := source.Telegram.GetMessage(item.ChannelID, download.MsgID)
+		msg, err := source.Telegram.GetMessage(_ctx, item.ChannelID, download.MsgID)
 		if err != nil {
 			response.Error(ctx, response.ErrTelegram, err)
 			return

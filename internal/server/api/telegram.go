@@ -1,10 +1,13 @@
 package api
 
 import (
+	"context"
+	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/server/response"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/tools"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 func GetChat(ctx *gin.Context) {
@@ -14,7 +17,10 @@ func GetChat(ctx *gin.Context) {
 		return
 	}
 
-	info, err := source.Telegram.GetChat(id)
+	_ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(config.Server.Get().Timeout))
+	defer cancel()
+
+	info, err := source.Telegram.GetChat(_ctx, id)
 	if err != nil {
 		response.Error(ctx, response.ErrTelegram, err)
 		return
@@ -30,7 +36,10 @@ func GetChatPhoto(ctx *gin.Context) {
 		return
 	}
 
-	info, err := source.Telegram.GetChat(id)
+	_ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(config.Server.Get().Timeout))
+	defer cancel()
+
+	info, err := source.Telegram.GetChat(_ctx, id)
 	if err != nil {
 		response.Error(ctx, response.ErrTelegram, err)
 		return
@@ -61,7 +70,10 @@ func GetMessage(ctx *gin.Context) {
 		return
 	}
 
-	info, err := source.Telegram.GetMessage(chatID, messageID)
+	_ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(config.Server.Get().Timeout))
+	defer cancel()
+
+	info, err := source.Telegram.GetMessage(_ctx, chatID, messageID)
 	if err != nil {
 		response.Error(ctx, response.ErrTelegram, err)
 		return

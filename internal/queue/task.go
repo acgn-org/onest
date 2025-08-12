@@ -21,25 +21,21 @@ import (
 	"time"
 )
 
-func UpdatePriority(id uint, priority int32) {
+func UpdatePriority(ctx context.Context, id uint, priority int32) error {
 	download, ok := queue.Load(id)
 	if !ok {
-		return
+		return nil
 	}
 	download.priority.Store(priority)
-	err := download.UpdateOrDownload(true)
-	if err != nil {
-		logfield.New(logfield.ComQueue).WithAction("update").Warnf("update priority of task %d to %d failed: %v", id, priority, err)
-	}
+	return download.UpdateOrDownload(ctx, true)
 }
 
-func ForceAddDownloadQueue(channelId int64, model repository.Download) error {
+func ForceAddDownloadQueue(ctx context.Context, channelId int64, model repository.Download) error {
 	task, ok := queue.Load(model.ID)
 	if ok {
-		return task.UpdateOrDownload(false)
+		return task.UpdateOrDownload(ctx, false)
 	}
-
-	return startDownload(channelId, model)
+	return startDownload(ctx, channelId, model)
 }
 
 func RemoveTasks(ids ...uint) {
@@ -130,7 +126,7 @@ func (tl TaskLogger) FatalNow() {
 	tl.isFatal.Store(true)
 }
 
-func NewTask(channelId int64, model repository.Download) (*DownloadTask, error) {
+func NewTask(ctx context.Context, channelId int64, model repository.Download) (*DownloadTask, error) {
 	task := &DownloadTask{
 		ID:        model.ID,
 		ChannelID: channelId,
@@ -138,7 +134,7 @@ func NewTask(channelId int64, model repository.Download) (*DownloadTask, error) 
 		log:       NewTaskLogger(model.ID, logfield.New(logfield.ComTask).WithField("id", model.ID)),
 	}
 	task.priority.Store(model.Priority)
-	return task, task.UpdateOrDownload(false)
+	return task, task.UpdateOrDownload(ctx, false)
 }
 
 type DownloadTask struct {
@@ -156,8 +152,9 @@ type DownloadTask struct {
 	state    atomic.Pointer[TaskFileState] // maybe nil
 }
 
-func (task *DownloadTask) _WriteFatalStateToDatabase() error {
+func (task *DownloadTask) _WriteFatalStateToDatabase(ctx context.Context) error {
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	downloadRepo.DB = downloadRepo.DB.WithContext(ctx)
 	defer downloadRepo.Rollback()
 
 	errorState := task.log.error.Load()
@@ -168,7 +165,7 @@ func (task *DownloadTask) _WriteFatalStateToDatabase() error {
 	return downloadRepo.Commit().Error
 }
 
-func (task *DownloadTask) CompleteDownload() (ok bool, err error) {
+func (task *DownloadTask) CompleteDownload(ctx context.Context) (ok bool, err error) {
 	if task.completed.Load() {
 		return true, nil
 	}
@@ -179,6 +176,7 @@ func (task *DownloadTask) CompleteDownload() (ok bool, err error) {
 	defer task.lockComplete.Unlock()
 
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
+	downloadRepo.DB = downloadRepo.DB.WithContext(ctx)
 	defer downloadRepo.Rollback()
 
 	download, err := downloadRepo.FirstByIDForUpdate(task.ID)
@@ -280,8 +278,8 @@ func (task *DownloadTask) CompleteDownload() (ok bool, err error) {
 	return
 }
 
-func (task *DownloadTask) GetVideoFile() (bool, error) {
-	msg, err := source.Telegram.GetMessage(task.ChannelID, task.MsgID)
+func (task *DownloadTask) GetVideoFile(ctx context.Context) (bool, error) {
+	msg, err := source.Telegram.GetMessage(ctx, task.ChannelID, task.MsgID)
 	if err != nil {
 		task.log.Errorln("get message failed:", err)
 		return false, err
@@ -297,7 +295,7 @@ func (task *DownloadTask) GetVideoFile() (bool, error) {
 	return true, nil
 }
 
-func (task *DownloadTask) UpdateOrDownload(forceStart bool) error {
+func (task *DownloadTask) UpdateOrDownload(ctx context.Context, forceStart bool) error {
 	if task.log.isFatal.Load() {
 		return nil
 	}
@@ -305,7 +303,7 @@ func (task *DownloadTask) UpdateOrDownload(forceStart bool) error {
 	state := task.state.Load()
 
 	if state == nil {
-		ok, err := task.GetVideoFile()
+		ok, err := task.GetVideoFile(ctx)
 		if err != nil {
 			return err
 		} else if !ok {

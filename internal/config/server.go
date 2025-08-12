@@ -9,6 +9,7 @@ import (
 type _Server struct {
 	Host        string `yaml:"host"`
 	Port        uint16 `yaml:"port"`
+	Timeout     uint   `yaml:"timeout"`
 	LogLevel    string `yaml:"log_level"`
 	LogRingSize int    `yaml:"log_ring_size"`
 	FilePerm    string `yaml:"file_perm"`
@@ -17,6 +18,7 @@ type _Server struct {
 var Server = LoadScoped("server", &_Server{
 	Host:        "0.0.0.0",
 	Port:        80,
+	Timeout:     30,
 	LogLevel:    "info",
 	LogRingSize: 500,
 	FilePerm:    "0777",

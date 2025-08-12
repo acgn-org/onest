@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
@@ -66,10 +67,12 @@ func (s _Supervisor) WorkerTaskControl() {
 func (s _Supervisor) TaskControl() (slowDown bool) {
 	queue.Range(func(key uint, task *DownloadTask) bool {
 		logger := s.logger.WithField("task", key)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
 
 		// remove tasks with fatal state
 		if task.log.isFatal.Load() {
-			err := task._WriteFatalStateToDatabase()
+			err := task._WriteFatalStateToDatabase(ctx)
 			if err != nil {
 				logger.Errorln("failed to write download task fatal state into database:", err)
 			} else {
@@ -80,14 +83,14 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 
 		if state := task.state.Load(); state == nil || time.Since(state.UpdatedAt) > time.Second*10 {
 			// proactively update stats, or restart downloads with error
-			if err := task.UpdateOrDownload(false); err != nil {
+			if err := task.UpdateOrDownload(ctx, false); err != nil {
 				logger.Errorln("failed to update task state:", err)
 			}
 		}
 
 		// proceed downloads completed
 		if state := task.state.Load(); state != nil && state.File.Local.IsDownloadingCompleted {
-			if ok, err := task.CompleteDownload(); err != nil {
+			if ok, err := task.CompleteDownload(context.TODO()); err != nil {
 				logger.Errorln("failed to complete download task:", err)
 			} else if ok {
 				queue.Delete(key)
@@ -107,7 +110,7 @@ func (s _Supervisor) TaskControl() (slowDown bool) {
 		} else if len(repos) != 0 {
 			s.Cleaned.Store(false)
 			for _, repo := range repos {
-				if err := startDownload(repo.ChannelID, repo.Download); err != nil {
+				if err := startDownload(context.Background(), repo.ChannelID, repo.Download); err != nil {
 					s.logger.Errorln("error occurred while start download task:", err)
 				}
 			}
@@ -151,7 +154,7 @@ func (s _Supervisor) WorkerListen() {
 					})
 					if file.Local.IsDownloadingCompleted {
 						isFileCompleted = true
-						ok, err := task.CompleteDownload()
+						ok, err := task.CompleteDownload(context.TODO())
 						if err != nil {
 							s.logger.Errorln("failed to complete download task:", err)
 						} else if ok {

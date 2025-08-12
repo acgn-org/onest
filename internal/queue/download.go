@@ -2,6 +2,7 @@ package queue
 
 import (
 	"container/list"
+	"context"
 	"fmt"
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
@@ -47,7 +48,10 @@ func MigrateDownloadTaskInfo(tasks []repository.DownloadTask) {
 }
 
 // create task and start
-func startDownload(channelId int64, download repository.Download) error {
+func startDownload(ctx context.Context, channelId int64, download repository.Download) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
 	downloadRepo := database.BeginRepository[repository.DownloadRepository]()
 	defer downloadRepo.Rollback()
 
@@ -60,7 +64,7 @@ func startDownload(channelId int64, download repository.Download) error {
 		return err
 	}
 
-	task, err := NewTask(channelId, download)
+	task, err := NewTask(ctx, channelId, download)
 	queue.Store(download.ID, task)
 	if err != nil {
 		return err
@@ -107,7 +111,7 @@ func ScanAndCreateNewDownloadTasks(processBefore *int64, channelId ...int64) (in
 		// fetch all new messages, list => *client.Message
 		messageList := list.New()
 	fetchMessage:
-		messages, err := source.Telegram.GetHistory(item.ChannelID, fromMessageID, 99)
+		messages, err := source.Telegram.GetHistory(context.Background(), item.ChannelID, fromMessageID, 99)
 		if err != nil {
 			logger.Errorf("get chat %d history failed: %v", item.ChannelID, err)
 			continue

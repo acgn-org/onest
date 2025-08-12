@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"context"
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
@@ -23,7 +24,8 @@ func init() {
 	}
 
 	for _, repo := range downloadingSlice {
-		err := startDownload(repo.ChannelID, repo.Download)
+		logger.Debugf("resuming download %d", repo.ID)
+		err := startDownload(context.Background(), repo.ChannelID, repo.Download)
 		if err != nil {
 			logger.Errorln("resume download failed:", err)
 		}

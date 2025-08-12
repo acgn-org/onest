@@ -2,12 +2,14 @@ package telegram
 
 import (
 	"context"
+	"errors"
 	"github.com/acgn-org/onest/tools"
 	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
-	"golang.org/x/time/rate"
 	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -55,7 +57,6 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 	return &Telegram{
 		logger:            c.Logger,
 		client:            _client,
-		rate:              rate.NewLimiter(rate.Every(time.Second)/2, 3),
 		databaseDirectory: databaseDirectory,
 		filesDirectory:    filesDirectory,
 	}, nil
@@ -64,39 +65,76 @@ func New(c *Config, opts ...client.Option) (*Telegram, error) {
 type Telegram struct {
 	logger log.FieldLogger
 	client *client.Client
-	rate   *rate.Limiter
 
 	databaseDirectory string
 	filesDirectory    string
+}
+
+// WithRetry retry if getting 429 errors
+func (t Telegram) WithRetry(ctx context.Context, fn func() (err error)) error {
+start:
+	fnErr := fn()
+	if fnErr == nil {
+		return nil
+	}
+	var responseErr *client.ResponseError
+	const frequencyErrorPrefix = "Too Many Requests: retry after "
+	if errors.As(fnErr, &responseErr) &&
+		responseErr.Err.Code == 429 && strings.HasPrefix(responseErr.Err.Message, frequencyErrorPrefix) {
+		// decode cool down duration
+		coolDown := strings.TrimPrefix(responseErr.Err.Message, frequencyErrorPrefix)
+		coolDownSeconds, err := strconv.ParseInt(coolDown, 10, 64)
+		if err == nil {
+			t.logger.Warnf("reached telegram flood control, will recover after %d seconds", coolDownSeconds)
+			select {
+			case <-time.After(time.Duration(coolDownSeconds) * time.Second):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+			goto start
+		} else {
+			t.logger.Debugf("decode cool down duration failed: %v", err)
+		}
+	}
+	return fnErr
 }
 
 func (t Telegram) GetListener() *client.Listener {
 	return t.client.GetListener()
 }
 
-func (t Telegram) GetHistory(chatID, fromMessageID int64, limit int32) (*client.Messages, error) {
-	_ = t.rate.Wait(context.Background())
-	return t.client.GetChatHistory(&client.GetChatHistoryRequest{
-		ChatId:        chatID,
-		FromMessageId: fromMessageID,
-		Offset:        0,
-		Limit:         limit,
-		OnlyLocal:     false,
+func (t Telegram) GetHistory(ctx context.Context, chatID, fromMessageID int64, limit int32) (*client.Messages, error) {
+	var messages *client.Messages
+	return messages, t.WithRetry(ctx, func() (err error) {
+		messages, err = t.client.GetChatHistory(&client.GetChatHistoryRequest{
+			ChatId:        chatID,
+			FromMessageId: fromMessageID,
+			Offset:        0,
+			Limit:         limit,
+			OnlyLocal:     false,
+		})
+		return err
 	})
 }
 
-func (t Telegram) GetChat(id int64) (*client.Chat, error) {
-	_ = t.rate.Wait(context.Background())
-	return t.client.GetChat(&client.GetChatRequest{
-		ChatId: id,
+func (t Telegram) GetChat(ctx context.Context, id int64) (*client.Chat, error) {
+	var chat *client.Chat
+	return chat, t.WithRetry(ctx, func() (err error) {
+		chat, err = t.client.GetChat(&client.GetChatRequest{
+			ChatId: id,
+		})
+		return err
 	})
 }
 
-func (t Telegram) GetMessage(chatId, messageId int64) (*client.Message, error) {
-	_ = t.rate.Wait(context.Background())
-	return t.client.GetMessage(&client.GetMessageRequest{
-		ChatId:    chatId,
-		MessageId: messageId,
+func (t Telegram) GetMessage(ctx context.Context, chatId, messageId int64) (*client.Message, error) {
+	var message *client.Message
+	return message, t.WithRetry(ctx, func() (err error) {
+		message, err = t.client.GetMessage(&client.GetMessageRequest{
+			ChatId:    chatId,
+			MessageId: messageId,
+		})
+		return err
 	})
 }
 
@@ -109,21 +147,23 @@ func (t Telegram) GetMessageVideo(msg *client.Message) (*client.MessageVideo, bo
 }
 
 func (t Telegram) GetFile(fileID int32) (*client.File, error) {
-	_ = t.rate.Wait(context.Background())
 	return t.client.GetFile(&client.GetFileRequest{
 		FileId: fileID,
 	})
 }
 
 func (t Telegram) DownloadFile(fileID, priority int32, synchronous bool) (*client.File, error) {
-	_ = t.rate.Wait(context.Background())
 	t.logger.Debugf("download file %d with priotiry %d", fileID, priority)
-	return t.client.DownloadFile(&client.DownloadFileRequest{
-		FileId:      fileID,
-		Priority:    priority,
-		Offset:      0,
-		Limit:       0,
-		Synchronous: synchronous,
+	var file *client.File
+	return file, t.WithRetry(context.Background(), func() (err error) {
+		file, err = t.client.DownloadFile(&client.DownloadFileRequest{
+			FileId:      fileID,
+			Priority:    priority,
+			Offset:      0,
+			Limit:       0,
+			Synchronous: synchronous,
+		})
+		return err
 	})
 }
 
@@ -143,7 +183,6 @@ func (t Telegram) RemoveFileFromDownloads(fileID int32) error {
 }
 
 func (t Telegram) RemoveAllDownloads() error {
-	_ = t.rate.Wait(context.Background())
 	_, err := t.client.RemoveAllFilesFromDownloads(&client.RemoveAllFilesFromDownloadsRequest{
 		OnlyActive:      false,
 		OnlyCompleted:   false,

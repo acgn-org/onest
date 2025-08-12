@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/queue"
 	"github.com/acgn-org/onest/internal/server/response"
@@ -12,6 +14,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/zelenin/go-tdlib/client"
 	"gorm.io/gorm"
+	"time"
 )
 
 func AddDownloadForItem(ctx *gin.Context) {
@@ -25,7 +28,11 @@ func AddDownloadForItem(ctx *gin.Context) {
 		return
 	}
 
+	_ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(config.Server.Get().Timeout))
+	defer cancel()
+
 	itemRepo := database.BeginRepository[repository.ItemRepository]()
+	itemRepo.DB = itemRepo.DB.WithContext(_ctx)
 	defer itemRepo.Rollback()
 
 	item, err := itemRepo.FirstItemByIDForUpdates(form.ItemID)
@@ -38,7 +45,7 @@ func AddDownloadForItem(ctx *gin.Context) {
 		return
 	}
 
-	msg, err := source.Telegram.GetMessage(item.ChannelID, form.MessageID)
+	msg, err := source.Telegram.GetMessage(_ctx, item.ChannelID, form.MessageID)
 	if err != nil {
 		response.Error(ctx, response.ErrTelegram, err)
 		return
@@ -100,7 +107,11 @@ func ForceStartTask(ctx *gin.Context) {
 		return
 	}
 
+	_ctx, cancel := context.WithTimeout(ctx, time.Second*time.Duration(config.Server.Get().Timeout))
+	defer cancel()
+
 	downloadRepo := database.NewRepository[repository.DownloadRepository]()
+	downloadRepo.DB = downloadRepo.DB.WithContext(_ctx)
 	downloadTask, err := downloadRepo.FirstByIDWithChannelID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -111,7 +122,7 @@ func ForceStartTask(ctx *gin.Context) {
 		return
 	}
 
-	if err := queue.ForceAddDownloadQueue(downloadTask.ChannelID, downloadTask.Download); err != nil {
+	if err := queue.ForceAddDownloadQueue(ctx, downloadTask.ChannelID, downloadTask.Download); err != nil {
 		response.Error(ctx, response.ErrUnexpected, err)
 		return
 	}
@@ -182,7 +193,12 @@ func UpdateDownloadPriority(ctx *gin.Context) {
 		return
 	}
 
-	queue.UpdatePriority(id, form.Priority)
+	_ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+	if err := queue.UpdatePriority(_ctx, id, form.Priority); err != nil {
+		response.Error(ctx, response.ErrTelegram, err)
+		return
+	}
 
 	response.Default(ctx)
 }
