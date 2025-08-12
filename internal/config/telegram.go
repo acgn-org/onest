@@ -13,7 +13,7 @@ type _Telegram struct {
 
 var Telegram = LoadScoped("telegram", &_Telegram{
 	DataFolder:          "tdlib",
-	MaxParallelDownload: 3,
+	MaxParallelDownload: 1,
 	MaxDownloadError:    5,
 	ScanThresholdDays:   32,
 })
