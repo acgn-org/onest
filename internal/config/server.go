@@ -1,9 +1,10 @@
 package config
 
 import (
-	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type _Server struct {

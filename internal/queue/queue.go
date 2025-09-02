@@ -2,13 +2,14 @@ package queue
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
+
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
-	"sync"
-	"sync/atomic"
 )
 
 func init() {

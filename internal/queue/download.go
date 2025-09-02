@@ -4,6 +4,9 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"regexp"
+	"time"
+
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
@@ -11,8 +14,6 @@ import (
 	"github.com/acgn-org/onest/repository"
 	"github.com/acgn-org/onest/tools"
 	"github.com/zelenin/go-tdlib/client"
-	"regexp"
-	"time"
 )
 
 func GetDownloading() ([]repository.DownloadTask, error) {

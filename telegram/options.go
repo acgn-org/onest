@@ -1,11 +1,12 @@
 package telegram
 
 import (
+	"net/url"
+	"strconv"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
 	"golang.org/x/net/http/httpproxy"
-	"net/url"
-	"strconv"
 )
 
 func ProxyFromEnvironment(logger log.FieldLogger) (*client.AddProxyRequest, bool) {

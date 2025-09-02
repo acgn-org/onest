@@ -2,14 +2,15 @@ package queue
 
 import (
 	"context"
+	"sync/atomic"
+	"time"
+
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/acgn-org/onest/repository"
 	"github.com/zelenin/go-tdlib/client"
-	"sync/atomic"
-	"time"
 )
 
 var _ActivateTaskControl = make(chan struct{})

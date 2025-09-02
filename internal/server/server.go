@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/acgn-org/onest/internal/config"
-	"github.com/acgn-org/onest/internal/logfield"
-	"github.com/gin-gonic/gin"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/acgn-org/onest/internal/config"
+	"github.com/acgn-org/onest/internal/logfield"
+	"github.com/gin-gonic/gin"
 )
 
 func NewEngine() *gin.Engine {

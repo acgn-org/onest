@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"time"
+
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/queue"
@@ -13,8 +16,6 @@ import (
 	"github.com/acgn-org/onest/tools"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"regexp"
-	"time"
 )
 
 func GetItemDownloads(ctx *gin.Context) {

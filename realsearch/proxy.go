@@ -1,10 +1,11 @@
 package realsearch
 
 import (
-	"github.com/acgn-org/onest/tools"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+
+	"github.com/acgn-org/onest/tools"
 )
 
 func (c Client) NewProxy() *Proxy {

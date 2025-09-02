@@ -1,8 +1,9 @@
 package tools
 
 import (
-	"github.com/gorilla/websocket"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 var WebsocketUpgrader = websocket.Upgrader{

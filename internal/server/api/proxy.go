@@ -1,10 +1,11 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/internal/source"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func RealSearchProxy() gin.HandlerFunc {

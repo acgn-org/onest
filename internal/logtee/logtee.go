@@ -4,13 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"container/list"
+	"io"
+	"os"
+	"sync"
+
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/acgn-org/onest/tools"
 	log "github.com/sirupsen/logrus"
-	"io"
-	"os"
-	"sync"
 )
 
 var reader io.Reader

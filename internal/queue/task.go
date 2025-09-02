@@ -4,6 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"path"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/acgn-org/onest/internal/config"
 	"github.com/acgn-org/onest/internal/database"
 	"github.com/acgn-org/onest/internal/logfield"
@@ -13,12 +20,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/zelenin/go-tdlib/client"
 	"gorm.io/gorm"
-	"io"
-	"os"
-	"path"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 func UpdatePriority(ctx context.Context, id uint, priority int32) error {

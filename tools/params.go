@@ -2,8 +2,9 @@ package tools
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func UintIDFromParam(ctx *gin.Context, name string) (uint, error) {

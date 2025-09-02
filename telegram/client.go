@@ -3,14 +3,15 @@ package telegram
 import (
 	"context"
 	"errors"
-	"github.com/acgn-org/onest/tools"
-	log "github.com/sirupsen/logrus"
-	"github.com/zelenin/go-tdlib/client"
 	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/acgn-org/onest/tools"
+	log "github.com/sirupsen/logrus"
+	"github.com/zelenin/go-tdlib/client"
 )
 
 type Config struct {

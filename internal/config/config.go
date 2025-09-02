@@ -2,6 +2,11 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"sync"
+	"sync/atomic"
+
 	"github.com/acgn-org/onest/internal/logfield"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
@@ -9,10 +14,6 @@ import (
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
 	log "github.com/sirupsen/logrus"
-	"os"
-	"strings"
-	"sync"
-	"sync/atomic"
 )
 
 const EnvPrefix = "ONEST"

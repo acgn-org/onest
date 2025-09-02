@@ -1,9 +1,10 @@
 package main
 
 import (
+	"os"
+
 	"github.com/acgn-org/onest/internal/server"
 	log "github.com/sirupsen/logrus"
-	"os"
 )
 
 func main() {

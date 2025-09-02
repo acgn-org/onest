@@ -3,10 +3,11 @@ package database
 import (
 	"context"
 	"errors"
+	"time"
+
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
-	"time"
 )
 
 type Logger struct {
